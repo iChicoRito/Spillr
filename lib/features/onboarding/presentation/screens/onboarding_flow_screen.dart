@@ -1,0 +1,227 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../../app/router/app_router.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../shared/widgets/fallback_state_view.dart';
+import '../../../../shared/widgets/onboarding_intro_content.dart';
+import '../../../../shared/widgets/onboarding_scaffold.dart';
+import '../../../../shared/widgets/primary_action_button.dart';
+import '../../domain/onboarding_step.dart';
+import '../providers/onboarding_providers.dart';
+
+class OnboardingFlowScreen extends ConsumerStatefulWidget {
+  const OnboardingFlowScreen({super.key});
+
+  @override
+  ConsumerState<OnboardingFlowScreen> createState() =>
+      _OnboardingFlowScreenState();
+}
+
+class _OnboardingFlowScreenState extends ConsumerState<OnboardingFlowScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  int _stepIndex = 0;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handlePrimaryAction() async {
+    if (_stepIndex < onboardingIntroSteps.length) {
+      setState(() {
+        _stepIndex += 1;
+      });
+      return;
+    }
+
+    if (_stepIndex == onboardingIntroSteps.length) {
+      final isValid = _formKey.currentState?.validate() ?? false;
+      if (!isValid) {
+        return;
+      }
+
+      await ref
+          .read(onboardingControllerProvider.notifier)
+          .submitName(_nameController.text);
+
+      final submission = ref.read(onboardingControllerProvider);
+      if (submission.hasError || !mounted) {
+        return;
+      }
+
+      setState(() {
+        _stepIndex += 1;
+      });
+      return;
+    }
+
+    if (_stepIndex == onboardingIntroSteps.length + 1 && mounted) {
+      context.go(AppRoutes.home);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final submissionState = ref.watch(onboardingControllerProvider);
+    final currentName = ref.watch(onboardingDraftNameProvider);
+    final isSubmitting = submissionState.isLoading;
+    final introCount = onboardingIntroSteps.length;
+
+    return OnboardingScaffold(
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 220),
+        child: switch (_stepIndex) {
+          0 || 1 || 2 => Align(
+            key: ValueKey('intro-$_stepIndex'),
+            alignment: Alignment.bottomCenter,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 28),
+              child: OnboardingIntroContent(
+                title: onboardingIntroSteps[_stepIndex].title,
+                subtitle: onboardingIntroSteps[_stepIndex].subtitle,
+              ),
+            ),
+          ),
+          3 => _NameEntrySection(
+            key: const ValueKey('name-input'),
+            formKey: _formKey,
+            controller: _nameController,
+            enabled: !isSubmitting,
+          ),
+          4 => _NameConfirmationSection(
+            key: const ValueKey('name-confirmation'),
+            displayName: currentName,
+          ),
+          _ => const SizedBox.shrink(),
+        },
+      ),
+      footer: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (submissionState.hasError)
+            const Padding(
+              padding: EdgeInsets.only(bottom: 12),
+              child: FallbackStateView.inline(
+                message: 'Something went wrong while saving your name.',
+              ),
+            ),
+          PrimaryActionButton(
+            label: switch (_stepIndex) {
+              0 || 1 || 2 => onboardingIntroSteps[_stepIndex].ctaLabel,
+              3 => 'Submit',
+              4 => "Let's Go!",
+              _ => '',
+            },
+            onPressed: _handlePrimaryAction,
+            isLoading: isSubmitting,
+          ),
+          if (_stepIndex < introCount)
+            const SizedBox(height: 6)
+          else
+            const SizedBox.shrink(),
+        ],
+      ),
+    );
+  }
+}
+
+class _NameEntrySection extends StatelessWidget {
+  const _NameEntrySection({
+    required this.formKey,
+    required this.controller,
+    required this.enabled,
+    super.key,
+  });
+
+  final GlobalKey<FormState> formKey;
+  final TextEditingController controller;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Center(
+      child: Form(
+        key: formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'What should we call you?',
+              style: theme.textTheme.headlineSmall,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Your name personalized your Spillr',
+              style: theme.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 20),
+            TextFormField(
+              controller: controller,
+              enabled: enabled,
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: AppColors.neutral700,
+              ),
+              cursorColor: AppColors.neutral700,
+              textInputAction: TextInputAction.done,
+              decoration: const InputDecoration(hintText: 'Enter your name'),
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Please enter your name.';
+                }
+                return null;
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _NameConfirmationSection extends StatelessWidget {
+  const _NameConfirmationSection({required this.displayName, super.key});
+
+  final String displayName;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text.rich(
+            TextSpan(
+              style: theme.textTheme.headlineLarge,
+              children: [
+                const TextSpan(text: "Let's Start\n"),
+                const TextSpan(text: 'Spilling, '),
+                TextSpan(
+                  text: displayName,
+                  style: theme.textTheme.headlineLarge?.copyWith(
+                    color: AppColors.teal500,
+                  ),
+                ),
+              ],
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 18),
+          Text(
+            'Pull a card, answer with confidence, and let the chaos begin.',
+            style: theme.textTheme.bodyLarge,
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+}
