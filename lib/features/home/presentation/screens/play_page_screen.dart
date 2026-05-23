@@ -3,10 +3,14 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hugeicons/hugeicons.dart';
 
+import '../../../../app/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/fallback_state_view.dart';
+import '../../../game/data/spillr_decks.dart';
+import '../../../game/domain/spillr_deck.dart';
 import '../../../onboarding/presentation/providers/onboarding_providers.dart';
 
 class PlayPageScreen extends ConsumerStatefulWidget {
@@ -192,6 +196,11 @@ class _PlayPageScreenState extends ConsumerState<PlayPageScreen> {
                                                   deck: deck,
                                                   isActive:
                                                       index == _activeIndex,
+                                                  onPlay: () {
+                                                    context.go(
+                                                      '${AppRoutes.game}/${deck.id}',
+                                                    );
+                                                  },
                                                 ),
                                               ),
                                             ),
@@ -357,10 +366,15 @@ class _PlayPageGreeting extends StatelessWidget {
 }
 
 class _DeckCard extends StatelessWidget {
-  const _DeckCard({required this.deck, required this.isActive});
+  const _DeckCard({
+    required this.deck,
+    required this.isActive,
+    required this.onPlay,
+  });
 
-  final _DeckPresentation deck;
+  final SpillrDeck deck;
   final bool isActive;
+  final VoidCallback onPlay;
 
   @override
   Widget build(BuildContext context) {
@@ -397,8 +411,14 @@ class _DeckCard extends StatelessWidget {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: isActive
-                  ? [deck.color, deck.color.withValues(alpha: 0.9)]
-                  : [deck.color.withValues(alpha: 0.92), deck.color],
+                  ? [
+                      deck.backgroundColor,
+                      deck.backgroundColor.withValues(alpha: 0.9),
+                    ]
+                  : [
+                      deck.backgroundColor.withValues(alpha: 0.92),
+                      deck.backgroundColor,
+                    ],
             ),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: deck.borderColor, width: 2),
@@ -416,7 +436,7 @@ class _DeckCard extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            deck.displayTitle,
+                            _deckDisplayTitle(deck.title),
                             style: theme.textTheme.headlineLarge?.copyWith(
                               color: AppColors.white,
                               fontSize: titleSize,
@@ -439,7 +459,7 @@ class _DeckCard extends StatelessWidget {
                               child: HugeIcon(
                                 icon: HugeIcons.strokeRoundedCards01,
                                 size: cardIconSize,
-                                color: deck.color,
+                                color: deck.backgroundColor,
                                 strokeWidth: isActive ? 1.9 : 1.6,
                               ),
                             ),
@@ -449,7 +469,7 @@ class _DeckCard extends StatelessWidget {
                     ),
                     const Spacer(),
                     Text(
-                      deck.displayDescription,
+                      _deckDisplayDescription(deck.description),
                       maxLines: isActive ? 2 : 2,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.bodyLarge?.copyWith(
@@ -460,19 +480,22 @@ class _DeckCard extends StatelessWidget {
                     ),
                     if (isActive) ...[
                       SizedBox(height: bottomGap),
-                      Container(
-                        height: buttonHeight,
-                        decoration: BoxDecoration(
-                          color: AppColors.white.withValues(alpha: 0.96),
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          'Play ${deck.title}',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            fontSize: 13,
-                            color: deck.color,
-                            fontWeight: FontWeight.w500,
+                      GestureDetector(
+                        onTap: onPlay,
+                        child: Container(
+                          height: buttonHeight,
+                          decoration: BoxDecoration(
+                            color: AppColors.white.withValues(alpha: 0.96),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            'Play ${deck.title}',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontSize: 13,
+                              color: deck.backgroundColor,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
                       ),
@@ -674,71 +697,27 @@ class _BottomNavItem extends StatelessWidget {
   }
 }
 
-class _DeckPresentation {
-  const _DeckPresentation({
-    required this.title,
-    required this.description,
-    required this.color,
-    required this.borderColor,
-    required this.displayTitle,
-    required this.displayDescription,
-  });
-
-  final String title;
-  final String description;
-  final Color color;
-  final Color borderColor;
-  final String displayTitle;
-  final String displayDescription;
+String _deckDisplayTitle(String title) {
+  return switch (title) {
+    'Deep Spill' => 'Deep\nSpill',
+    'No Dead Air' => 'No\nDead\nAir',
+    'Chaos Mode' => 'Chaos\nMode',
+    'Hot Seat' => 'Hot\nSeat',
+    'Date Mode' => 'Date\nMode',
+    _ => title,
+  };
 }
 
-const _playDecks = [
-  _DeckPresentation(
-    title: 'Deep Spill',
-    description: 'More meaningful conversation',
-    color: AppColors.blue500,
-    borderColor: AppColors.blue200,
-    displayTitle: 'Deep\nSpill',
-    displayDescription: 'More meaningful\nconversation',
-  ),
-  _DeckPresentation(
-    title: 'No Dead Air',
-    description: 'Easy questions to start the vibe',
-    color: AppColors.violet500,
-    borderColor: AppColors.violet200,
-    displayTitle: 'No\nDead\nAir',
-    displayDescription: 'Easy questions to start the\nvibe',
-  ),
-  _DeckPresentation(
-    title: 'Drop Lore',
-    description: 'Personal questions for fun stories',
-    color: AppColors.amber500,
-    borderColor: AppColors.amber200,
-    displayTitle: 'Drop\nLore',
-    displayDescription: 'Personal questions\nfor fun stories',
-  ),
-  _DeckPresentation(
-    title: 'Chaos Mode',
-    description: 'Funny, random, and unhinged questions',
-    color: AppColors.teal500,
-    borderColor: AppColors.teal200,
-    displayTitle: 'Chaos\nMode',
-    displayDescription: 'Funny, random, and\nunhinged questions',
-  ),
-  _DeckPresentation(
-    title: 'Hot Seat',
-    description: 'Bold questions for brave players',
-    color: AppColors.red500,
-    borderColor: AppColors.red200,
-    displayTitle: 'Hot\nSeat',
-    displayDescription: 'Bold questions for\nbrave players',
-  ),
-  _DeckPresentation(
-    title: 'Date Mode',
-    description: 'Getting to know someone better',
-    color: AppColors.pink500,
-    borderColor: AppColors.pink200,
-    displayTitle: 'Date\nMode',
-    displayDescription: 'Getting to know\nsomeone better',
-  ),
-];
+String _deckDisplayDescription(String description) {
+  return switch (description) {
+    'More meaningful conversation' => 'More meaningful\nconversation',
+    'Easy questions to start the vibe' => 'Easy questions to start the\nvibe',
+    'Funny, random, and unhinged questions' =>
+      'Funny, random, and\nunhinged questions',
+    'Bold questions for brave players' => 'Bold questions for\nbrave players',
+    'Getting to know someone better' => 'Getting to know\nsomeone better',
+    _ => description,
+  };
+}
+
+const _playDecks = spillrDecks;
