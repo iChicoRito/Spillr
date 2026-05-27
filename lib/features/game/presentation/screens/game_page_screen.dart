@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -10,6 +11,7 @@ import '../../../../app/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../onboarding/presentation/providers/onboarding_providers.dart';
 import '../../data/spillr_decks.dart';
+import '../../domain/game_result.dart';
 import '../../domain/game_session_state.dart';
 import '../../domain/spillr_deck.dart';
 import '../models/game_ending_arguments.dart';
@@ -17,10 +19,7 @@ import '../providers/game_providers.dart';
 import '../widgets/deck_pattern_background.dart';
 
 class GamePageScreen extends ConsumerStatefulWidget {
-  const GamePageScreen({
-    required this.initialDeckId,
-    super.key,
-  });
+  const GamePageScreen({required this.initialDeckId, super.key});
 
   final String initialDeckId;
 
@@ -29,10 +28,14 @@ class GamePageScreen extends ConsumerStatefulWidget {
 }
 
 class _GamePageScreenState extends ConsumerState<GamePageScreen> {
+  static const int _flipTimerDurationSeconds = 10;
+
   late GameSessionState _session;
   _AdvanceAction? _pendingAdvanceAction;
+  Timer? _flipTimer;
   int _pendingAdvanceToken = 0;
-  bool _hideDeckSelector = false;
+  int _secondsRemaining = _flipTimerDurationSeconds;
+  int _timerRotationTick = 0;
 
   @override
   void initState() {
@@ -43,75 +46,120 @@ class _GamePageScreenState extends ConsumerState<GamePageScreen> {
     );
   }
 
-  void _switchDeck(String deckId) {
-    setState(() {
-      _pendingAdvanceAction = null;
-      _pendingAdvanceToken += 1;
-      _session = GameSessionState.start(
-        findDeckById(deckId),
-        random: ref.read(gameRandomProvider),
-      );
-    });
-  }
-
   void _toggleFlip() {
+    _cancelFlipTimer();
     setState(() {
-      _hideDeckSelector = true;
       _session = _session.flip();
+      _resetFlipTimer();
     });
+
+    if (_session.isFlipped) {
+      _startFlipTimer();
+    }
   }
 
-  void _answerCard() {
+  void _spillCard() {
+    _cancelFlipTimer();
     final displayName =
         ref.read(onboardingProfileProvider).value?.displayName ?? 'Spiller';
     if (_session.displayIndex == _session.totalQuestions) {
       final result = _session.answeredResult(displayName);
-      context.go(
-        AppRoutes.ending,
-        extra: GameEndingArguments(deck: _session.deck, result: result),
-      );
+      _goToEnding(result);
       return;
     }
 
-    _closeCurrentCardThenAdvance(_AdvanceAction.answer);
+    _closeCurrentCardThenAdvance(_AdvanceAction.spill);
   }
 
   void _passCard() {
+    _cancelFlipTimer();
     final displayName =
         ref.read(onboardingProfileProvider).value?.displayName ?? 'Spiller';
     if (_session.displayIndex == _session.totalQuestions) {
       final result = _session.passedResult(displayName);
-      context.go(
-        AppRoutes.ending,
-        extra: GameEndingArguments(deck: _session.deck, result: result),
-      );
+      _goToEnding(result);
       return;
     }
 
     _closeCurrentCardThenAdvance(_AdvanceAction.pass);
   }
 
+  void _endRound() {
+    _cancelFlipTimer();
+    final displayName =
+        ref.read(onboardingProfileProvider).value?.displayName ?? 'Spiller';
+    final result = _session.endedResult(displayName);
+    _goToEnding(result);
+  }
+
+  void _goToEnding(GameResult result) {
+    context.go(
+      AppRoutes.ending,
+      extra: GameEndingArguments(deck: _session.deck, result: result),
+    );
+  }
+
   void _closeCurrentCardThenAdvance(_AdvanceAction action) {
     final token = _pendingAdvanceToken + 1;
+    _cancelFlipTimer();
     setState(() {
       _pendingAdvanceToken = token;
       _pendingAdvanceAction = action;
       _session = _session.copyWith(isFlipped: false);
+      _resetFlipTimer();
     });
 
     Future<void>.delayed(const Duration(milliseconds: 420), () {
-      if (!mounted || token != _pendingAdvanceToken || _pendingAdvanceAction != action) {
+      if (!mounted ||
+          token != _pendingAdvanceToken ||
+          _pendingAdvanceAction != action) {
         return;
       }
 
       setState(() {
         _session = switch (action) {
-          _AdvanceAction.answer => _session.nextAnswered(),
+          _AdvanceAction.spill => _session.nextAnswered(),
           _AdvanceAction.pass => _session.nextPassed(),
         };
         _pendingAdvanceAction = null;
       });
     });
+  }
+
+  void _startFlipTimer() {
+    _flipTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted || !_session.isFlipped || _pendingAdvanceAction != null) {
+        timer.cancel();
+        return;
+      }
+
+      if (_secondsRemaining <= 1) {
+        timer.cancel();
+        _passCard();
+        return;
+      }
+
+      setState(() {
+        _secondsRemaining -= 1;
+        _timerRotationTick += 1;
+      });
+    });
+  }
+
+  void _cancelFlipTimer() {
+    _flipTimer?.cancel();
+    _flipTimer = null;
+  }
+
+  void _resetFlipTimer() {
+    _secondsRemaining = _flipTimerDurationSeconds;
+    _timerRotationTick = 0;
+  }
+
+  @override
+  void dispose() {
+    _cancelFlipTimer();
+    super.dispose();
   }
 
   @override
@@ -139,24 +187,27 @@ class _GamePageScreenState extends ConsumerState<GamePageScreen> {
                         padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
                         child: Column(
                           children: [
-                            _TopBar(
-                              onBack: () => context.go(AppRoutes.home),
-                            ),
+                            _TopBar(onBack: () => context.go(AppRoutes.home)),
                             const SizedBox(height: 30),
-                            if (!_hideDeckSelector &&
-                                !_session.isFlipped &&
-                                _pendingAdvanceAction == null)
-                              _DeckSelector(
-                                selectedDeck: deck,
-                                onSelected: _switchDeck,
-                              )
-                            else
-                              const SizedBox(height: 52),
+                            SizedBox(
+                              height: 52,
+                              child: Center(
+                                child: _session.isFlipped
+                                    ? _FlipTimerChip(
+                                        secondsRemaining: _secondsRemaining,
+                                        rotationTick: _timerRotationTick,
+                                        accentColor: deck.badgeTextColor,
+                                      )
+                                    : const SizedBox.shrink(),
+                              ),
+                            ),
                             const SizedBox(height: 26),
                             Expanded(
                               child: GestureDetector(
                                 key: const ValueKey('game-flip-card'),
-                                onTap: _session.isFlipped || _pendingAdvanceAction != null
+                                onTap:
+                                    _session.isFlipped ||
+                                        _pendingAdvanceAction != null
                                     ? null
                                     : _toggleFlip,
                                 child: _FlipCard(session: _session),
@@ -166,56 +217,15 @@ class _GamePageScreenState extends ConsumerState<GamePageScreen> {
                             _ProgressIndicator(session: _session),
                             const SizedBox(height: 20),
                             if (_session.isFlipped) ...[
-                              TextButton(
-                                key: const ValueKey('game-pass-button'),
-                                onPressed: _pendingAdvanceAction == null ? _passCard : null,
-                                style: TextButton.styleFrom(
-                                  foregroundColor: AppColors.white,
-                                ),
-                                child: const Text('Pass'),
-                              ),
-                              const SizedBox(height: 10),
-                              SizedBox(
-                                width: double.infinity,
-                                height: 56,
-                                child: FilledButton(
-                                  key: const ValueKey('game-next-card-button'),
-                                  onPressed: _pendingAdvanceAction == null ? _answerCard : null,
-                                  style: FilledButton.styleFrom(
-                                    backgroundColor: AppColors.white,
-                                    foregroundColor: deck.badgeTextColor,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      if (_session.displayIndex == _session.totalQuestions)
-                                        Icon(
-                                          Icons.check,
-                                          size: 20,
-                                          color: deck.badgeTextColor,
-                                        )
-                                      else
-                                        HugeIcon(
-                                          icon: HugeIcons.strokeRoundedPlay,
-                                          size: 20,
-                                          color: deck.badgeTextColor,
-                                          strokeWidth: 1.8,
-                                        ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        _session.displayIndex == _session.totalQuestions
-                                            ? "Done, I'm cooked"
-                                            : 'Next Card',
-                                      ),
-                                    ],
-                                  ),
-                                ),
+                              _FlipActionBar(
+                                deck: deck,
+                                enabled: _pendingAdvanceAction == null,
+                                onEnd: _endRound,
+                                onSpill: _spillCard,
+                                onPass: _passCard,
                               ),
                             ] else
-                              const SizedBox(height: 102),
+                              const SizedBox(height: 136),
                           ],
                         ),
                       ),
@@ -232,7 +242,7 @@ class _GamePageScreenState extends ConsumerState<GamePageScreen> {
   }
 }
 
-enum _AdvanceAction { answer, pass }
+enum _AdvanceAction { spill, pass }
 
 class _TopBar extends StatelessWidget {
   const _TopBar({required this.onBack});
@@ -253,11 +263,7 @@ class _TopBar extends StatelessWidget {
               child: const Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    Icons.chevron_left,
-                    color: AppColors.white,
-                    size: 22,
-                  ),
+                  Icon(Icons.chevron_left, color: AppColors.white, size: 22),
                   SizedBox(width: 2),
                   Text(
                     'Back',
@@ -286,55 +292,53 @@ class _TopBar extends StatelessWidget {
   }
 }
 
-class _DeckSelector extends StatelessWidget {
-  const _DeckSelector({
-    required this.selectedDeck,
-    required this.onSelected,
+class _FlipTimerChip extends StatelessWidget {
+  const _FlipTimerChip({
+    required this.secondsRemaining,
+    required this.rotationTick,
+    required this.accentColor,
   });
 
-  final SpillrDeck selectedDeck;
-  final ValueChanged<String> onSelected;
+  final int secondsRemaining;
+  final int rotationTick;
+  final Color accentColor;
 
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
+      key: const ValueKey('game-flip-timer-chip'),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(999),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14),
-        child: DropdownButtonHideUnderline(
-          child: DropdownButton<String>(
-            key: const ValueKey('game-deck-selector'),
-            value: selectedDeck.id,
-            iconEnabledColor: AppColors.neutral700,
-            dropdownColor: AppColors.white,
-            borderRadius: BorderRadius.circular(16),
-            onChanged: (value) {
-              if (value != null) {
-                onSelected(value);
-              }
-            },
-            items: [
-              for (final deck in spillrDecks)
-                DropdownMenuItem<String>(
-                  value: deck.id,
-                  child: Row(
-                    children: [
-                      HugeIcon(
-                        icon: HugeIcons.strokeRoundedCards01,
-                        size: 18,
-                        color: deck.badgeTextColor,
-                        strokeWidth: 1.8,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(deck.title),
-                    ],
-                  ),
-                ),
-            ],
-          ),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedRotation(
+              key: const ValueKey('game-flip-timer-icon'),
+              turns: rotationTick * 0.5,
+              duration: const Duration(milliseconds: 380),
+              curve: Curves.easeInOutCubic,
+              child: HugeIcon(
+                icon: HugeIcons.strokeRoundedHourglass,
+                size: 18,
+                color: accentColor,
+                strokeWidth: 1.8,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              '$secondsRemaining sec',
+              style: const TextStyle(
+                color: AppColors.neutral700,
+                fontSize: 16,
+                height: 1.0,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -405,10 +409,7 @@ class _FlipCardState extends State<_FlipCard>
             decoration: BoxDecoration(
               color: AppColors.white,
               borderRadius: BorderRadius.circular(30),
-              border: Border.all(
-                color: deck.cardBorderColor,
-                width: 3,
-              ),
+              border: Border.all(color: deck.cardBorderColor, width: 3),
             ),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 32),
             child: isShowingBack
@@ -532,11 +533,7 @@ class _FrontFace extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Icon(
-                  Icons.sync,
-                  color: deck.badgeTextColor,
-                  size: 18,
-                ),
+                Icon(Icons.sync, color: deck.badgeTextColor, size: 18),
               ],
             ),
           ),
@@ -640,6 +637,144 @@ class _ProgressIndicator extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _FlipActionBar extends StatelessWidget {
+  const _FlipActionBar({
+    required this.deck,
+    required this.enabled,
+    required this.onEnd,
+    required this.onSpill,
+    required this.onPass,
+  });
+
+  final SpillrDeck deck;
+  final bool enabled;
+  final VoidCallback onEnd;
+  final VoidCallback onSpill;
+  final VoidCallback onPass;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      key: const ValueKey('game-action-bar'),
+      height: 136,
+      child: Row(
+        children: [
+          Expanded(
+            child: _RoundActionButton(
+              buttonKey: const ValueKey('game-end-button'),
+              circleKey: const ValueKey('game-end-button-circle'),
+              label: 'End',
+              icon: HugeIcons.strokeRoundedLogout05,
+              iconColor: deck.badgeTextColor,
+              buttonDiameter: 64,
+              iconSize: 24,
+              enabled: enabled,
+              onPressed: onEnd,
+            ),
+          ),
+          Expanded(
+            child: _RoundActionButton(
+              buttonKey: const ValueKey('game-next-card-button'),
+              circleKey: const ValueKey('game-spill-button-circle'),
+              label: 'Spill',
+              icon: HugeIcons.strokeRoundedBulb,
+              iconColor: deck.badgeTextColor,
+              buttonDiameter: 90,
+              iconSize: 36,
+              enabled: enabled,
+              onPressed: onSpill,
+            ),
+          ),
+          Expanded(
+            child: _RoundActionButton(
+              buttonKey: const ValueKey('game-pass-button'),
+              circleKey: const ValueKey('game-pass-button-circle'),
+              label: 'Pass',
+              icon: HugeIcons.strokeRoundedNext,
+              iconColor: deck.badgeTextColor,
+              buttonDiameter: 64,
+              iconSize: 24,
+              enabled: enabled,
+              onPressed: onPass,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RoundActionButton extends StatelessWidget {
+  const _RoundActionButton({
+    required this.buttonKey,
+    required this.circleKey,
+    required this.label,
+    required this.icon,
+    required this.iconColor,
+    required this.buttonDiameter,
+    required this.iconSize,
+    required this.enabled,
+    required this.onPressed,
+  });
+
+  final Key buttonKey;
+  final Key circleKey;
+  final String label;
+  final List<List<dynamic>> icon;
+  final Color iconColor;
+  final double buttonDiameter;
+  final double iconSize;
+  final bool enabled;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final contentOpacity = enabled ? 1.0 : 0.65;
+
+    return GestureDetector(
+      key: buttonKey,
+      behavior: HitTestBehavior.opaque,
+      onTap: enabled ? onPressed : null,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          Opacity(
+            opacity: contentOpacity,
+            child: Material(
+              key: circleKey,
+              color: AppColors.white,
+              shape: const CircleBorder(),
+              child: ClipOval(
+                child: SizedBox(
+                  width: buttonDiameter,
+                  height: buttonDiameter,
+                  child: Center(
+                    child: HugeIcon(
+                      icon: icon,
+                      color: iconColor,
+                      size: iconSize,
+                      strokeWidth: 1.5,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            label,
+            style: TextStyle(
+              color: AppColors.white.withValues(alpha: contentOpacity),
+              fontSize: 16,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

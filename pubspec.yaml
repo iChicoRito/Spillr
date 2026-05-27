@@ -42,7 +42,8 @@ dependencies:
   path_provider: ^2.1.5
   hugeicons: ^1.1.7
   flutter_svg: ^2.3.0
-  confetti: 0.8.0
+  pretty_animated_text: 2.0.0
+  flutter_confetti: ^0.5.1
 
 dev_dependencies:
   flutter_test:

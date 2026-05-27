@@ -24,6 +24,7 @@ class _PlayPageScreenState extends ConsumerState<PlayPageScreen> {
   late final PageController _pageController;
   double _currentPage = 1;
   int _activeIndex = 1;
+  static const _carouselViewportFraction = 0.64;
   static const _activeCardWidth = 180.0;
   static const _activeCardHeight = 385.0;
   static const _inactiveCardWidth = 188.0;
@@ -34,7 +35,7 @@ class _PlayPageScreenState extends ConsumerState<PlayPageScreen> {
     super.initState();
     _pageController = PageController(
       initialPage: _activeIndex,
-      viewportFraction: 0.70,
+      viewportFraction: _carouselViewportFraction,
     )..addListener(_handlePageChange);
   }
 
@@ -150,64 +151,61 @@ class _PlayPageScreenState extends ConsumerState<PlayPageScreen> {
                                   child: SizedBox(height: 24),
                                 ),
                               ),
-                              SliverPadding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                ),
-                                sliver: SliverToBoxAdapter(
-                                  child: SizedBox(
-                                    height: carouselHeight,
-                                    child: PageView.builder(
-                                      controller: _pageController,
-                                      physics: const BouncingScrollPhysics(),
-                                      itemCount: _playDecks.length,
-                                      itemBuilder: (context, index) {
-                                        final deck = _playDecks[index];
-                                        final delta = (_currentPage - index)
-                                            .abs();
-                                        final scale = (1 - (delta * 0.14))
-                                            .clamp(0.88, 1.0);
-                                        final opacity = (1 - (delta * 0.22))
-                                            .clamp(0.68, 1.0);
+                              SliverToBoxAdapter(
+                                child: SizedBox(
+                                  height: carouselHeight,
+                                  child: PageView.builder(
+                                    controller: _pageController,
+                                    clipBehavior: Clip.none,
+                                    physics: const BouncingScrollPhysics(),
+                                    itemCount: _playDecks.length,
+                                    itemBuilder: (context, index) {
+                                      final deck = _playDecks[index];
+                                      final delta = (_currentPage - index)
+                                          .abs();
+                                      final scale = (1 - (delta * 0.14)).clamp(
+                                        0.88,
+                                        1.0,
+                                      );
+                                      final opacity = (1 - (delta * 0.22))
+                                          .clamp(0.68, 1.0);
 
-                                        return AnimatedContainer(
-                                          duration: const Duration(
-                                            milliseconds: 180,
-                                          ),
-                                          curve: Curves.easeOutCubic,
-                                          padding: EdgeInsets.only(
-                                            top: index == _activeIndex
-                                                ? 0
-                                                : _inactiveVerticalInset,
-                                            bottom: index == _activeIndex
-                                                ? 0
-                                                : _inactiveVerticalInset,
-                                          ),
-                                          child: Transform.scale(
-                                            scale: scale,
-                                            child: Opacity(
-                                              opacity: opacity,
-                                              child: Padding(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      horizontal: 0,
-                                                    ),
-                                                child: _DeckCard(
-                                                  deck: deck,
-                                                  isActive:
-                                                      index == _activeIndex,
-                                                  onPlay: () {
-                                                    context.go(
-                                                      '${AppRoutes.game}/${deck.id}',
-                                                    );
-                                                  },
-                                                ),
+                                      return AnimatedContainer(
+                                        duration: const Duration(
+                                          milliseconds: 180,
+                                        ),
+                                        curve: Curves.easeOutCubic,
+                                        padding: EdgeInsets.only(
+                                          top: index == _activeIndex
+                                              ? 0
+                                              : _inactiveVerticalInset,
+                                          bottom: index == _activeIndex
+                                              ? 0
+                                              : _inactiveVerticalInset,
+                                        ),
+                                        child: Transform.scale(
+                                          scale: scale,
+                                          child: Opacity(
+                                            opacity: opacity,
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 0,
+                                                  ),
+                                              child: _DeckCard(
+                                                deck: deck,
+                                                isActive: index == _activeIndex,
+                                                onPlay: () {
+                                                  context.go(
+                                                    '${AppRoutes.preparation}/${deck.id}',
+                                                  );
+                                                },
                                               ),
                                             ),
                                           ),
-                                        );
-                                      },
-                                    ),
+                                        ),
+                                      );
+                                    },
                                   ),
                                 ),
                               ),

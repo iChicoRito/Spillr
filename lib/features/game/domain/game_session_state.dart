@@ -73,6 +73,21 @@ class GameSessionState {
     );
   }
 
+  GameResult endedResult(String displayName) {
+    if (answeredCount == 0) {
+      return GameResult(
+        title: 'No Spill? Kinda Sus, $displayName',
+        subtitle: 'You ended the round with zero answers. The tea remains untouched.',
+      );
+    }
+
+    return _resultForCounts(
+      answered: answeredCount,
+      passed: passedCount,
+      displayName: displayName,
+    );
+  }
+
   GameSessionState copyWith({
     SpillrDeck? deck,
     List<String>? questions,
