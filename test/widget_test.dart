@@ -7,16 +7,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hugeicons/hugeicons.dart';
 
-import 'package:spillr/app/app.dart';
-import 'package:spillr/core/database/app_database.dart';
-import 'package:spillr/core/theme/app_colors.dart';
-import 'package:spillr/features/game/data/spillr_decks.dart';
-import 'package:spillr/features/game/domain/game_result.dart';
-import 'package:spillr/features/game/domain/game_session_state.dart';
-import 'package:spillr/features/game/presentation/screens/ending_page_screen.dart';
-import 'package:spillr/features/game/presentation/screens/preparation_page_screen.dart';
-import 'package:spillr/features/game/presentation/providers/game_providers.dart';
-import 'package:spillr/features/onboarding/presentation/providers/onboarding_providers.dart';
+import 'package:Spillr/app/app.dart';
+import 'package:Spillr/core/database/app_database.dart';
+import 'package:Spillr/core/theme/app_colors.dart';
+import 'package:Spillr/features/game/data/spillr_decks.dart';
+import 'package:Spillr/features/game/domain/game_result.dart';
+import 'package:Spillr/features/game/domain/game_session_state.dart';
+import 'package:Spillr/features/game/presentation/screens/ending_page_screen.dart';
+import 'package:Spillr/features/game/presentation/screens/preparation_page_screen.dart';
+import 'package:Spillr/features/game/presentation/providers/game_providers.dart';
+import 'package:Spillr/features/onboarding/presentation/providers/onboarding_providers.dart';
 
 void main() {
   late AppDatabase database;
@@ -85,7 +85,9 @@ void main() {
       pageView.controller!.jumpToPage(targetIndex);
       await tester.pumpAndSettle();
     }
-    await tester.ensureVisible(find.byKey(ValueKey('play-deck-button-$targetKey')));
+    await tester.ensureVisible(
+      find.byKey(ValueKey('play-deck-button-$targetKey')),
+    );
     await tester.tap(find.byKey(ValueKey('play-deck-button-$targetKey')));
     await tester.pumpAndSettle();
   }
@@ -145,7 +147,10 @@ void main() {
     expect(find.text('Vibe'), findsOneWidget);
     expect(find.text('Check'), findsOneWidget);
     expect(find.text('Okay'), findsOneWidget);
-    expect(find.byKey(const ValueKey('onboarding-art-placeholder-0')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('onboarding-art-placeholder-0')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('progresses through the onboarding intro screens', (
@@ -187,11 +192,69 @@ void main() {
     await tester.enterText(find.byType(TextFormField), 'Chico');
     await tester.tap(find.text('Submit'));
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 220));
+
+    expect(
+      find.byKey(const ValueKey('onboarding-confirmation-headline-line-0')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('onboarding-confirmation-subtitle-line-0')),
+      findsOneWidget,
+    );
+    expect(find.text("Let's Go!"), findsOneWidget);
+  });
+
+  testWidgets('animates final onboarding confirmation text sequentially', (
+    tester,
+  ) async {
+    await pumpApp(tester);
+
+    await advanceToNameInput(tester);
+
+    await tester.enterText(find.byType(TextFormField), 'Chico');
+    await tester.tap(find.text('Submit'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 220));
+
+    final headlineLetters = find.descendant(
+      of: find.byKey(const ValueKey('onboarding-confirmation-headline-line-0')),
+      matching: find.byType(Opacity),
+    );
+    final subtitleLetters = find.descendant(
+      of: find.byKey(const ValueKey('onboarding-confirmation-subtitle-line-0')),
+      matching: find.byType(Opacity),
+    );
+    final nameLetters = find.descendant(
+      of: find.byKey(const ValueKey('onboarding-confirmation-headline-line-2')),
+      matching: find.byType(Opacity),
+    );
+
+    final firstHeadlineLetter = tester.widget<Opacity>(headlineLetters.first);
+    final firstSubtitleLetter = tester.widget<Opacity>(subtitleLetters.first);
+    final firstNameLetter = tester.widget<Opacity>(nameLetters.first);
+
+    final firstNameColor = tester
+        .widget<Text>(
+          find.descendant(
+            of: find.byWidget(firstNameLetter),
+            matching: find.byType(Text),
+          ),
+        )
+        .style!
+        .color;
+
+    expect(
+      firstHeadlineLetter.opacity,
+      greaterThan(firstSubtitleLetter.opacity),
+    );
+    expect(firstSubtitleLetter.opacity, 0);
+    expect(firstNameColor, AppColors.teal500);
+
     await tester.pumpAndSettle();
 
-    expect(find.textContaining("Let's Start"), findsOneWidget);
-    expect(find.textContaining('Chico'), findsOneWidget);
-    expect(find.text("Let's Go!"), findsOneWidget);
+    final settledSubtitleLetter = tester.widget<Opacity>(subtitleLetters.first);
+    expect(settledSubtitleLetter.opacity, 1);
   });
 
   testWidgets('lets the user reach the play page after onboarding', (
@@ -337,7 +400,9 @@ void main() {
     final pageView = tester.widget<PageView>(find.byType(PageView));
     pageView.controller!.jumpToPage(5);
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('play-deck-button-wildcard-tea')));
+    await tester.tap(
+      find.byKey(const ValueKey('play-deck-button-wildcard-tea')),
+    );
     await tester.pumpAndSettle();
 
     final letterOpacities = find.descendant(
@@ -420,7 +485,7 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.byKey(const ValueKey('preparation-intro-deck')),
+      find.byKey(const ValueKey('preparation-intro-deck-line-0')),
       findsOneWidget,
     );
     expect(
