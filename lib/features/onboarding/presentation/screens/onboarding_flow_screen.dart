@@ -69,22 +69,17 @@ class _OnboardingFlowScreenState extends ConsumerState<OnboardingFlowScreen> {
     final submissionState = ref.watch(onboardingControllerProvider);
     final currentName = ref.watch(onboardingDraftNameProvider);
     final isSubmitting = submissionState.isLoading;
-    final introCount = onboardingIntroSteps.length;
 
     return OnboardingScaffold(
       body: AnimatedSwitcher(
         duration: const Duration(milliseconds: 220),
         child: switch (_stepIndex) {
-          0 || 1 || 2 => Align(
+          0 || 1 || 2 => OnboardingIntroContent(
             key: ValueKey('intro-$_stepIndex'),
-            alignment: Alignment.bottomCenter,
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 28),
-              child: OnboardingIntroContent(
-                title: onboardingIntroSteps[_stepIndex].title,
-                subtitle: onboardingIntroSteps[_stepIndex].subtitle,
-              ),
-            ),
+            titlePrimary: onboardingIntroSteps[_stepIndex].titlePrimary,
+            titleAccent: onboardingIntroSteps[_stepIndex].titleAccent,
+            subtitle: onboardingIntroSteps[_stepIndex].subtitle,
+            stepIndex: _stepIndex,
           ),
           3 => _NameEntrySection(
             key: const ValueKey('name-input'),
@@ -119,10 +114,6 @@ class _OnboardingFlowScreenState extends ConsumerState<OnboardingFlowScreen> {
             onPressed: _handlePrimaryAction,
             isLoading: isSubmitting,
           ),
-          if (_stepIndex < introCount)
-            const SizedBox(height: 6)
-          else
-            const SizedBox.shrink(),
         ],
       ),
     );

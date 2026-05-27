@@ -1,7 +1,7 @@
 import '../../../core/theme/app_colors.dart';
 import '../domain/spillr_deck.dart';
 
-const spillrDecks = [
+const _baseSpillrDecks = [
   SpillrDeck(
     id: 'deep-spill',
     title: 'Deep Spill',
@@ -168,6 +168,26 @@ const spillrDecks = [
     ],
   ),
 ];
+
+final _wildcardTeaQuestions = List<String>.unmodifiable(
+  _baseSpillrDecks.expand((deck) => deck.questions),
+);
+
+final spillrDecks = List<SpillrDeck>.unmodifiable([
+  ..._baseSpillrDecks,
+  SpillrDeck(
+    id: 'wildcard-tea',
+    title: 'Just Pull It',
+    description: 'No category, no rules, just whatever the deck serves',
+    backgroundColor: AppColors.neutral700,
+    borderColor: AppColors.neutral200,
+    badgeColor: AppColors.neutral100,
+    badgeTextColor: AppColors.neutral700,
+    iconColor: AppColors.neutral700,
+    cardBorderColor: AppColors.neutral200,
+    questions: _wildcardTeaQuestions,
+  ),
+]);
 
 SpillrDeck findDeckById(String id) {
   return spillrDecks.firstWhere((deck) => deck.id == id);

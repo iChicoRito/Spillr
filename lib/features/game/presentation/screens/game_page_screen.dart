@@ -28,7 +28,7 @@ class GamePageScreen extends ConsumerStatefulWidget {
 }
 
 class _GamePageScreenState extends ConsumerState<GamePageScreen> {
-  static const int _flipTimerDurationSeconds = 10;
+  static const int _flipTimerDurationSeconds = 120;
 
   late GameSessionState _session;
   _AdvanceAction? _pendingAdvanceAction;
@@ -330,7 +330,7 @@ class _FlipTimerChip extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             Text(
-              '$secondsRemaining sec',
+              _formatDuration(secondsRemaining),
               style: const TextStyle(
                 color: AppColors.neutral700,
                 fontSize: 16,
@@ -444,7 +444,7 @@ class _BackFace extends StatelessWidget {
             child: SingleChildScrollView(
               child: Text(
                 key: const ValueKey('game-question-text'),
-                '"${session.currentQuestion}"',
+                session.currentQuestion,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: AppColors.neutral700,
@@ -680,7 +680,7 @@ class _FlipActionBar extends StatelessWidget {
             child: _RoundActionButton(
               buttonKey: const ValueKey('game-next-card-button'),
               circleKey: const ValueKey('game-spill-button-circle'),
-              label: 'Spill',
+              label: 'Answered',
               icon: HugeIcons.strokeRoundedBulb,
               iconColor: deck.badgeTextColor,
               buttonDiameter: 90,
@@ -706,6 +706,12 @@ class _FlipActionBar extends StatelessWidget {
       ),
     );
   }
+}
+
+String _formatDuration(int totalSeconds) {
+  final minutes = totalSeconds ~/ 60;
+  final seconds = totalSeconds % 60;
+  return '$minutes:${seconds.toString().padLeft(2, '0')}';
 }
 
 class _RoundActionButton extends StatelessWidget {
@@ -764,12 +770,15 @@ class _RoundActionButton extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Text(
             label,
+            maxLines: 2,
+            textAlign: TextAlign.center,
             style: TextStyle(
               color: AppColors.white.withValues(alpha: contentOpacity),
-              fontSize: 16,
+              fontSize: 14,
+              height: 1.1,
               fontWeight: FontWeight.w400,
             ),
           ),

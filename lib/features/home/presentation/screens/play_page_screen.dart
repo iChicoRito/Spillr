@@ -26,9 +26,9 @@ class _PlayPageScreenState extends ConsumerState<PlayPageScreen> {
   int _activeIndex = 1;
   static const _carouselViewportFraction = 0.64;
   static const _activeCardWidth = 180.0;
-  static const _activeCardHeight = 385.0;
+  static const _activeCardHeight = 456.0;
   static const _inactiveCardWidth = 188.0;
-  static const _inactiveVerticalInset = 40.0;
+  static const _inactiveVerticalInset = 48.0;
 
   @override
   void initState() {
@@ -81,7 +81,7 @@ class _PlayPageScreenState extends ConsumerState<PlayPageScreen> {
                   builder: (context, constraints) {
                     final carouselHeight = math.min(
                       _activeCardHeight,
-                      math.max(360.0, constraints.maxHeight * 0.52),
+                      math.max(404.0, constraints.maxHeight * 0.62),
                     );
 
                     return Stack(
@@ -210,7 +210,7 @@ class _PlayPageScreenState extends ConsumerState<PlayPageScreen> {
                                 ),
                               ),
                               const SliverToBoxAdapter(
-                                child: SizedBox(height: 180),
+                                child: SizedBox(height: 106),
                               ),
                             ],
                           ),
@@ -219,14 +219,7 @@ class _PlayPageScreenState extends ConsumerState<PlayPageScreen> {
                           left: 16,
                           right: 16,
                           bottom: 10,
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const _RandomDeckButton(),
-                              const SizedBox(height: 22),
-                              const _BottomNavigationBar(),
-                            ],
-                          ),
+                          child: const _BottomNavigationBar(),
                         ),
                       ],
                     );
@@ -385,12 +378,11 @@ class _DeckCard extends StatelessWidget {
             ? (isCompact ? 34.0 : 50.0)
             : (isCompact ? 30.0 : 40.0);
         final descriptionSize = isActive
-            ? (isCompact ? 12.0 : 18.0)
+            ? (isCompact ? 12.0 : 16.0)
             : (isCompact ? 8.0 : 14.0);
-        final buttonHeight = isActive ? (isCompact ? 34.0 : 38.0) : 22.0;
         final cardIconSize = isActive ? (isCompact ? 16.0 : 18.0) : 14.0;
         final cardIconBoxSize = isActive ? (isCompact ? 34.0 : 40.0) : 34.0;
-        final bottomGap = isActive ? (isCompact ? 10.0 : 16.0) : 6.0;
+        final bottomGap = isActive ? (isCompact ? 8.0 : 8.0) : 6.0;
         final contentPadding = isActive
             ? EdgeInsets.fromLTRB(
                 isCompact ? 14 : 16,
@@ -468,7 +460,7 @@ class _DeckCard extends StatelessWidget {
                     const Spacer(),
                     Text(
                       _deckDisplayDescription(deck.description),
-                      maxLines: isActive ? 2 : 2,
+                      maxLines: isActive ? 3 : 2,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.bodyLarge?.copyWith(
                         color: AppColors.white.withValues(alpha: 0.78),
@@ -478,23 +470,25 @@ class _DeckCard extends StatelessWidget {
                     ),
                     if (isActive) ...[
                       SizedBox(height: bottomGap),
-                      GestureDetector(
-                        onTap: onPlay,
-                        child: Container(
-                          height: buttonHeight,
-                          decoration: BoxDecoration(
-                            color: AppColors.white.withValues(alpha: 0.96),
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            'Play ${deck.title}',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              fontSize: 13,
-                              color: deck.backgroundColor,
+                      SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: FilledButton(
+                          key: ValueKey('play-deck-button-${deck.id}'),
+                          onPressed: onPlay,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColors.white,
+                            foregroundColor: deck.backgroundColor,
+                            textStyle: const TextStyle(
+                              fontSize: 18,
+                              height: 1.1,
                               fontWeight: FontWeight.w500,
                             ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
                           ),
+                          child: const Text('Play'),
                         ),
                       ),
                     ],
@@ -577,48 +571,6 @@ class _DeckCardPattern extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _RandomDeckButton extends StatelessWidget {
-  const _RandomDeckButton();
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: AppColors.teal500,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const HugeIcon(
-                icon: HugeIcons.strokeRoundedCards01,
-                size: 24,
-                color: AppColors.white,
-                strokeWidth: 1.9,
-              ),
-              const SizedBox(width: 10),
-              Flexible(
-                child: Text(
-                  'Pull a random deck',
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: AppColors.white,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }
@@ -718,4 +670,4 @@ String _deckDisplayDescription(String description) {
   };
 }
 
-const _playDecks = spillrDecks;
+final _playDecks = spillrDecks;

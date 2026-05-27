@@ -1,29 +1,34 @@
 class OnboardingIntroStep {
   const OnboardingIntroStep({
-    required this.title,
+    required this.titlePrimary,
+    required this.titleAccent,
     required this.subtitle,
     required this.ctaLabel,
   });
 
-  final String title;
+  final String titlePrimary;
+  final String titleAccent;
   final String subtitle;
   final String ctaLabel;
 }
 
 const onboardingIntroSteps = [
   OnboardingIntroStep(
-    title: 'Vibe Check',
+    titlePrimary: 'Vibe',
+    titleAccent: 'Check',
     subtitle: 'Awkward silence gets cancelled before it even starts, bestie.',
     ctaLabel: 'Okay',
   ),
   OnboardingIntroStep(
-    title: 'Tea Time',
+    titlePrimary: 'Tea',
+    titleAccent: 'Time',
     subtitle:
         'Pick a card and let the group reveal their funniest, weirdest lore.',
     ctaLabel: 'It sounds fun',
   ),
   OnboardingIntroStep(
-    title: 'Main Character',
+    titlePrimary: 'Main',
+    titleAccent: 'Character',
     subtitle: 'Play with friends, dates, or anyone brave enough to answer.',
     ctaLabel: 'Start Spilling',
   ),

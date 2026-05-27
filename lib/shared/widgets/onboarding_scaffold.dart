@@ -15,14 +15,11 @@ class OnboardingScaffold extends StatelessWidget {
     return Scaffold(
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
           child: Column(
             children: [
               Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 6),
-                  child: body,
-                ),
+                child: body,
               ),
               footer,
             ],
