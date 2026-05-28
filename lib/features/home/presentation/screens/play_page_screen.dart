@@ -9,6 +9,7 @@ import 'package:hugeicons/hugeicons.dart';
 import '../../../../app/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/fallback_state_view.dart';
+import '../../../../shared/widgets/spillr_bottom_navigation.dart';
 import '../../../game/data/spillr_decks.dart';
 import '../../../game/domain/spillr_deck.dart';
 import '../../../onboarding/presentation/providers/onboarding_providers.dart';
@@ -219,7 +220,11 @@ class _PlayPageScreenState extends ConsumerState<PlayPageScreen> {
                           left: 16,
                           right: 16,
                           bottom: 10,
-                          child: const _BottomNavigationBar(),
+                          child: SpillrBottomNavigation(
+                            selectedTab: SpillrBottomNavTab.play,
+                            onDecksTap: () => context.go(AppRoutes.decks),
+                            onPlayTap: () {},
+                          ),
                         ),
                       ],
                     );
@@ -568,78 +573,6 @@ class _DeckCardPattern extends StatelessWidget {
               border: Border.all(color: borderColor),
               borderRadius: BorderRadius.circular(2),
             ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _BottomNavigationBar extends StatelessWidget {
-  const _BottomNavigationBar();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 64,
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.neutral100),
-      ),
-      child: const Row(
-        children: [
-          Expanded(
-            child: _BottomNavItem(
-              label: 'Decks',
-              icon: HugeIcons.strokeRoundedCards01,
-            ),
-          ),
-          Expanded(
-            child: _BottomNavItem(
-              label: 'Play Cards',
-              icon: HugeIcons.strokeRoundedPlay,
-              selected: true,
-            ),
-          ),
-          Expanded(
-            child: _BottomNavItem(
-              label: 'Profile',
-              icon: HugeIcons.strokeRoundedUser,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _BottomNavItem extends StatelessWidget {
-  const _BottomNavItem({
-    required this.label,
-    required this.icon,
-    this.selected = false,
-  });
-
-  final String label;
-  final List<List<dynamic>> icon;
-  final bool selected;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = selected ? AppColors.teal500 : AppColors.neutral300;
-
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        HugeIcon(icon: icon, size: 24, color: color, strokeWidth: 1.9),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            fontSize: 12,
-            color: color,
-            fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
           ),
         ),
       ],
