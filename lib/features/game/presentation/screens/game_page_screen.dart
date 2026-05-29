@@ -9,8 +9,9 @@ import 'package:hugeicons/hugeicons.dart';
 
 import '../../../../app/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../shared/widgets/fallback_state_view.dart';
+import '../../../decks/presentation/providers/deck_providers.dart';
 import '../../../onboarding/presentation/providers/onboarding_providers.dart';
-import '../../data/spillr_decks.dart';
 import '../../domain/game_result.dart';
 import '../../domain/game_session_state.dart';
 import '../../domain/spillr_deck.dart';
@@ -30,40 +31,37 @@ class GamePageScreen extends ConsumerStatefulWidget {
 class _GamePageScreenState extends ConsumerState<GamePageScreen> {
   static const int _flipTimerDurationSeconds = 120;
 
-  late GameSessionState _session;
+  GameSessionState? _session;
   _AdvanceAction? _pendingAdvanceAction;
   Timer? _flipTimer;
   int _pendingAdvanceToken = 0;
   int _secondsRemaining = _flipTimerDurationSeconds;
   int _timerRotationTick = 0;
 
-  @override
-  void initState() {
-    super.initState();
-    _session = GameSessionState.start(
-      findDeckById(widget.initialDeckId),
-      random: ref.read(gameRandomProvider),
-    );
-  }
-
   void _toggleFlip() {
+    if (_session == null) {
+      return;
+    }
     _cancelFlipTimer();
     setState(() {
-      _session = _session.flip();
+      _session = _session!.flip();
       _resetFlipTimer();
     });
 
-    if (_session.isFlipped) {
+    if (_session!.isFlipped) {
       _startFlipTimer();
     }
   }
 
   void _spillCard() {
+    if (_session == null) {
+      return;
+    }
     _cancelFlipTimer();
     final displayName =
         ref.read(onboardingProfileProvider).value?.displayName ?? 'Spiller';
-    if (_session.displayIndex == _session.totalQuestions) {
-      final result = _session.answeredResult(displayName);
+    if (_session!.displayIndex == _session!.totalQuestions) {
+      final result = _session!.answeredResult(displayName);
       _goToEnding(result);
       return;
     }
@@ -72,11 +70,14 @@ class _GamePageScreenState extends ConsumerState<GamePageScreen> {
   }
 
   void _passCard() {
+    if (_session == null) {
+      return;
+    }
     _cancelFlipTimer();
     final displayName =
         ref.read(onboardingProfileProvider).value?.displayName ?? 'Spiller';
-    if (_session.displayIndex == _session.totalQuestions) {
-      final result = _session.passedResult(displayName);
+    if (_session!.displayIndex == _session!.totalQuestions) {
+      final result = _session!.passedResult(displayName);
       _goToEnding(result);
       return;
     }
@@ -85,27 +86,33 @@ class _GamePageScreenState extends ConsumerState<GamePageScreen> {
   }
 
   void _endRound() {
+    if (_session == null) {
+      return;
+    }
     _cancelFlipTimer();
     final displayName =
         ref.read(onboardingProfileProvider).value?.displayName ?? 'Spiller';
-    final result = _session.endedResult(displayName);
+    final result = _session!.endedResult(displayName);
     _goToEnding(result);
   }
 
   void _goToEnding(GameResult result) {
     context.go(
       AppRoutes.ending,
-      extra: GameEndingArguments(deck: _session.deck, result: result),
+      extra: GameEndingArguments(deck: _session!.deck, result: result),
     );
   }
 
   void _closeCurrentCardThenAdvance(_AdvanceAction action) {
+    if (_session == null) {
+      return;
+    }
     final token = _pendingAdvanceToken + 1;
     _cancelFlipTimer();
     setState(() {
       _pendingAdvanceToken = token;
       _pendingAdvanceAction = action;
-      _session = _session.copyWith(isFlipped: false);
+      _session = _session!.copyWith(isFlipped: false);
       _resetFlipTimer();
     });
 
@@ -118,8 +125,8 @@ class _GamePageScreenState extends ConsumerState<GamePageScreen> {
 
       setState(() {
         _session = switch (action) {
-          _AdvanceAction.spill => _session.nextAnswered(),
-          _AdvanceAction.pass => _session.nextPassed(),
+          _AdvanceAction.spill => _session!.nextAnswered(),
+          _AdvanceAction.pass => _session!.nextPassed(),
         };
         _pendingAdvanceAction = null;
       });
@@ -128,7 +135,10 @@ class _GamePageScreenState extends ConsumerState<GamePageScreen> {
 
   void _startFlipTimer() {
     _flipTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted || !_session.isFlipped || _pendingAdvanceAction != null) {
+      if (!mounted ||
+          _session == null ||
+          !_session!.isFlipped ||
+          _pendingAdvanceAction != null) {
         timer.cancel();
         return;
       }
@@ -164,7 +174,55 @@ class _GamePageScreenState extends ConsumerState<GamePageScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final deck = _session.deck;
+    final deckAsync = ref.watch(resolvedDeckProvider(widget.initialDeckId));
+
+    if (deckAsync.hasError) {
+      return const Scaffold(
+        backgroundColor: AppColors.white,
+        body: SafeArea(
+          child: FallbackStateView.error(message: 'Unable to load this deck.'),
+        ),
+      );
+    }
+    if (deckAsync.isLoading) {
+      return const Scaffold(
+        backgroundColor: AppColors.white,
+        body: SafeArea(child: FallbackStateView.loading()),
+      );
+    }
+
+    final deck = deckAsync.requireValue;
+    _session ??= GameSessionState.start(
+      deck,
+      random: ref.read(gameRandomProvider),
+    );
+    final session = _session!;
+
+    if (session.questions.isEmpty) {
+      return Scaffold(
+        backgroundColor: AppColors.white,
+        body: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const FallbackStateView.error(
+                    message: 'This deck has no questions yet.',
+                  ),
+                  const SizedBox(height: 16),
+                  FilledButton(
+                    onPressed: () => context.go(AppRoutes.decks),
+                    child: const Text('Back'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: AppColors.white,
@@ -192,7 +250,7 @@ class _GamePageScreenState extends ConsumerState<GamePageScreen> {
                             SizedBox(
                               height: 52,
                               child: Center(
-                                child: _session.isFlipped
+                                child: session.isFlipped
                                     ? _FlipTimerChip(
                                         secondsRemaining: _secondsRemaining,
                                         rotationTick: _timerRotationTick,
@@ -206,17 +264,17 @@ class _GamePageScreenState extends ConsumerState<GamePageScreen> {
                               child: GestureDetector(
                                 key: const ValueKey('game-flip-card'),
                                 onTap:
-                                    _session.isFlipped ||
+                                    session.isFlipped ||
                                         _pendingAdvanceAction != null
                                     ? null
                                     : _toggleFlip,
-                                child: _FlipCard(session: _session),
+                                child: _FlipCard(session: session),
                               ),
                             ),
                             const SizedBox(height: 18),
-                            _ProgressIndicator(session: _session),
+                            _ProgressIndicator(session: session),
                             const SizedBox(height: 20),
-                            if (_session.isFlipped) ...[
+                            if (session.isFlipped) ...[
                               _FlipActionBar(
                                 deck: deck,
                                 enabled: _pendingAdvanceAction == null,

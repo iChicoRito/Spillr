@@ -41,7 +41,9 @@ void main() {
         child: const SpillrApp(),
       ),
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 300));
   }
 
   Future<void> advanceToNameInput(WidgetTester tester) async {
@@ -293,7 +295,7 @@ void main() {
     },
   );
 
-  testWidgets('uses the figma title typography for the active deck card', (
+  testWidgets('uses the consistent H1 typography for the active deck card', (
     tester,
   ) async {
     await database.saveProfile('Chico');
@@ -302,8 +304,8 @@ void main() {
 
     final title = tester.widget<Text>(find.text('No\nDead\nAir'));
 
-    expect(title.style?.fontSize, 50);
-    expect(title.style?.fontWeight, FontWeight.w600);
+    expect(title.style?.fontSize, 36);
+    expect(title.style?.fontWeight, FontWeight.w700);
   });
 
   testWidgets('renders the active deck card without a shadow', (tester) async {
@@ -338,7 +340,7 @@ void main() {
     expect(carouselRect.left, 0);
     expect(carouselRect.right, 393);
     expect(pageView.clipBehavior, Clip.none);
-    expect(pageView.controller!.viewportFraction, 0.64);
+    expect(pageView.controller!.viewportFraction, 0.78);
   });
 
   testWidgets('updates the active deck label when the carousel moves', (

@@ -7,6 +7,8 @@ import '../../../../app/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/fallback_state_view.dart';
 import '../../../../shared/widgets/spillr_bottom_navigation.dart';
+import '../../../../shared/widgets/spillr_bottom_sheet_scaffold.dart';
+import '../../../../shared/widgets/spillr_confirm_dialog.dart';
 import '../../domain/deck_catalog.dart';
 import '../providers/deck_providers.dart';
 
@@ -16,6 +18,7 @@ class DecksScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedFilter = ref.watch(deckFilterProvider);
+    final filterChips = ref.watch(deckFilterChipsProvider);
     final deckListAsync = ref.watch(deckListProvider);
 
     return Scaffold(
@@ -36,7 +39,10 @@ class DecksScreen extends ConsumerWidget {
                       SliverPadding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         sliver: SliverToBoxAdapter(
-                          child: _DecksHeader(selectedFilter: selectedFilter),
+                          child: _DecksHeader(
+                            selectedFilter: selectedFilter,
+                            filterChips: filterChips,
+                          ),
                         ),
                       ),
                       SliverPadding(
@@ -47,7 +53,7 @@ class DecksScreen extends ConsumerWidget {
                             itemBuilder: (context, index) =>
                                 _DeckRow(item: items[index]),
                             separatorBuilder: (context, index) =>
-                                const SizedBox(height: 16),
+                                const SizedBox(height: 10),
                           ),
                           loading: () => const SliverToBoxAdapter(
                             child: Padding(
@@ -127,9 +133,13 @@ class DecksScreen extends ConsumerWidget {
 }
 
 class _DecksHeader extends ConsumerWidget {
-  const _DecksHeader({required this.selectedFilter});
+  const _DecksHeader({
+    required this.selectedFilter,
+    required this.filterChips,
+  });
 
-  final DeckFilter selectedFilter;
+  final DeckFilterSelection selectedFilter;
+  final List<DeckFilterChip> filterChips;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -144,7 +154,7 @@ class _DecksHeader extends ConsumerWidget {
             Text(
               'Create your',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontSize: 28,
+                fontSize: 24,
                 height: 1.15,
                 fontWeight: FontWeight.w700,
                 color: AppColors.neutral700,
@@ -153,7 +163,7 @@ class _DecksHeader extends ConsumerWidget {
             Text(
               'Custom Deck',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontSize: 28,
+                fontSize: 24,
                 height: 1.15,
                 fontWeight: FontWeight.w700,
                 color: AppColors.teal500,
@@ -165,15 +175,16 @@ class _DecksHeader extends ConsumerWidget {
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
-            children: DeckFilter.values
+            children: filterChips
                 .map(
                   (filter) => Padding(
-                    padding: const EdgeInsets.only(right: 12),
+                    padding: const EdgeInsets.only(right: 8),
                     child: _DeckFilterChip(
                       filter: filter,
-                      selected: filter == selectedFilter,
-                      onTap: () =>
-                          ref.read(deckFilterProvider.notifier).select(filter),
+                      selected: _isSelected(filter, selectedFilter),
+                      onTap: () => ref
+                          .read(deckFilterProvider.notifier)
+                          .select(_selectionFor(filter)),
                     ),
                   ),
                 )
@@ -182,6 +193,25 @@ class _DecksHeader extends ConsumerWidget {
         ),
       ],
     );
+  }
+
+  bool _isSelected(DeckFilterChip filter, DeckFilterSelection selected) {
+    return switch (selected) {
+      AllDeckFilterSelection() =>
+        filter is BuiltInDeckFilterChip && filter.filter == DeckFilter.all,
+      BuiltInDeckFilterSelection(filter: final selectedFilter) =>
+        filter is BuiltInDeckFilterChip && filter.filter == selectedFilter,
+      CustomDeckFilterSelection(:final deckId) =>
+        filter is CustomDeckFilterChip && filter.deckId == deckId,
+    };
+  }
+
+  DeckFilterSelection _selectionFor(DeckFilterChip filter) {
+    return switch (filter) {
+      BuiltInDeckFilterChip(:final filter) =>
+        DeckFilterSelection.builtIn(filter),
+      CustomDeckFilterChip(:final deckId) => DeckFilterSelection.custom(deckId),
+    };
   }
 }
 
@@ -192,7 +222,7 @@ class _DeckFilterChip extends StatelessWidget {
     required this.onTap,
   });
 
-  final DeckFilter filter;
+  final DeckFilterChip filter;
   final bool selected;
   final VoidCallback onTap;
 
@@ -200,15 +230,13 @@ class _DeckFilterChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       key: ValueKey(
-        filter == DeckFilter.all
-            ? 'decks-filter-all'
-            : 'decks-filter-${filter.builtInDeckId}',
+        filter.id,
       ),
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
         decoration: BoxDecoration(
           color: selected ? AppColors.teal500 : AppColors.white,
           borderRadius: BorderRadius.circular(20),
@@ -220,6 +248,7 @@ class _DeckFilterChip extends StatelessWidget {
           filter.label,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             fontSize: 16,
+            fontWeight: FontWeight.w400,
             color: selected ? AppColors.white : AppColors.neutral400,
           ),
         ),
@@ -228,107 +257,153 @@ class _DeckFilterChip extends StatelessWidget {
   }
 }
 
-class _DeckRow extends StatelessWidget {
+class _DeckRow extends ConsumerWidget {
   const _DeckRow({required this.item});
 
   final DeckListItem item;
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.neutral100),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 76,
-            height: 76,
+  Widget build(BuildContext context, WidgetRef ref) {
+    void navigateToQuestions() {
+      context.push('${AppRoutes.decks}/${item.id}/questions');
+    }
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onLongPressStart: item.isBuiltIn
+          ? null
+          : (details) => _showDeckContextMenu(
+              context: context,
+              item: item,
+              globalPosition: details.globalPosition,
+            ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          key: ValueKey('decks-row-${item.id}'),
+          borderRadius: BorderRadius.circular(24),
+          onTap: navigateToQuestions,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
             decoration: BoxDecoration(
-              color: item.avatarColor,
-              shape: BoxShape.circle,
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: AppColors.neutral100),
             ),
-            child: Center(
-              child: HugeIcon(
-                icon: item.icon,
-                color: AppColors.white,
-                size: 34,
-                strokeWidth: 1.8,
-              ),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: [
-                Text(
-                  item.title,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontSize: 18,
-                    color: AppColors.neutral700,
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: item.avatarColor,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: HugeIcon(
+                      icon: item.icon,
+                      color: AppColors.white,
+                      size: 24,
+                      strokeWidth: 1.8,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'x${item.cardCount} Cards',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontSize: 14,
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.title,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.neutral700,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'x${item.cardCount} Cards',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          color: AppColors.neutral400,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  key: ValueKey('decks-row-arrow-${item.id}'),
+                  onPressed: navigateToQuestions,
+                  icon: const Icon(
+                    Icons.chevron_right,
                     color: AppColors.neutral400,
+                    size: 24,
                   ),
                 ),
               ],
             ),
           ),
-          PopupMenuButton<_DeckMenuAction>(
-            key: ValueKey('decks-row-menu-${item.id}'),
-            tooltip: '',
-            color: AppColors.white,
-            elevation: 10,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            onSelected: (_) {},
-            itemBuilder: (context) => [
-              PopupMenuItem<_DeckMenuAction>(
-                value: _DeckMenuAction.edit,
-                child: Text(
-                  'Edit Deck',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(color: AppColors.neutral700),
-                ),
-              ),
-              PopupMenuItem<_DeckMenuAction>(
-                value: _DeckMenuAction.delete,
-                child: Text(
-                  'Delete',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(color: AppColors.red500),
-                ),
-              ),
-            ],
-            child: const Padding(
-              padding: EdgeInsets.all(8),
-              child: HugeIcon(
-                icon: HugeIcons.strokeRoundedArrowRight01,
-                color: AppColors.neutral400,
-                size: 22,
-                strokeWidth: 1.8,
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
+
+  Future<void> _showDeckContextMenu({
+    required BuildContext context,
+    required DeckListItem item,
+    required Offset globalPosition,
+  }) async {
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+    final position = RelativeRect.fromRect(
+      Rect.fromPoints(globalPosition, globalPosition),
+      Offset.zero & overlay.size,
+    );
+
+    final action = await showMenu<_DeckAction>(
+      context: context,
+      position: position,
+      color: AppColors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      items: [
+        const PopupMenuItem<_DeckAction>(
+          value: _DeckAction.edit,
+          child: Text('Edit Deck'),
+        ),
+        const PopupMenuItem<_DeckAction>(
+          value: _DeckAction.delete,
+          child: Text(
+            'Delete',
+            style: TextStyle(color: AppColors.red500),
+          ),
+        ),
+      ],
+    );
+
+    if (action == null || !context.mounted) {
+      return;
+    }
+
+    if (action == _DeckAction.edit) {
+      showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        barrierColor: AppColors.black.withValues(alpha: 0.38),
+        builder: (context) => _EditDeckSheet(item: item),
+      );
+    } else {
+      showDialog<void>(
+        context: context,
+        barrierColor: AppColors.black.withValues(alpha: 0.34),
+        builder: (context) => _DeleteDeckDialog(deckId: item.id),
+      );
+    }
+  }
 }
 
-enum _DeckMenuAction { edit, delete }
+enum _DeckAction { edit, delete }
 
 class _CreateDeckSheet extends ConsumerStatefulWidget {
   const _CreateDeckSheet();
@@ -362,9 +437,10 @@ class _CreateDeckSheetState extends ConsumerState<_CreateDeckSheet> {
           colorKey: _selectedColor,
         );
 
-    final state = ref.read(deckCreationControllerProvider);
-    if (mounted && !state.hasError) {
-      ref.read(deckFilterProvider.notifier).select(DeckFilter.all);
+    if (mounted && !ref.read(deckCreationControllerProvider).hasError) {
+      ref.read(deckFilterProvider.notifier).select(
+        const DeckFilterSelection.all(),
+      );
       Navigator.of(context).pop();
     }
   }
@@ -372,185 +448,237 @@ class _CreateDeckSheetState extends ConsumerState<_CreateDeckSheet> {
   @override
   Widget build(BuildContext context) {
     final creationState = ref.watch(deckCreationControllerProvider);
-    final isSaving = creationState.isLoading;
 
-    return Padding(
-      padding: EdgeInsets.only(
-        top: 80,
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
-      child: ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-        child: ColoredBox(
-          color: AppColors.white,
-          child: SafeArea(
-            top: false,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Center(
-                        child: Container(
-                          width: 116,
-                          height: 10,
-                          decoration: BoxDecoration(
-                            color: AppColors.neutral200,
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 28),
-                      Text(
-                        'Create Deck',
-                        style: Theme.of(context).textTheme.headlineSmall
-                            ?.copyWith(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.neutral700,
-                            ),
-                      ),
-                      const SizedBox(height: 28),
-                      Text(
-                        'Deck Name',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.neutral700,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        key: const ValueKey('decks-sheet-name-field'),
-                        controller: _nameController,
-                        enabled: !isSaving,
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Please enter a deck name.';
-                          }
-                          return null;
-                        },
-                        decoration: const InputDecoration(
-                          hintText: 'e.g Weird Humor',
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      Text(
-                        'Icon',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.neutral700,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      LayoutBuilder(
-                        builder: (context, constraints) {
-                          const crossAxisCount = 7;
-                          const spacing = 8.0;
-                          final itemSize =
-                              (constraints.maxWidth -
-                                      (spacing * (crossAxisCount - 1))) /
-                                  crossAxisCount;
-
-                          return Wrap(
-                            spacing: spacing,
-                            runSpacing: spacing,
-                            children: CustomDeckIconKey.values
-                                .map(
-                                  (iconKey) => SizedBox(
-                                    width: itemSize,
-                                    height: itemSize,
-                                    child: _SelectableIconButton(
-                                      iconKey: iconKey,
-                                      selected: iconKey == _selectedIcon,
-                                      selectedColor: _selectedColor.color,
-                                      onTap: isSaving
-                                          ? null
-                                          : () => setState(
-                                              () => _selectedIcon = iconKey,
-                                            ),
-                                    ),
-                                  ),
-                                )
-                                .toList(growable: false),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 24),
-                      Text(
-                        'Color Selection',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.neutral700,
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      Wrap(
-                        spacing: 12,
-                        runSpacing: 12,
-                        children: CustomDeckColorKey.values
-                            .map(
-                              (colorKey) => _SelectableColorButton(
-                                colorKey: colorKey,
-                                selected: colorKey == _selectedColor,
-                                onTap: isSaving
-                                    ? null
-                                    : () => setState(
-                                        () => _selectedColor = colorKey,
-                                      ),
-                              ),
-                            )
-                            .toList(growable: false),
-                      ),
-                      const SizedBox(height: 28),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 62,
-                        child: FilledButton(
-                          key: const ValueKey('decks-sheet-submit-button'),
-                          onPressed: isSaving ? null : _submit,
-                          style: FilledButton.styleFrom(
-                            backgroundColor: AppColors.teal500,
-                            foregroundColor: AppColors.white,
-                            disabledBackgroundColor: AppColors.teal500
-                                .withValues(alpha: 0.45),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(18),
-                            ),
-                            textStyle: const TextStyle(
-                              fontSize: 18,
-                              height: 1.1,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          child: isSaving
-                              ? const SizedBox(
-                                  width: 22,
-                                  height: 22,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      AppColors.white,
-                                    ),
-                                  ),
-                                )
-                              : const Text('Create Deck'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
+    return SpillrBottomSheetScaffold(
+      title: 'Create Deck',
+      primaryActionLabel: 'Create Deck',
+      onPrimaryAction: _submit,
+      isPrimaryActionEnabled: !creationState.isLoading,
+      isPrimaryActionLoading: creationState.isLoading,
+      child: Form(
+        key: _formKey,
+        child: _DeckFormFields(
+          nameController: _nameController,
+          selectedIcon: _selectedIcon,
+          selectedColor: _selectedColor,
+          enabled: !creationState.isLoading,
+          onIconSelected: (icon) => setState(() => _selectedIcon = icon),
+          onColorSelected: (color) => setState(() => _selectedColor = color),
         ),
       ),
+    );
+  }
+}
+
+class _EditDeckSheet extends ConsumerStatefulWidget {
+  const _EditDeckSheet({required this.item});
+
+  final DeckListItem item;
+
+  @override
+  ConsumerState<_EditDeckSheet> createState() => _EditDeckSheetState();
+}
+
+class _EditDeckSheetState extends ConsumerState<_EditDeckSheet> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _nameController;
+  late CustomDeckIconKey _selectedIcon;
+  late CustomDeckColorKey _selectedColor;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.item.title);
+    _selectedIcon = widget.item.customIconKey ?? CustomDeckIconKey.leaf;
+    _selectedColor = widget.item.customColorKey ?? CustomDeckColorKey.teal;
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    await ref
+        .read(customDeckMutationControllerProvider.notifier)
+        .updateDeck(
+          deckId: widget.item.id,
+          rawName: _nameController.text,
+          iconKey: _selectedIcon,
+          colorKey: _selectedColor,
+        );
+
+    if (mounted && !ref.read(customDeckMutationControllerProvider).hasError) {
+      Navigator.of(context).pop();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final mutationState = ref.watch(customDeckMutationControllerProvider);
+
+    return SpillrBottomSheetScaffold(
+      title: 'Edit Deck',
+      primaryActionLabel: 'Save',
+      onPrimaryAction: _submit,
+      isPrimaryActionEnabled: !mutationState.isLoading,
+      isPrimaryActionLoading: mutationState.isLoading,
+      child: Form(
+        key: _formKey,
+        child: _DeckFormFields(
+          nameController: _nameController,
+          selectedIcon: _selectedIcon,
+          selectedColor: _selectedColor,
+          enabled: !mutationState.isLoading,
+          onIconSelected: (icon) => setState(() => _selectedIcon = icon),
+          onColorSelected: (color) => setState(() => _selectedColor = color),
+        ),
+      ),
+    );
+  }
+}
+
+class _DeleteDeckDialog extends ConsumerWidget {
+  const _DeleteDeckDialog({required this.deckId});
+
+  final String deckId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return SpillrConfirmDialog(
+      title: 'Delete This Deck?',
+      message: 'This deck and its tea will be removed.',
+      onConfirm: () async {
+        await ref
+            .read(customDeckMutationControllerProvider.notifier)
+            .deleteDeck(deckId);
+        if (context.mounted) {
+          Navigator.of(context).pop();
+        }
+      },
+    );
+  }
+}
+
+class _DeckFormFields extends StatelessWidget {
+  const _DeckFormFields({
+    required this.nameController,
+    required this.selectedIcon,
+    required this.selectedColor,
+    required this.enabled,
+    required this.onIconSelected,
+    required this.onColorSelected,
+  });
+
+  final TextEditingController nameController;
+  final CustomDeckIconKey selectedIcon;
+  final CustomDeckColorKey selectedColor;
+  final bool enabled;
+  final ValueChanged<CustomDeckIconKey> onIconSelected;
+  final ValueChanged<CustomDeckColorKey> onColorSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Deck Name',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            color: AppColors.neutral700,
+          ),
+        ),
+        const SizedBox(height: 12),
+        TextFormField(
+          key: const ValueKey('decks-sheet-name-field'),
+          controller: nameController,
+          enabled: enabled,
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return 'Please enter a deck name.';
+            }
+            return null;
+          },
+          decoration: const InputDecoration(hintText: 'e.g Weird Humor'),
+        ),
+        const SizedBox(height: 24),
+        Text(
+          'Icon',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            color: AppColors.neutral700,
+          ),
+        ),
+        const SizedBox(height: 12),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            const crossAxisCount = 7;
+            const spacing = 8.0;
+            final itemSize =
+                (constraints.maxWidth - (spacing * (crossAxisCount - 1))) /
+                crossAxisCount;
+
+            return Wrap(
+              spacing: spacing,
+              runSpacing: spacing,
+              children: CustomDeckIconKey.values
+                  .map(
+                    (iconKey) => SizedBox(
+                      width: itemSize,
+                      height: itemSize,
+                      child: _SelectableIconButton(
+                        iconKey: iconKey,
+                        selected: iconKey == selectedIcon,
+                        selectedColor: selectedColor.color,
+                        onTap: enabled ? () => onIconSelected(iconKey) : null,
+                      ),
+                    ),
+                  )
+                  .toList(growable: false),
+            );
+          },
+        ),
+        const SizedBox(height: 24),
+        Text(
+          'Color Selection',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            color: AppColors.neutral700,
+          ),
+        ),
+        const SizedBox(height: 14),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          child: Row(
+            children: CustomDeckColorKey.values
+                .map(
+                  (colorKey) => Padding(
+                    padding: const EdgeInsets.only(right: 12),
+                    child: SizedBox(
+                      width: 56,
+                      height: 56,
+                      child: _SelectableColorButton(
+                        colorKey: colorKey,
+                        selected: colorKey == selectedColor,
+                        onTap: enabled ? () => onColorSelected(colorKey) : null,
+                      ),
+                    ),
+                  ),
+                )
+                .toList(growable: false),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -615,13 +743,6 @@ class _SelectableColorButton extends StatelessWidget {
           color: colorKey.color,
           shape: BoxShape.circle,
           border: Border.all(color: AppColors.white, width: 3),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x14000000),
-              blurRadius: 8,
-              offset: Offset(0, 2),
-            ),
-          ],
         ),
         child: selected
             ? const Center(
