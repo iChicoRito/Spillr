@@ -9,20 +9,38 @@ class SpillrBottomSheetScaffold extends StatelessWidget {
     required this.primaryActionLabel,
     required this.onPrimaryAction,
     super.key,
+    this.primaryActionKey,
     this.primaryActionColor = AppColors.teal500,
     this.primaryActionForegroundColor = AppColors.white,
     this.isPrimaryActionEnabled = true,
     this.isPrimaryActionLoading = false,
+    this.secondaryActionKey,
+    this.secondaryActionLabel,
+    this.secondaryActionIcon,
+    this.onSecondaryAction,
+    this.secondaryActionBackgroundColor = AppColors.teal100,
+    this.secondaryActionForegroundColor = AppColors.teal500,
+    this.isSecondaryActionEnabled = true,
+    this.isSecondaryActionLoading = false,
   });
 
   final String title;
   final Widget child;
   final String primaryActionLabel;
   final VoidCallback? onPrimaryAction;
+  final Key? primaryActionKey;
   final Color primaryActionColor;
   final Color primaryActionForegroundColor;
   final bool isPrimaryActionEnabled;
   final bool isPrimaryActionLoading;
+  final Key? secondaryActionKey;
+  final String? secondaryActionLabel;
+  final Widget? secondaryActionIcon;
+  final VoidCallback? onSecondaryAction;
+  final Color secondaryActionBackgroundColor;
+  final Color secondaryActionForegroundColor;
+  final bool isSecondaryActionEnabled;
+  final bool isSecondaryActionLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -67,6 +85,7 @@ class SpillrBottomSheetScaffold extends StatelessWidget {
                     width: double.infinity,
                     height: 46,
                     child: FilledButton(
+                      key: primaryActionKey,
                       onPressed: isPrimaryActionEnabled
                           ? onPrimaryAction
                           : null,
@@ -98,6 +117,52 @@ class SpillrBottomSheetScaffold extends StatelessWidget {
                           : Text(primaryActionLabel),
                     ),
                   ),
+                  if (secondaryActionLabel != null) ...[
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: FilledButton.icon(
+                        key: secondaryActionKey,
+                        onPressed: isSecondaryActionEnabled
+                            ? onSecondaryAction
+                            : null,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: secondaryActionBackgroundColor,
+                          foregroundColor: secondaryActionForegroundColor,
+                          disabledBackgroundColor:
+                              secondaryActionBackgroundColor.withValues(
+                                alpha: 0.5,
+                              ),
+                          disabledForegroundColor:
+                              secondaryActionForegroundColor.withValues(
+                                alpha: 0.45,
+                              ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          textStyle: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          elevation: 0,
+                        ),
+                        icon: isSecondaryActionLoading
+                            ? SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    secondaryActionForegroundColor,
+                                  ),
+                                ),
+                              )
+                            : secondaryActionIcon ?? const SizedBox.shrink(),
+                        label: Text(secondaryActionLabel!),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

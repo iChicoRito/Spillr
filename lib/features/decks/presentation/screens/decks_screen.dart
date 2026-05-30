@@ -452,6 +452,7 @@ class _CreateDeckSheetState extends ConsumerState<_CreateDeckSheet> {
     return SpillrBottomSheetScaffold(
       title: 'Create Deck',
       primaryActionLabel: 'Create Deck',
+      primaryActionKey: const ValueKey('decks-sheet-submit-button'),
       onPrimaryAction: _submit,
       isPrimaryActionEnabled: !creationState.isLoading,
       isPrimaryActionLoading: creationState.isLoading,
@@ -525,6 +526,7 @@ class _EditDeckSheetState extends ConsumerState<_EditDeckSheet> {
     return SpillrBottomSheetScaffold(
       title: 'Edit Deck',
       primaryActionLabel: 'Save',
+      primaryActionKey: const ValueKey('decks-sheet-submit-button'),
       onPrimaryAction: _submit,
       isPrimaryActionEnabled: !mutationState.isLoading,
       isPrimaryActionLoading: mutationState.isLoading,

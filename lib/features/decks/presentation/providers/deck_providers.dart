@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../game/domain/spillr_deck.dart';
 import '../../../onboarding/presentation/providers/onboarding_providers.dart';
 import '../../data/deck_repository.dart';
+import '../../data/question_generation_service.dart';
 import '../../domain/deck_catalog.dart';
 import '../../domain/deck_question_item.dart';
 
@@ -11,9 +12,16 @@ final deckRepositoryProvider = Provider<DeckRepository>((ref) {
   return DeckRepository(database);
 });
 
-final deckFilterProvider = NotifierProvider<DeckFilterNotifier, DeckFilterSelection>(
-  DeckFilterNotifier.new,
-);
+final questionGenerationServiceProvider = Provider<QuestionGenerationService>((
+  ref,
+) {
+  return GemmaQuestionGenerationService();
+});
+
+final deckFilterProvider =
+    NotifierProvider<DeckFilterNotifier, DeckFilterSelection>(
+      DeckFilterNotifier.new,
+    );
 
 final deckFilterChipsProvider = Provider<List<DeckFilterChip>>((ref) {
   final customDecksAsync = ref.watch(customDecksProvider);
@@ -25,7 +33,8 @@ final deckFilterChipsProvider = Provider<List<DeckFilterChip>>((ref) {
   if (customDecksAsync.hasValue) {
     chips.addAll(
       customDecksAsync.requireValue.map(
-        (deck) => CustomDeckFilterChip(deckId: 'custom-${deck.id}', label: deck.name),
+        (deck) =>
+            CustomDeckFilterChip(deckId: 'custom-${deck.id}', label: deck.name),
       ),
     );
   }
@@ -128,6 +137,11 @@ final questionMutationControllerProvider =
       QuestionMutationController.new,
     );
 
+final questionGenerationControllerProvider =
+    AsyncNotifierProvider<QuestionGenerationController, String?>(
+      QuestionGenerationController.new,
+    );
+
 class DeckFilterNotifier extends Notifier<DeckFilterSelection> {
   @override
   DeckFilterSelection build() => const DeckFilterSelection.all();
@@ -204,6 +218,7 @@ class QuestionMutationController extends AsyncNotifier<void> {
       await ref
           .read(deckRepositoryProvider)
           .addQuestion(deckId: deckId, rawText: rawText);
+      _invalidateResolvedDecks(deckId);
     });
   }
 
@@ -213,17 +228,48 @@ class QuestionMutationController extends AsyncNotifier<void> {
   }) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
-      await ref
+      final deckId = await ref
           .read(deckRepositoryProvider)
           .updateQuestion(id: id, rawText: rawText);
+      _invalidateResolvedDecks(deckId);
     });
   }
 
   Future<void> deleteQuestion(int id) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
-      await ref.read(deckRepositoryProvider).deleteQuestion(id);
+      final deckId = await ref.read(deckRepositoryProvider).deleteQuestion(id);
+      _invalidateResolvedDecks(deckId);
     });
+  }
+
+  void _invalidateResolvedDecks(String deckId) {
+    ref.invalidate(resolvedDeckProvider(deckId));
+    if (deckId != 'wildcard-tea') {
+      ref.invalidate(resolvedDeckProvider('wildcard-tea'));
+    }
+  }
+}
+
+class QuestionGenerationController extends AsyncNotifier<String?> {
+  @override
+  Future<String?> build() async => null;
+
+  Future<String> generateQuestion({
+    required SpillrDeck deck,
+    List<String> excludedQuestions = const [],
+  }) async {
+    state = const AsyncLoading();
+    try {
+      final question = await ref
+          .read(questionGenerationServiceProvider)
+          .generateQuestion(deck: deck, excludedQuestions: excludedQuestions);
+      state = AsyncData(question);
+      return question;
+    } catch (error, stackTrace) {
+      state = AsyncError(error, stackTrace);
+      Error.throwWithStackTrace(error, stackTrace);
+    }
   }
 }
 

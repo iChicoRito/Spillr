@@ -295,8 +295,12 @@ class DeckRepository {
     );
   }
 
-  Future<void> updateQuestion({required int id, required String rawText}) {
-    return (_database.update(
+  Future<String> updateQuestion({
+    required int id,
+    required String rawText,
+  }) async {
+    final deckId = await _deckIdForQuestion(id);
+    await (_database.update(
       _database.deckQuestionEntries,
     )..where((table) => table.id.equals(id))).write(
       DeckQuestionEntriesCompanion(
@@ -304,10 +308,12 @@ class DeckRepository {
         updatedAt: Value(DateTime.now()),
       ),
     );
+    return deckId;
   }
 
-  Future<void> deleteQuestion(int id) {
-    return (_database.update(
+  Future<String> deleteQuestion(int id) async {
+    final deckId = await _deckIdForQuestion(id);
+    await (_database.update(
       _database.deckQuestionEntries,
     )..where((table) => table.id.equals(id))).write(
       DeckQuestionEntriesCompanion(
@@ -315,6 +321,7 @@ class DeckRepository {
         updatedAt: Value(DateTime.now()),
       ),
     );
+    return deckId;
   }
 
   Future<SpillrDeck> resolvePlayableDeck(String deckId) async {
@@ -353,6 +360,13 @@ class DeckRepository {
     return (_database.select(
       _database.customDecks,
     )..where((table) => table.id.equals(dbId))).getSingle();
+  }
+
+  Future<String> _deckIdForQuestion(int id) async {
+    final row = await (_database.select(
+      _database.deckQuestionEntries,
+    )..where((table) => table.id.equals(id))).getSingle();
+    return row.deckId;
   }
 
   Future<int> _nextSortOrder(String deckId) async {

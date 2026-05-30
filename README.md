@@ -1,17 +1,33 @@
-# spillr
+# Spillr
 
-A new Flutter project.
+A Flutter party-card app with offline AI question generation for Android.
 
-## Getting Started
+## Android Offline Gemma Model
 
-This project is a starting point for a Flutter application.
+AI question generation uses `flutter_gemma` with Gemma 3 270M Q8. The Android
+build expects the model file at:
 
-A few resources to get you started if this is your first Flutter project:
+```text
+android/app/src/main/assets/models/gemma3-270m-it-q8.task
+```
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+Download the official model file from:
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```text
+https://huggingface.co/litert-community/gemma-3-270m-it/resolve/main/gemma3-270m-it-q8.task
+```
+
+The Hugging Face repository is gated. Sign in, accept the Gemma license/contact
+information requirement, then download with an access token:
+
+```powershell
+$env:HF_TOKEN = "hf_your_token_here"
+$url = "https://huggingface.co/litert-community/gemma-3-270m-it/resolve/main/gemma3-270m-it-q8.task?download=true"
+$out = "android/app/src/main/assets/models/gemma3-270m-it-q8.task"
+Invoke-WebRequest -Uri $url -OutFile $out -Headers @{ Authorization = "Bearer $env:HF_TOKEN" }
+```
+
+After adding or replacing the model file, rebuild the Android app so Gradle
+packages the native asset. Do not also place this model under `assets/models/`
+unless Flutter asset loading is intentionally being tested, because that would
+bundle a second copy of the same large file.

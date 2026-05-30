@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:collection';
+
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -5,6 +8,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:Spillr/app/app.dart';
 import 'package:Spillr/core/database/app_database.dart';
+import 'package:Spillr/core/theme/app_colors.dart';
+import 'package:Spillr/features/decks/data/question_generation_service.dart';
+import 'package:Spillr/features/decks/presentation/providers/deck_providers.dart';
+import 'package:Spillr/features/game/domain/spillr_deck.dart';
 import 'package:Spillr/features/onboarding/presentation/providers/onboarding_providers.dart';
 
 void main() {
@@ -18,12 +25,21 @@ void main() {
     await database.close();
   });
 
-  Future<void> pumpApp(WidgetTester tester) async {
+  Future<void> pumpApp(
+    WidgetTester tester, {
+    QuestionGenerationService? questionGenerationService,
+  }) async {
     await tester.binding.setSurfaceSize(const Size(393, 852));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [appDatabaseProvider.overrideWithValue(database)],
+        overrides: [
+          appDatabaseProvider.overrideWithValue(database),
+          if (questionGenerationService != null)
+            questionGenerationServiceProvider.overrideWithValue(
+              questionGenerationService,
+            ),
+        ],
         child: const SpillrApp(),
       ),
     );
@@ -32,9 +48,12 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
   }
 
-  Future<void> seedProfileAndOpenPlayPage(WidgetTester tester) async {
+  Future<void> seedProfileAndOpenPlayPage(
+    WidgetTester tester, {
+    QuestionGenerationService? questionGenerationService,
+  }) async {
     await database.saveProfile('Chico');
-    await pumpApp(tester);
+    await pumpApp(tester, questionGenerationService: questionGenerationService);
   }
 
   Future<void> openDecksScreen(WidgetTester tester) async {
@@ -50,6 +69,34 @@ void main() {
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
+  }
+
+  Future<void> createCustomDeckAndOpenQuestionSheet(
+    WidgetTester tester, {
+    String deckName = 'Weird Humor',
+  }) async {
+    await openCreateSheet(tester);
+    await tester.enterText(
+      find.byKey(const ValueKey('decks-sheet-name-field')),
+      deckName,
+    );
+    await tester.tap(find.byKey(const ValueKey('decks-sheet-submit-button')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    await tester.tap(find.byKey(const ValueKey('decks-row-custom-1')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.byKey(const ValueKey('questions-add-button')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+  }
+
+  Future<void> disposeApp(WidgetTester tester) async {
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(milliseconds: 1));
+    await tester.pump(const Duration(milliseconds: 1));
+    await tester.pump(const Duration(milliseconds: 1));
   }
 
   void expectTextTypography(
@@ -380,4 +427,535 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets('shows the AI question generator below the create action', (
+    tester,
+  ) async {
+    await seedProfileAndOpenPlayPage(
+      tester,
+      questionGenerationService: _FakeQuestionGenerationService([
+        'What snack could start a debate?',
+      ]),
+    );
+
+    await createCustomDeckAndOpenQuestionSheet(tester);
+
+    expect(
+      find.byKey(const ValueKey('question-ai-generate-button')),
+      findsOneWidget,
+    );
+    expect(find.text('Generate with AI'), findsOneWidget);
+
+    final generateButton = tester.widget<FilledButton>(
+      find.byKey(const ValueKey('question-ai-generate-button')),
+    );
+    expect(
+      generateButton.style?.backgroundColor?.resolve(const <WidgetState>{}),
+      AppColors.teal100,
+    );
+    expect(
+      generateButton.style?.foregroundColor?.resolve(const <WidgetState>{}),
+      AppColors.teal500,
+    );
+
+    await tester.binding.handlePopRoute();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await disposeApp(tester);
+  });
+
+  testWidgets('shows a loading label while the AI question is generating', (
+    tester,
+  ) async {
+    final generator = _PendingQuestionGenerationService();
+    await seedProfileAndOpenPlayPage(
+      tester,
+      questionGenerationService: generator,
+    );
+
+    await createCustomDeckAndOpenQuestionSheet(tester);
+    await tester.tap(find.byKey(const ValueKey('question-ai-generate-button')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(
+      find.byKey(const ValueKey('question-ai-loading-dialog')),
+      findsOneWidget,
+    );
+    expect(find.text('Question Generating...'), findsOneWidget);
+    expect(
+      find.text(
+        'Please be patient while the AI generating the question for Weird Humor',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('question-sheet-text-field')),
+      findsNothing,
+    );
+
+    generator.complete('What harmless choice starts your villain era?');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(
+      find.byKey(const ValueKey('question-ai-ready-dialog')),
+      findsOneWidget,
+    );
+    expect(find.text('Question Ready!'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('question-ai-accept-button')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.binding.handlePopRoute();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await disposeApp(tester);
+  });
+
+  testWidgets('accepting an AI question fills the field without creating it', (
+    tester,
+  ) async {
+    const generatedQuestion = 'What harmless choice starts your villain era?';
+    await seedProfileAndOpenPlayPage(
+      tester,
+      questionGenerationService: _FakeQuestionGenerationService([
+        generatedQuestion,
+      ]),
+    );
+
+    await createCustomDeckAndOpenQuestionSheet(tester);
+    await tester.tap(find.byKey(const ValueKey('question-ai-generate-button')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(
+      find.byKey(const ValueKey('question-ai-ready-dialog')),
+      findsOneWidget,
+    );
+    expect(find.text('Question Ready!'), findsOneWidget);
+    expect(
+      find.text("New question generated. Let's keep the chat moving."),
+      findsOneWidget,
+    );
+    expect(find.text('Question Generated:'), findsOneWidget);
+    expect(find.text(generatedQuestion), findsOneWidget);
+
+    final generateAgainButton = tester.widget<OutlinedButton>(
+      find.byKey(const ValueKey('question-ai-generate-again-button')),
+    );
+    final acceptButton = tester.widget<FilledButton>(
+      find.byKey(const ValueKey('question-ai-accept-button')),
+    );
+    expect(
+      generateAgainButton.style?.foregroundColor?.resolve(
+        const <WidgetState>{},
+      ),
+      AppColors.teal500,
+    );
+    expect(
+      generateAgainButton.style?.side?.resolve(const <WidgetState>{})?.color,
+      AppColors.teal500,
+    );
+    expect(
+      acceptButton.style?.backgroundColor?.resolve(const <WidgetState>{}),
+      AppColors.teal500,
+    );
+
+    await tester.tap(find.byKey(const ValueKey('question-ai-accept-button')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(
+      find.byKey(const ValueKey('question-ai-ready-dialog')),
+      findsNothing,
+    );
+    expect(find.text('Create Question'), findsOneWidget);
+    final field = tester.widget<TextFormField>(
+      find.byKey(const ValueKey('question-sheet-text-field')),
+    );
+    expect(field.controller?.text, generatedQuestion);
+    expect(find.text('Weird Humor has total of 0 Cards'), findsOneWidget);
+
+    await tester.binding.handlePopRoute();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await disposeApp(tester);
+  });
+
+  testWidgets('generate again replaces the reviewed AI question', (
+    tester,
+  ) async {
+    const firstQuestion = 'What tiny inconvenience ruins your whole vibe?';
+    const secondQuestion = 'What snack would you defend in court?';
+    await seedProfileAndOpenPlayPage(
+      tester,
+      questionGenerationService: _FakeQuestionGenerationService([
+        firstQuestion,
+        secondQuestion,
+      ]),
+    );
+
+    await createCustomDeckAndOpenQuestionSheet(tester);
+    await tester.tap(find.byKey(const ValueKey('question-ai-generate-button')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text(firstQuestion), findsOneWidget);
+
+    await tester.tap(
+      find.byKey(const ValueKey('question-ai-generate-again-button')),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text(firstQuestion), findsNothing);
+    expect(find.text(secondQuestion), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('question-ai-accept-button')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.binding.handlePopRoute();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await disposeApp(tester);
+  });
+
+  testWidgets(
+    're-generating returns to the centered loading dialog before showing the next question',
+    (tester) async {
+      final generator = _StagedQuestionGenerationService([
+        'What harmless choice starts your villain era?',
+        Completer<String>(),
+      ]);
+      await seedProfileAndOpenPlayPage(
+        tester,
+        questionGenerationService: generator,
+      );
+
+      await createCustomDeckAndOpenQuestionSheet(tester);
+      await tester.tap(
+        find.byKey(const ValueKey('question-ai-generate-button')),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      await tester.tap(
+        find.byKey(const ValueKey('question-ai-generate-again-button')),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(
+        find.byKey(const ValueKey('question-ai-loading-dialog')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('question-ai-ready-dialog')),
+        findsNothing,
+      );
+      expect(find.text('Question Generating...'), findsOneWidget);
+
+      generator.completeNext(
+        'Who would accidentally start the group chat war?',
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(
+        find.byKey(const ValueKey('question-ai-ready-dialog')),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Who would accidentally start the group chat war?'),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.byKey(const ValueKey('question-ai-accept-button')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.binding.handlePopRoute();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await disposeApp(tester);
+    },
+  );
+
+  testWidgets(
+    'generate again asks the service to avoid the previously generated question',
+    (tester) async {
+      final generator = _RecordingQuestionGenerationService([
+        'What tiny inconvenience ruins your whole vibe?',
+        'What snack would you defend in court?',
+      ]);
+      await seedProfileAndOpenPlayPage(
+        tester,
+        questionGenerationService: generator,
+      );
+
+      await createCustomDeckAndOpenQuestionSheet(tester);
+      await tester.tap(
+        find.byKey(const ValueKey('question-ai-generate-button')),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(
+        find.byKey(const ValueKey('question-ai-generate-again-button')),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(generator.excludedQuestionsLog, hasLength(2));
+      expect(generator.excludedQuestionsLog.first, isEmpty);
+      expect(generator.excludedQuestionsLog.last, [
+        'What tiny inconvenience ruins your whole vibe?',
+      ]);
+
+      await tester.tap(find.byKey(const ValueKey('question-ai-accept-button')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.binding.handlePopRoute();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await disposeApp(tester);
+    },
+  );
+
+  testWidgets(
+    'unavailable AI generation shows a message and leaves field empty',
+    (tester) async {
+      const message =
+          'AI question generation is only available on supported Android devices.';
+      await seedProfileAndOpenPlayPage(
+        tester,
+        questionGenerationService: _FakeQuestionGenerationService([
+          const QuestionGenerationUnavailableException(message),
+        ]),
+      );
+
+      await createCustomDeckAndOpenQuestionSheet(tester);
+      await tester.tap(
+        find.byKey(const ValueKey('question-ai-generate-button')),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      final field = tester.widget<TextFormField>(
+        find.byKey(const ValueKey('question-sheet-text-field')),
+      );
+      expect(field.controller?.text, isEmpty);
+      expect(find.text(message), findsOneWidget);
+
+      await tester.binding.handlePopRoute();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await disposeApp(tester);
+    },
+  );
+
+  testWidgets('missing bundled AI model shows an actionable error message', (
+    tester,
+  ) async {
+    await seedProfileAndOpenPlayPage(
+      tester,
+      questionGenerationService: _FakeQuestionGenerationService([
+        const QuestionGenerationUnavailableException(
+          missingBundledGemmaModelMessage,
+        ),
+      ]),
+    );
+
+    await createCustomDeckAndOpenQuestionSheet(tester);
+    await tester.tap(find.byKey(const ValueKey('question-ai-generate-button')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text(missingBundledGemmaModelMessage), findsOneWidget);
+    expect(find.text('Create Question'), findsOneWidget);
+
+    final field = tester.widget<TextFormField>(
+      find.byKey(const ValueKey('question-sheet-text-field')),
+    );
+    expect(field.controller?.text, isEmpty);
+
+    await tester.binding.handlePopRoute();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await disposeApp(tester);
+  });
+
+  testWidgets(
+    'timed out AI generation shows a retry message and leaves field empty',
+    (tester) async {
+      await seedProfileAndOpenPlayPage(
+        tester,
+        questionGenerationService: _FakeQuestionGenerationService([
+          const QuestionGenerationTimeoutException(
+            questionGenerationTimeoutMessage,
+          ),
+        ]),
+      );
+
+      await createCustomDeckAndOpenQuestionSheet(tester);
+      await tester.tap(
+        find.byKey(const ValueKey('question-ai-generate-button')),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.text(questionGenerationTimeoutMessage), findsOneWidget);
+      expect(find.text('Create Question'), findsOneWidget);
+
+      final field = tester.widget<TextFormField>(
+        find.byKey(const ValueKey('question-sheet-text-field')),
+      );
+      expect(field.controller?.text, isEmpty);
+
+      await tester.binding.handlePopRoute();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await disposeApp(tester);
+    },
+  );
+
+  testWidgets(
+    'preparation screen reflects the first newly added custom deck question in the same session',
+    (tester) async {
+      await seedProfileAndOpenPlayPage(tester);
+
+      await openCreateSheet(tester);
+      await tester.enterText(
+        find.byKey(const ValueKey('decks-sheet-name-field')),
+        'Fresh Tea',
+      );
+      await tester.tap(find.text('Create Deck').last);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      await tester.tap(find.byKey(const ValueKey('decks-row-custom-1')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      await tester.tap(find.byKey(const ValueKey('questions-add-button')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.enterText(
+        find.byKey(const ValueKey('question-sheet-text-field')),
+        'Who changed the vibe tonight?',
+      );
+      await tester.tap(find.text('Create').last);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      await tester.tap(find.byKey(const ValueKey('questions-back-button')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      await tester.tap(find.byKey(const ValueKey('bottom-nav-play')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      final pageView = tester.widget<PageView>(find.byType(PageView));
+      pageView.controller!.jumpToPage(0);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      await tester.tap(find.byKey(const ValueKey('play-deck-button-custom-1')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.text("Let's Get Started"), findsOneWidget);
+      expect(find.text('Add Tea First'), findsNothing);
+    },
+  );
+}
+
+class _FakeQuestionGenerationService implements QuestionGenerationService {
+  _FakeQuestionGenerationService(List<Object> responses)
+    : _responses = Queue<Object>.of(responses);
+
+  final Queue<Object> _responses;
+
+  @override
+  Future<String> generateQuestion({
+    required SpillrDeck deck,
+    List<String> excludedQuestions = const [],
+  }) async {
+    final response = _responses.removeFirst();
+    if (response is Exception) {
+      throw response;
+    }
+    return response as String;
+  }
+}
+
+class _PendingQuestionGenerationService implements QuestionGenerationService {
+  final _completer = Completer<String>();
+
+  @override
+  Future<String> generateQuestion({
+    required SpillrDeck deck,
+    List<String> excludedQuestions = const [],
+  }) {
+    return _completer.future;
+  }
+
+  void complete(String question) {
+    _completer.complete(question);
+  }
+}
+
+class _RecordingQuestionGenerationService implements QuestionGenerationService {
+  _RecordingQuestionGenerationService(List<String> responses)
+    : _responses = Queue<String>.of(responses);
+
+  final Queue<String> _responses;
+  final List<List<String>> excludedQuestionsLog = <List<String>>[];
+
+  @override
+  Future<String> generateQuestion({
+    required SpillrDeck deck,
+    List<String> excludedQuestions = const [],
+  }) async {
+    excludedQuestionsLog.add(List<String>.from(excludedQuestions));
+    return _responses.removeFirst();
+  }
+}
+
+class _StagedQuestionGenerationService implements QuestionGenerationService {
+  _StagedQuestionGenerationService(List<Object> responses)
+    : _responses = Queue<Object>.of(responses);
+
+  final Queue<Object> _responses;
+  Completer<String>? _activeCompleter;
+
+  @override
+  Future<String> generateQuestion({
+    required SpillrDeck deck,
+    List<String> excludedQuestions = const [],
+  }) {
+    final response = _responses.removeFirst();
+    if (response is Completer<String>) {
+      _activeCompleter = response;
+      return response.future;
+    }
+    return Future<String>.value(response as String);
+  }
+
+  void completeNext(String question) {
+    final completer = _activeCompleter;
+    if (completer != null && !completer.isCompleted) {
+      completer.complete(question);
+    }
+  }
 }
