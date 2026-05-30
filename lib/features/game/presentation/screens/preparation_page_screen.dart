@@ -1,19 +1,39 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../shared/widgets/fallback_state_view.dart';
 import '../../../../shared/widgets/sequential_text_reveal.dart';
-import '../../data/spillr_decks.dart';
+import '../../../decks/presentation/providers/deck_providers.dart';
 
-class PreparationPageScreen extends StatelessWidget {
+class PreparationPageScreen extends ConsumerWidget {
   const PreparationPageScreen({required this.deckId, super.key});
 
   final String deckId;
 
   @override
-  Widget build(BuildContext context) {
-    final deck = findDeckById(deckId);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final deckAsync = ref.watch(resolvedDeckProvider(deckId));
+
+    if (deckAsync.hasError) {
+      return const Scaffold(
+        backgroundColor: AppColors.white,
+        body: SafeArea(
+          child: FallbackStateView.error(message: 'Unable to load this deck.'),
+        ),
+      );
+    }
+    if (deckAsync.isLoading) {
+      return const Scaffold(
+        backgroundColor: AppColors.white,
+        body: SafeArea(child: FallbackStateView.loading()),
+      );
+    }
+
+    final deck = deckAsync.requireValue;
+    final canStart = deck.questions.isNotEmpty;
 
     return Scaffold(
       backgroundColor: AppColors.white,
@@ -40,11 +60,14 @@ class PreparationPageScreen extends StatelessWidget {
                       height: 56,
                       child: FilledButton(
                         key: const ValueKey('preparation-continue-button'),
-                        onPressed: () =>
-                            context.go('${AppRoutes.game}/${deck.id}'),
+                        onPressed: canStart
+                            ? () => context.go('${AppRoutes.game}/${deck.id}')
+                            : null,
                         style: FilledButton.styleFrom(
                           backgroundColor: deck.badgeTextColor,
                           foregroundColor: AppColors.white,
+                          disabledBackgroundColor: deck.badgeTextColor
+                              .withValues(alpha: 0.4),
                           textStyle: const TextStyle(
                             fontSize: 18,
                             height: 1.1,
@@ -54,7 +77,9 @@ class PreparationPageScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(14),
                           ),
                         ),
-                        child: const Text("Let's Get Started"),
+                        child: Text(
+                          canStart ? "Let's Get Started" : 'Add Tea First',
+                        ),
                       ),
                     ),
                   ],

@@ -43,3 +43,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Local offline AI model binaries
+/android/app/src/main/assets/models/gemma3-270m-it-q8.task
+/android/app/src/main/assets/models/gemma3-270m-it-q8.task.partial

@@ -10,7 +10,7 @@ import '../../../../app/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/fallback_state_view.dart';
 import '../../../../shared/widgets/spillr_bottom_navigation.dart';
-import '../../../game/data/spillr_decks.dart';
+import '../../../decks/presentation/providers/deck_providers.dart';
 import '../../../game/domain/spillr_deck.dart';
 import '../../../onboarding/presentation/providers/onboarding_providers.dart';
 
@@ -25,10 +25,9 @@ class _PlayPageScreenState extends ConsumerState<PlayPageScreen> {
   late final PageController _pageController;
   double _currentPage = 1;
   int _activeIndex = 1;
-  static const _carouselViewportFraction = 0.64;
-  static const _activeCardWidth = 180.0;
+  static const _carouselViewportFraction = 0.78;
+  static const _cardWidthFactor = 0.84;
   static const _activeCardHeight = 456.0;
-  static const _inactiveCardWidth = 188.0;
   static const _inactiveVerticalInset = 48.0;
 
   @override
@@ -53,8 +52,13 @@ class _PlayPageScreenState extends ConsumerState<PlayPageScreen> {
       return;
     }
 
+    final deckCount = ref.read(playableDecksProvider).asData?.value.length ?? 0;
+    if (deckCount == 0) {
+      return;
+    }
+
     final page = _pageController.page ?? _activeIndex.toDouble();
-    final nextIndex = page.round().clamp(0, _playDecks.length - 1);
+    final nextIndex = page.round().clamp(0, deckCount - 1);
     if (page != _currentPage || nextIndex != _activeIndex) {
       setState(() {
         _currentPage = page;
@@ -66,12 +70,29 @@ class _PlayPageScreenState extends ConsumerState<PlayPageScreen> {
   @override
   Widget build(BuildContext context) {
     final profileAsync = ref.watch(onboardingProfileProvider);
+    final playableDecksAsync = ref.watch(playableDecksProvider);
 
     return Scaffold(
       backgroundColor: AppColors.white,
       body: SafeArea(
         child: profileAsync.when(
           data: (profile) {
+            if (playableDecksAsync.hasError) {
+              return const FallbackStateView.error(
+                message: 'Unable to load your decks.',
+              );
+            }
+            if (playableDecksAsync.isLoading) {
+              return const FallbackStateView.loading();
+            }
+
+            final decks = playableDecksAsync.requireValue;
+            if (decks.isEmpty) {
+              return const FallbackStateView.error(
+                message: 'Create a deck to start playing.',
+              );
+            }
+
             final name = profile?.displayName ?? 'Spiller';
 
             return Align(
@@ -80,6 +101,10 @@ class _PlayPageScreenState extends ConsumerState<PlayPageScreen> {
                 constraints: const BoxConstraints(maxWidth: 393),
                 child: LayoutBuilder(
                   builder: (context, constraints) {
+                    final cardWidth = math.min(
+                      332.0,
+                      constraints.maxWidth * _cardWidthFactor,
+                    );
                     final carouselHeight = math.min(
                       _activeCardHeight,
                       math.max(404.0, constraints.maxHeight * 0.62),
@@ -159,9 +184,9 @@ class _PlayPageScreenState extends ConsumerState<PlayPageScreen> {
                                     controller: _pageController,
                                     clipBehavior: Clip.none,
                                     physics: const BouncingScrollPhysics(),
-                                    itemCount: _playDecks.length,
+                                    itemCount: decks.length,
                                     itemBuilder: (context, index) {
-                                      final deck = _playDecks[index];
+                                      final deck = decks[index];
                                       final delta = (_currentPage - index)
                                           .abs();
                                       final scale = (1 - (delta * 0.14)).clamp(
@@ -188,20 +213,15 @@ class _PlayPageScreenState extends ConsumerState<PlayPageScreen> {
                                           scale: scale,
                                           child: Opacity(
                                             opacity: opacity,
-                                            child: Padding(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 0,
-                                                  ),
-                                              child: _DeckCard(
-                                                deck: deck,
-                                                isActive: index == _activeIndex,
-                                                onPlay: () {
-                                                  context.go(
-                                                    '${AppRoutes.preparation}/${deck.id}',
-                                                  );
-                                                },
-                                              ),
+                                            child: _DeckCard(
+                                              deck: deck,
+                                              isActive: index == _activeIndex,
+                                              width: cardWidth,
+                                              onPlay: () {
+                                                context.go(
+                                                  '${AppRoutes.preparation}/${deck.id}',
+                                                );
+                                              },
                                             ),
                                           ),
                                         ),
@@ -365,29 +385,28 @@ class _DeckCard extends StatelessWidget {
   const _DeckCard({
     required this.deck,
     required this.isActive,
+    required this.width,
     required this.onPlay,
   });
 
   final SpillrDeck deck;
   final bool isActive;
+  final double width;
   final VoidCallback onPlay;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final canPlay = deck.questions.isNotEmpty;
 
     return LayoutBuilder(
       builder: (context, constraints) {
         final isCompact = constraints.maxHeight < 340;
         final titleSize = isActive
-            ? (isCompact ? 34.0 : 50.0)
-            : (isCompact ? 30.0 : 40.0);
-        final descriptionSize = isActive
-            ? (isCompact ? 12.0 : 16.0)
-            : (isCompact ? 8.0 : 14.0);
-        final cardIconSize = isActive ? (isCompact ? 16.0 : 18.0) : 14.0;
-        final cardIconBoxSize = isActive ? (isCompact ? 34.0 : 40.0) : 34.0;
-        final bottomGap = isActive ? (isCompact ? 8.0 : 8.0) : 6.0;
+            ? (isCompact ? 32.0 : 64.0)
+            : (isCompact ? 28.0 : 38.0);
+        final cardIconSize = isActive ? (isCompact ? 16.0 : 18.0) : 13.0;
+        final cardIconBoxSize = isActive ? (isCompact ? 34.0 : 40.0) : 32.0;
         final contentPadding = isActive
             ? EdgeInsets.fromLTRB(
                 isCompact ? 14 : 16,
@@ -395,12 +414,10 @@ class _DeckCard extends StatelessWidget {
                 isCompact ? 14 : 16,
                 isCompact ? 12 : 16,
               )
-            : const EdgeInsets.fromLTRB(16, 16, 16, 16);
+            : const EdgeInsets.fromLTRB(14, 14, 14, 12);
 
         return Container(
-          width: isActive
-              ? _PlayPageScreenState._activeCardWidth
-              : _PlayPageScreenState._inactiveCardWidth,
+          width: width,
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
@@ -436,7 +453,7 @@ class _DeckCard extends StatelessWidget {
                               color: AppColors.white,
                               fontSize: titleSize,
                               height: isActive ? 1.0 : 1.05,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ),
@@ -463,27 +480,21 @@ class _DeckCard extends StatelessWidget {
                       ],
                     ),
                     const Spacer(),
-                    Text(
-                      _deckDisplayDescription(deck.description),
-                      maxLines: isActive ? 3 : 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: AppColors.white.withValues(alpha: 0.78),
-                        fontSize: descriptionSize,
-                        height: 1.35,
-                      ),
-                    ),
-                    if (isActive) ...[
-                      SizedBox(height: bottomGap),
+                    if (isActive)
                       SizedBox(
                         width: double.infinity,
                         height: 56,
                         child: FilledButton(
                           key: ValueKey('play-deck-button-${deck.id}'),
-                          onPressed: onPlay,
+                          onPressed: canPlay ? onPlay : null,
                           style: FilledButton.styleFrom(
                             backgroundColor: AppColors.white,
                             foregroundColor: deck.backgroundColor,
+                            disabledBackgroundColor: AppColors.white.withValues(
+                              alpha: 0.72,
+                            ),
+                            disabledForegroundColor: deck.backgroundColor
+                                .withValues(alpha: 0.7),
                             textStyle: const TextStyle(
                               fontSize: 18,
                               height: 1.1,
@@ -493,10 +504,9 @@ class _DeckCard extends StatelessWidget {
                               borderRadius: BorderRadius.circular(14),
                             ),
                           ),
-                          child: const Text('Play'),
+                          child: Text(canPlay ? 'Play' : 'Add Tea First'),
                         ),
                       ),
-                    ],
                   ],
                 ),
               ),
@@ -590,17 +600,3 @@ String _deckDisplayTitle(String title) {
     _ => title,
   };
 }
-
-String _deckDisplayDescription(String description) {
-  return switch (description) {
-    'More meaningful conversation' => 'More meaningful\nconversation',
-    'Easy questions to start the vibe' => 'Easy questions to start the\nvibe',
-    'Funny, random, and unhinged questions' =>
-      'Funny, random, and\nunhinged questions',
-    'Bold questions for brave players' => 'Bold questions for\nbrave players',
-    'Getting to know someone better' => 'Getting to know\nsomeone better',
-    _ => description,
-  };
-}
-
-final _playDecks = spillrDecks;

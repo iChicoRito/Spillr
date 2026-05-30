@@ -625,16 +625,597 @@ class CustomDecksCompanion extends UpdateCompanion<CustomDeck> {
   }
 }
 
+class $DeckQuestionEntriesTable extends DeckQuestionEntries
+    with TableInfo<$DeckQuestionEntriesTable, DeckQuestionEntry> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $DeckQuestionEntriesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _deckIdMeta = const VerificationMeta('deckId');
+  @override
+  late final GeneratedColumn<String> deckId = GeneratedColumn<String>(
+    'deck_id',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 64,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _builtInQuestionKeyMeta =
+      const VerificationMeta('builtInQuestionKey');
+  @override
+  late final GeneratedColumn<String> builtInQuestionKey =
+      GeneratedColumn<String>(
+        'built_in_question_key',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _questionTextMeta = const VerificationMeta(
+    'questionText',
+  );
+  @override
+  late final GeneratedColumn<String> questionText = GeneratedColumn<String>(
+    'question_text',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 280,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sortOrderMeta = const VerificationMeta(
+    'sortOrder',
+  );
+  @override
+  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
+    'sort_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _isBuiltInMeta = const VerificationMeta(
+    'isBuiltIn',
+  );
+  @override
+  late final GeneratedColumn<bool> isBuiltIn = GeneratedColumn<bool>(
+    'is_built_in',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_built_in" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _isDeletedMeta = const VerificationMeta(
+    'isDeleted',
+  );
+  @override
+  late final GeneratedColumn<bool> isDeleted = GeneratedColumn<bool>(
+    'is_deleted',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_deleted" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    deckId,
+    builtInQuestionKey,
+    questionText,
+    sortOrder,
+    isBuiltIn,
+    isDeleted,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'deck_question_entries';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<DeckQuestionEntry> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('deck_id')) {
+      context.handle(
+        _deckIdMeta,
+        deckId.isAcceptableOrUnknown(data['deck_id']!, _deckIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_deckIdMeta);
+    }
+    if (data.containsKey('built_in_question_key')) {
+      context.handle(
+        _builtInQuestionKeyMeta,
+        builtInQuestionKey.isAcceptableOrUnknown(
+          data['built_in_question_key']!,
+          _builtInQuestionKeyMeta,
+        ),
+      );
+    }
+    if (data.containsKey('question_text')) {
+      context.handle(
+        _questionTextMeta,
+        questionText.isAcceptableOrUnknown(
+          data['question_text']!,
+          _questionTextMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_questionTextMeta);
+    }
+    if (data.containsKey('sort_order')) {
+      context.handle(
+        _sortOrderMeta,
+        sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sortOrderMeta);
+    }
+    if (data.containsKey('is_built_in')) {
+      context.handle(
+        _isBuiltInMeta,
+        isBuiltIn.isAcceptableOrUnknown(data['is_built_in']!, _isBuiltInMeta),
+      );
+    }
+    if (data.containsKey('is_deleted')) {
+      context.handle(
+        _isDeletedMeta,
+        isDeleted.isAcceptableOrUnknown(data['is_deleted']!, _isDeletedMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  DeckQuestionEntry map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return DeckQuestionEntry(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      deckId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}deck_id'],
+      )!,
+      builtInQuestionKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}built_in_question_key'],
+      ),
+      questionText: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}question_text'],
+      )!,
+      sortOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sort_order'],
+      )!,
+      isBuiltIn: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_built_in'],
+      )!,
+      isDeleted: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_deleted'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $DeckQuestionEntriesTable createAlias(String alias) {
+    return $DeckQuestionEntriesTable(attachedDatabase, alias);
+  }
+}
+
+class DeckQuestionEntry extends DataClass
+    implements Insertable<DeckQuestionEntry> {
+  final int id;
+  final String deckId;
+  final String? builtInQuestionKey;
+  final String questionText;
+  final int sortOrder;
+  final bool isBuiltIn;
+  final bool isDeleted;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  const DeckQuestionEntry({
+    required this.id,
+    required this.deckId,
+    this.builtInQuestionKey,
+    required this.questionText,
+    required this.sortOrder,
+    required this.isBuiltIn,
+    required this.isDeleted,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['deck_id'] = Variable<String>(deckId);
+    if (!nullToAbsent || builtInQuestionKey != null) {
+      map['built_in_question_key'] = Variable<String>(builtInQuestionKey);
+    }
+    map['question_text'] = Variable<String>(questionText);
+    map['sort_order'] = Variable<int>(sortOrder);
+    map['is_built_in'] = Variable<bool>(isBuiltIn);
+    map['is_deleted'] = Variable<bool>(isDeleted);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  DeckQuestionEntriesCompanion toCompanion(bool nullToAbsent) {
+    return DeckQuestionEntriesCompanion(
+      id: Value(id),
+      deckId: Value(deckId),
+      builtInQuestionKey: builtInQuestionKey == null && nullToAbsent
+          ? const Value.absent()
+          : Value(builtInQuestionKey),
+      questionText: Value(questionText),
+      sortOrder: Value(sortOrder),
+      isBuiltIn: Value(isBuiltIn),
+      isDeleted: Value(isDeleted),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory DeckQuestionEntry.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return DeckQuestionEntry(
+      id: serializer.fromJson<int>(json['id']),
+      deckId: serializer.fromJson<String>(json['deckId']),
+      builtInQuestionKey: serializer.fromJson<String?>(
+        json['builtInQuestionKey'],
+      ),
+      questionText: serializer.fromJson<String>(json['questionText']),
+      sortOrder: serializer.fromJson<int>(json['sortOrder']),
+      isBuiltIn: serializer.fromJson<bool>(json['isBuiltIn']),
+      isDeleted: serializer.fromJson<bool>(json['isDeleted']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'deckId': serializer.toJson<String>(deckId),
+      'builtInQuestionKey': serializer.toJson<String?>(builtInQuestionKey),
+      'questionText': serializer.toJson<String>(questionText),
+      'sortOrder': serializer.toJson<int>(sortOrder),
+      'isBuiltIn': serializer.toJson<bool>(isBuiltIn),
+      'isDeleted': serializer.toJson<bool>(isDeleted),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  DeckQuestionEntry copyWith({
+    int? id,
+    String? deckId,
+    Value<String?> builtInQuestionKey = const Value.absent(),
+    String? questionText,
+    int? sortOrder,
+    bool? isBuiltIn,
+    bool? isDeleted,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) => DeckQuestionEntry(
+    id: id ?? this.id,
+    deckId: deckId ?? this.deckId,
+    builtInQuestionKey: builtInQuestionKey.present
+        ? builtInQuestionKey.value
+        : this.builtInQuestionKey,
+    questionText: questionText ?? this.questionText,
+    sortOrder: sortOrder ?? this.sortOrder,
+    isBuiltIn: isBuiltIn ?? this.isBuiltIn,
+    isDeleted: isDeleted ?? this.isDeleted,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  DeckQuestionEntry copyWithCompanion(DeckQuestionEntriesCompanion data) {
+    return DeckQuestionEntry(
+      id: data.id.present ? data.id.value : this.id,
+      deckId: data.deckId.present ? data.deckId.value : this.deckId,
+      builtInQuestionKey: data.builtInQuestionKey.present
+          ? data.builtInQuestionKey.value
+          : this.builtInQuestionKey,
+      questionText: data.questionText.present
+          ? data.questionText.value
+          : this.questionText,
+      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
+      isBuiltIn: data.isBuiltIn.present ? data.isBuiltIn.value : this.isBuiltIn,
+      isDeleted: data.isDeleted.present ? data.isDeleted.value : this.isDeleted,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DeckQuestionEntry(')
+          ..write('id: $id, ')
+          ..write('deckId: $deckId, ')
+          ..write('builtInQuestionKey: $builtInQuestionKey, ')
+          ..write('questionText: $questionText, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('isBuiltIn: $isBuiltIn, ')
+          ..write('isDeleted: $isDeleted, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    deckId,
+    builtInQuestionKey,
+    questionText,
+    sortOrder,
+    isBuiltIn,
+    isDeleted,
+    createdAt,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is DeckQuestionEntry &&
+          other.id == this.id &&
+          other.deckId == this.deckId &&
+          other.builtInQuestionKey == this.builtInQuestionKey &&
+          other.questionText == this.questionText &&
+          other.sortOrder == this.sortOrder &&
+          other.isBuiltIn == this.isBuiltIn &&
+          other.isDeleted == this.isDeleted &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class DeckQuestionEntriesCompanion extends UpdateCompanion<DeckQuestionEntry> {
+  final Value<int> id;
+  final Value<String> deckId;
+  final Value<String?> builtInQuestionKey;
+  final Value<String> questionText;
+  final Value<int> sortOrder;
+  final Value<bool> isBuiltIn;
+  final Value<bool> isDeleted;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  const DeckQuestionEntriesCompanion({
+    this.id = const Value.absent(),
+    this.deckId = const Value.absent(),
+    this.builtInQuestionKey = const Value.absent(),
+    this.questionText = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    this.isBuiltIn = const Value.absent(),
+    this.isDeleted = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  });
+  DeckQuestionEntriesCompanion.insert({
+    this.id = const Value.absent(),
+    required String deckId,
+    this.builtInQuestionKey = const Value.absent(),
+    required String questionText,
+    required int sortOrder,
+    this.isBuiltIn = const Value.absent(),
+    this.isDeleted = const Value.absent(),
+    required DateTime createdAt,
+    required DateTime updatedAt,
+  }) : deckId = Value(deckId),
+       questionText = Value(questionText),
+       sortOrder = Value(sortOrder),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<DeckQuestionEntry> custom({
+    Expression<int>? id,
+    Expression<String>? deckId,
+    Expression<String>? builtInQuestionKey,
+    Expression<String>? questionText,
+    Expression<int>? sortOrder,
+    Expression<bool>? isBuiltIn,
+    Expression<bool>? isDeleted,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (deckId != null) 'deck_id': deckId,
+      if (builtInQuestionKey != null)
+        'built_in_question_key': builtInQuestionKey,
+      if (questionText != null) 'question_text': questionText,
+      if (sortOrder != null) 'sort_order': sortOrder,
+      if (isBuiltIn != null) 'is_built_in': isBuiltIn,
+      if (isDeleted != null) 'is_deleted': isDeleted,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+    });
+  }
+
+  DeckQuestionEntriesCompanion copyWith({
+    Value<int>? id,
+    Value<String>? deckId,
+    Value<String?>? builtInQuestionKey,
+    Value<String>? questionText,
+    Value<int>? sortOrder,
+    Value<bool>? isBuiltIn,
+    Value<bool>? isDeleted,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+  }) {
+    return DeckQuestionEntriesCompanion(
+      id: id ?? this.id,
+      deckId: deckId ?? this.deckId,
+      builtInQuestionKey: builtInQuestionKey ?? this.builtInQuestionKey,
+      questionText: questionText ?? this.questionText,
+      sortOrder: sortOrder ?? this.sortOrder,
+      isBuiltIn: isBuiltIn ?? this.isBuiltIn,
+      isDeleted: isDeleted ?? this.isDeleted,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (deckId.present) {
+      map['deck_id'] = Variable<String>(deckId.value);
+    }
+    if (builtInQuestionKey.present) {
+      map['built_in_question_key'] = Variable<String>(builtInQuestionKey.value);
+    }
+    if (questionText.present) {
+      map['question_text'] = Variable<String>(questionText.value);
+    }
+    if (sortOrder.present) {
+      map['sort_order'] = Variable<int>(sortOrder.value);
+    }
+    if (isBuiltIn.present) {
+      map['is_built_in'] = Variable<bool>(isBuiltIn.value);
+    }
+    if (isDeleted.present) {
+      map['is_deleted'] = Variable<bool>(isDeleted.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DeckQuestionEntriesCompanion(')
+          ..write('id: $id, ')
+          ..write('deckId: $deckId, ')
+          ..write('builtInQuestionKey: $builtInQuestionKey, ')
+          ..write('questionText: $questionText, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('isBuiltIn: $isBuiltIn, ')
+          ..write('isDeleted: $isDeleted, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $ProfilesTable profiles = $ProfilesTable(this);
   late final $CustomDecksTable customDecks = $CustomDecksTable(this);
+  late final $DeckQuestionEntriesTable deckQuestionEntries =
+      $DeckQuestionEntriesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities => [profiles, customDecks];
+  List<DatabaseSchemaEntity> get allSchemaEntities => [
+    profiles,
+    customDecks,
+    deckQuestionEntries,
+  ];
 }
 
 typedef $$ProfilesTableCreateCompanionBuilder =
@@ -985,6 +1566,296 @@ typedef $$CustomDecksTableProcessedTableManager =
       CustomDeck,
       PrefetchHooks Function()
     >;
+typedef $$DeckQuestionEntriesTableCreateCompanionBuilder =
+    DeckQuestionEntriesCompanion Function({
+      Value<int> id,
+      required String deckId,
+      Value<String?> builtInQuestionKey,
+      required String questionText,
+      required int sortOrder,
+      Value<bool> isBuiltIn,
+      Value<bool> isDeleted,
+      required DateTime createdAt,
+      required DateTime updatedAt,
+    });
+typedef $$DeckQuestionEntriesTableUpdateCompanionBuilder =
+    DeckQuestionEntriesCompanion Function({
+      Value<int> id,
+      Value<String> deckId,
+      Value<String?> builtInQuestionKey,
+      Value<String> questionText,
+      Value<int> sortOrder,
+      Value<bool> isBuiltIn,
+      Value<bool> isDeleted,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+    });
+
+class $$DeckQuestionEntriesTableFilterComposer
+    extends Composer<_$AppDatabase, $DeckQuestionEntriesTable> {
+  $$DeckQuestionEntriesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get deckId => $composableBuilder(
+    column: $table.deckId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get builtInQuestionKey => $composableBuilder(
+    column: $table.builtInQuestionKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get questionText => $composableBuilder(
+    column: $table.questionText,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isBuiltIn => $composableBuilder(
+    column: $table.isBuiltIn,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isDeleted => $composableBuilder(
+    column: $table.isDeleted,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$DeckQuestionEntriesTableOrderingComposer
+    extends Composer<_$AppDatabase, $DeckQuestionEntriesTable> {
+  $$DeckQuestionEntriesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get deckId => $composableBuilder(
+    column: $table.deckId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get builtInQuestionKey => $composableBuilder(
+    column: $table.builtInQuestionKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get questionText => $composableBuilder(
+    column: $table.questionText,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isBuiltIn => $composableBuilder(
+    column: $table.isBuiltIn,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isDeleted => $composableBuilder(
+    column: $table.isDeleted,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$DeckQuestionEntriesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $DeckQuestionEntriesTable> {
+  $$DeckQuestionEntriesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get deckId =>
+      $composableBuilder(column: $table.deckId, builder: (column) => column);
+
+  GeneratedColumn<String> get builtInQuestionKey => $composableBuilder(
+    column: $table.builtInQuestionKey,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get questionText => $composableBuilder(
+    column: $table.questionText,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get sortOrder =>
+      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
+
+  GeneratedColumn<bool> get isBuiltIn =>
+      $composableBuilder(column: $table.isBuiltIn, builder: (column) => column);
+
+  GeneratedColumn<bool> get isDeleted =>
+      $composableBuilder(column: $table.isDeleted, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$DeckQuestionEntriesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $DeckQuestionEntriesTable,
+          DeckQuestionEntry,
+          $$DeckQuestionEntriesTableFilterComposer,
+          $$DeckQuestionEntriesTableOrderingComposer,
+          $$DeckQuestionEntriesTableAnnotationComposer,
+          $$DeckQuestionEntriesTableCreateCompanionBuilder,
+          $$DeckQuestionEntriesTableUpdateCompanionBuilder,
+          (
+            DeckQuestionEntry,
+            BaseReferences<
+              _$AppDatabase,
+              $DeckQuestionEntriesTable,
+              DeckQuestionEntry
+            >,
+          ),
+          DeckQuestionEntry,
+          PrefetchHooks Function()
+        > {
+  $$DeckQuestionEntriesTableTableManager(
+    _$AppDatabase db,
+    $DeckQuestionEntriesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$DeckQuestionEntriesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$DeckQuestionEntriesTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$DeckQuestionEntriesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> deckId = const Value.absent(),
+                Value<String?> builtInQuestionKey = const Value.absent(),
+                Value<String> questionText = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
+                Value<bool> isBuiltIn = const Value.absent(),
+                Value<bool> isDeleted = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+              }) => DeckQuestionEntriesCompanion(
+                id: id,
+                deckId: deckId,
+                builtInQuestionKey: builtInQuestionKey,
+                questionText: questionText,
+                sortOrder: sortOrder,
+                isBuiltIn: isBuiltIn,
+                isDeleted: isDeleted,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String deckId,
+                Value<String?> builtInQuestionKey = const Value.absent(),
+                required String questionText,
+                required int sortOrder,
+                Value<bool> isBuiltIn = const Value.absent(),
+                Value<bool> isDeleted = const Value.absent(),
+                required DateTime createdAt,
+                required DateTime updatedAt,
+              }) => DeckQuestionEntriesCompanion.insert(
+                id: id,
+                deckId: deckId,
+                builtInQuestionKey: builtInQuestionKey,
+                questionText: questionText,
+                sortOrder: sortOrder,
+                isBuiltIn: isBuiltIn,
+                isDeleted: isDeleted,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$DeckQuestionEntriesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $DeckQuestionEntriesTable,
+      DeckQuestionEntry,
+      $$DeckQuestionEntriesTableFilterComposer,
+      $$DeckQuestionEntriesTableOrderingComposer,
+      $$DeckQuestionEntriesTableAnnotationComposer,
+      $$DeckQuestionEntriesTableCreateCompanionBuilder,
+      $$DeckQuestionEntriesTableUpdateCompanionBuilder,
+      (
+        DeckQuestionEntry,
+        BaseReferences<
+          _$AppDatabase,
+          $DeckQuestionEntriesTable,
+          DeckQuestionEntry
+        >,
+      ),
+      DeckQuestionEntry,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -993,4 +1864,6 @@ class $AppDatabaseManager {
       $$ProfilesTableTableManager(_db, _db.profiles);
   $$CustomDecksTableTableManager get customDecks =>
       $$CustomDecksTableTableManager(_db, _db.customDecks);
+  $$DeckQuestionEntriesTableTableManager get deckQuestionEntries =>
+      $$DeckQuestionEntriesTableTableManager(_db, _db.deckQuestionEntries);
 }

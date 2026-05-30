@@ -18,6 +18,63 @@ enum DeckFilter {
   final String? builtInDeckId;
 }
 
+sealed class DeckFilterSelection {
+  const DeckFilterSelection();
+
+  const factory DeckFilterSelection.all() = AllDeckFilterSelection;
+  const factory DeckFilterSelection.builtIn(DeckFilter filter) =
+      BuiltInDeckFilterSelection;
+  const factory DeckFilterSelection.custom(String deckId) =
+      CustomDeckFilterSelection;
+}
+
+class AllDeckFilterSelection extends DeckFilterSelection {
+  const AllDeckFilterSelection();
+}
+
+class BuiltInDeckFilterSelection extends DeckFilterSelection {
+  const BuiltInDeckFilterSelection(this.filter);
+
+  final DeckFilter filter;
+}
+
+class CustomDeckFilterSelection extends DeckFilterSelection {
+  const CustomDeckFilterSelection(this.deckId);
+
+  final String deckId;
+}
+
+sealed class DeckFilterChip {
+  const DeckFilterChip({required this.id, required this.label});
+
+  final String id;
+  final String label;
+
+  bool get isBuiltIn => false;
+}
+
+class BuiltInDeckFilterChip extends DeckFilterChip {
+  BuiltInDeckFilterChip({required this.filter})
+      : super(
+          id: 'built-in-${filter.builtInDeckId ?? "all"}',
+          label: filter.label,
+        );
+
+  final DeckFilter filter;
+
+  @override
+  bool get isBuiltIn => true;
+}
+
+class CustomDeckFilterChip extends DeckFilterChip {
+  CustomDeckFilterChip({
+    required this.deckId,
+    required super.label,
+  }) : super(id: deckId);
+
+  final String deckId;
+}
+
 enum CustomDeckIconKey {
   user('user', HugeIcons.strokeRoundedUser),
   favourite('favourite', HugeIcons.strokeRoundedFavourite),
@@ -32,6 +89,13 @@ enum CustomDeckIconKey {
   dizzy('dizzy', HugeIcons.strokeRoundedSadDizzy),
   smile('smile', HugeIcons.strokeRoundedSmile),
   wink('wink', HugeIcons.strokeRoundedWink),
+  sparkles('sparkles', HugeIcons.strokeRoundedSparkles),
+  party('party', HugeIcons.strokeRoundedParty),
+  starAward('star-award', HugeIcons.strokeRoundedStarAward01),
+  gift('gift', HugeIcons.strokeRoundedGift),
+  book('book', HugeIcons.strokeRoundedBook01),
+  chat('chat', HugeIcons.strokeRoundedChat01),
+  camera('camera', HugeIcons.strokeRoundedCamera01),
   monster('monster', HugeIcons.strokeRoundedMonster);
 
   const CustomDeckIconKey(this.value, this.icon);
@@ -78,6 +142,8 @@ class DeckListItem {
     required this.icon,
     required this.avatarColor,
     required this.isBuiltIn,
+    this.customIconKey,
+    this.customColorKey,
   });
 
   final String id;
@@ -86,4 +152,6 @@ class DeckListItem {
   final List<List<dynamic>> icon;
   final Color avatarColor;
   final bool isBuiltIn;
+  final CustomDeckIconKey? customIconKey;
+  final CustomDeckColorKey? customColorKey;
 }
