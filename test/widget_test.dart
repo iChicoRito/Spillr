@@ -9,6 +9,7 @@ import 'package:hugeicons/hugeicons.dart';
 
 import 'package:spillr/app/app.dart';
 import 'package:spillr/core/database/app_database.dart';
+import 'package:spillr/core/theme/app_colors.dart';
 import 'package:spillr/features/game/data/spillr_decks.dart';
 import 'package:spillr/features/game/domain/game_result.dart';
 import 'package:spillr/features/game/domain/game_session_state.dart';
@@ -67,15 +68,25 @@ void main() {
       'Play Chaos Mode': 2,
       'Play Hot Seat': 3,
       'Play Date Mode': 4,
+      'Play': 5,
+    };
+    const deckKeys = {
+      'Play Deep Spill': 'deep-spill',
+      'Play No Dead Air': 'no-dead-air',
+      'Play Chaos Mode': 'chaos-mode',
+      'Play Hot Seat': 'hot-seat',
+      'Play Date Mode': 'date-mode',
+      'Play': 'wildcard-tea',
     };
     final pageView = tester.widget<PageView>(find.byType(PageView));
     final targetIndex = deckIndexes[label];
+    final targetKey = deckKeys[label];
     if (targetIndex != null) {
       pageView.controller!.jumpToPage(targetIndex);
       await tester.pumpAndSettle();
     }
-    await tester.ensureVisible(find.text(label));
-    await tester.tap(find.text(label));
+    await tester.ensureVisible(find.byKey(ValueKey('play-deck-button-$targetKey')));
+    await tester.tap(find.byKey(ValueKey('play-deck-button-$targetKey')));
     await tester.pumpAndSettle();
   }
 
@@ -131,8 +142,10 @@ void main() {
   testWidgets('renders the first onboarding screen', (tester) async {
     await pumpApp(tester);
 
-    expect(find.text('Vibe Check'), findsOneWidget);
+    expect(find.text('Vibe'), findsOneWidget);
+    expect(find.text('Check'), findsOneWidget);
     expect(find.text('Okay'), findsOneWidget);
+    expect(find.byKey(const ValueKey('onboarding-art-placeholder-0')), findsOneWidget);
   });
 
   testWidgets('progresses through the onboarding intro screens', (
@@ -142,11 +155,13 @@ void main() {
 
     await tester.tap(find.text('Okay'));
     await tester.pumpAndSettle();
-    expect(find.text('Tea Time'), findsOneWidget);
+    expect(find.text('Tea'), findsOneWidget);
+    expect(find.text('Time'), findsOneWidget);
 
     await tester.tap(find.text('It sounds fun'));
     await tester.pumpAndSettle();
-    expect(find.text('Main Character'), findsOneWidget);
+    expect(find.text('Main'), findsOneWidget);
+    expect(find.text('Character'), findsOneWidget);
 
     await tester.tap(find.text('Start Spilling'));
     await tester.pumpAndSettle();
@@ -196,7 +211,7 @@ void main() {
     expect(find.text('Ready to Spill?'), findsOneWidget);
     expect(find.text('Choose Your Deck'), findsOneWidget);
     expect(find.text('No\nDead\nAir'), findsOneWidget);
-    expect(find.text('Pull a random deck'), findsOneWidget);
+    expect(find.text('Pull a random deck'), findsNothing);
     expect(find.text('Play Cards'), findsOneWidget);
   });
 
@@ -209,9 +224,9 @@ void main() {
       expect(find.text('Ready to Spill?'), findsOneWidget);
       expect(find.text('Choose Your Deck'), findsOneWidget);
       expect(find.text('No\nDead\nAir'), findsOneWidget);
-      expect(find.text('Pull a random deck'), findsOneWidget);
+      expect(find.text('Pull a random deck'), findsNothing);
       expect(find.text('Play Cards'), findsOneWidget);
-      expect(find.text('Vibe Check'), findsNothing);
+      expect(find.text('Vibe'), findsNothing);
     },
   );
 
@@ -268,13 +283,116 @@ void main() {
   ) async {
     await seedProfileAndOpenPlayPage(tester);
 
-    expect(find.text('Play No Dead Air'), findsOneWidget);
+    expect(find.text('Play'), findsOneWidget);
 
     final pageView = tester.widget<PageView>(find.byType(PageView));
     pageView.controller!.jumpToPage(2);
     await tester.pumpAndSettle();
 
-    expect(find.text('Play Chaos Mode'), findsOneWidget);
+    expect(find.text('Play'), findsOneWidget);
+  });
+
+  testWidgets('shows wildcard tea as the final playable deck', (tester) async {
+    await seedProfileAndOpenPlayPage(tester);
+
+    final pageView = tester.widget<PageView>(find.byType(PageView));
+    pageView.controller!.jumpToPage(5);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Just Pull It'), findsOneWidget);
+    expect(
+      find.text('No category, no rules, just whatever the deck serves'),
+      findsOneWidget,
+    );
+    expect(find.text('Play'), findsOneWidget);
+
+    final playButton = tester.widget<FilledButton>(
+      find.byKey(const ValueKey('play-deck-button-wildcard-tea')),
+    );
+    final playButtonRect = tester.getRect(
+      find.byKey(const ValueKey('play-deck-button-wildcard-tea')),
+    );
+    final playButtonStyle = playButton.style!;
+
+    expect(playButtonRect.height, 56);
+    expect(
+      playButtonStyle.shape?.resolve(const <WidgetState>{}),
+      isA<RoundedRectangleBorder>(),
+    );
+    expect(
+      playButtonStyle.backgroundColor?.resolve(const <WidgetState>{}),
+      AppColors.white,
+    );
+    expect(
+      playButtonStyle.foregroundColor?.resolve(const <WidgetState>{}),
+      AppColors.neutral700,
+    );
+  });
+
+  testWidgets('cycles Just Pull It letters through deck accent colors', (
+    tester,
+  ) async {
+    await seedProfileAndOpenPlayPage(tester);
+
+    final pageView = tester.widget<PageView>(find.byType(PageView));
+    pageView.controller!.jumpToPage(5);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('play-deck-button-wildcard-tea')));
+    await tester.pumpAndSettle();
+
+    final letterOpacities = find.descendant(
+      of: find.byKey(const ValueKey('preparation-intro-deck-line-0')),
+      matching: find.byType(Opacity),
+    );
+
+    final firstLetter = tester.widget<Opacity>(letterOpacities.at(0));
+    final secondLetter = tester.widget<Opacity>(letterOpacities.at(1));
+    final thirdLetter = tester.widget<Opacity>(letterOpacities.at(2));
+
+    final firstColor = tester
+        .widget<Text>(
+          find.descendant(
+            of: find.byWidget(firstLetter),
+            matching: find.byType(Text),
+          ),
+        )
+        .style!
+        .color;
+    final secondColor = tester
+        .widget<Text>(
+          find.descendant(
+            of: find.byWidget(secondLetter),
+            matching: find.byType(Text),
+          ),
+        )
+        .style!
+        .color;
+    final thirdColor = tester
+        .widget<Text>(
+          find.descendant(
+            of: find.byWidget(thirdLetter),
+            matching: find.byType(Text),
+          ),
+        )
+        .style!
+        .color;
+
+    expect(firstColor, AppColors.blue500);
+    expect(secondColor, AppColors.violet500);
+    expect(thirdColor, AppColors.teal500);
+  });
+
+  test('wildcard tea deck aggregates all existing category questions', () {
+    final wildcardDeck = spillrDecks.last;
+    final sourceDecks = spillrDecks.take(spillrDecks.length - 1).toList();
+    final expectedQuestions = sourceDecks
+        .expand((deck) => deck.questions)
+        .toList();
+
+    expect(wildcardDeck.id, 'wildcard-tea');
+    expect(wildcardDeck.title, 'Just Pull It');
+    expect(wildcardDeck.backgroundColor, AppColors.neutral700);
+    expect(wildcardDeck.questions, expectedQuestions);
   });
 
   testWidgets('starts each game with shuffled questions', (tester) async {
@@ -443,7 +561,7 @@ void main() {
     await flipCard(tester);
 
     expect(find.text('End'), findsOneWidget);
-    expect(find.text('Spill'), findsOneWidget);
+    expect(find.text('Answered'), findsOneWidget);
     expect(find.text('Pass'), findsOneWidget);
     expect(find.text("Done, I'm cooked"), findsNothing);
   });
@@ -458,11 +576,11 @@ void main() {
     await flipCard(tester);
 
     expect(find.text('End'), findsOneWidget);
-    expect(find.text('Spill'), findsOneWidget);
+    expect(find.text('Answered'), findsOneWidget);
     expect(find.text('Pass'), findsOneWidget);
   });
 
-  testWidgets('uses a larger primary Spill button with hugeicons only', (
+  testWidgets('uses a larger primary Answered button with hugeicons only', (
     tester,
   ) async {
     await seedProfileAndOpenPlayPage(tester);
@@ -563,7 +681,20 @@ void main() {
     await flipCard(tester);
 
     expect(find.byKey(const ValueKey('game-flip-timer-chip')), findsOneWidget);
-    expect(find.text('10 sec'), findsOneWidget);
+    expect(find.text('2:00'), findsOneWidget);
+  });
+
+  testWidgets('counts down the flipped-card timer in minute format', (
+    tester,
+  ) async {
+    await seedProfileAndOpenPlayPage(tester);
+
+    await openDeckFromPlayPage(tester, label: 'Play No Dead Air');
+    await continueFromPreparation(tester);
+    await flipCard(tester);
+
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text('1:59'), findsOneWidget);
   });
 
   testWidgets('counts down the flipped-card timer and auto-passes on timeout', (
@@ -576,9 +707,9 @@ void main() {
     await flipCard(tester);
 
     await tester.pump(const Duration(seconds: 1));
-    expect(find.text('9 sec'), findsOneWidget);
+    expect(find.text('1:59'), findsOneWidget);
 
-    await tester.pump(const Duration(seconds: 9));
+    await tester.pump(const Duration(seconds: 119));
     await tester.pumpAndSettle();
 
     expect(find.text('No. 2'), findsOneWidget);
@@ -701,6 +832,21 @@ void main() {
     );
 
     expect(questionCenter.alignment, Alignment.center);
+  });
+
+  testWidgets('shows flipped questions without added outer quotation marks', (
+    tester,
+  ) async {
+    await seedProfileAndOpenPlayPage(tester);
+
+    await openDeckFromPlayPage(tester, label: 'Play No Dead Air');
+    await continueFromPreparation(tester);
+    await flipCard(tester);
+
+    final question = currentQuestionText(tester);
+
+    expect(question.startsWith('"'), isFalse);
+    expect(question.endsWith('"'), isFalse);
   });
 
   testWidgets(

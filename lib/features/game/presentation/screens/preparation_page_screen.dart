@@ -31,6 +31,7 @@ class PreparationPageScreen extends StatelessWidget {
                     _PreparationAnimatedMessage(
                       titleLines: _preparationDeckTitleLines(deck.title),
                       deckTitleColor: deck.badgeTextColor,
+                      titleLetterColors: _preparationDeckLetterColors(deck.id),
                     ),
                     const Spacer(flex: 6),
                     SizedBox(
@@ -52,7 +53,7 @@ class PreparationPageScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(14),
                           ),
                         ),
-                        child: const Text('Let me Cook!'),
+                        child: const Text("Let's Get Started"),
                       ),
                     ),
                   ],
@@ -75,14 +76,29 @@ List<String> _preparationDeckTitleLines(String title) {
   };
 }
 
+List<Color>? _preparationDeckLetterColors(String deckId) {
+  return switch (deckId) {
+    'wildcard-tea' => const [
+        AppColors.blue500,
+        AppColors.violet500,
+        AppColors.teal500,
+        AppColors.red500,
+        AppColors.pink500,
+      ],
+    _ => null,
+  };
+}
+
 class _PreparationAnimatedMessage extends StatefulWidget {
   const _PreparationAnimatedMessage({
     required this.titleLines,
     required this.deckTitleColor,
+    required this.titleLetterColors,
   });
 
   final List<String> titleLines;
   final Color deckTitleColor;
+  final List<Color>? titleLetterColors;
 
   @override
   State<_PreparationAnimatedMessage> createState() =>
@@ -113,6 +129,7 @@ class _PreparationAnimatedMessageState
         key: ValueKey('preparation-intro-deck-line-$index'),
         text: titleLine,
         color: widget.deckTitleColor,
+        letterColors: widget.titleLetterColors,
       ),
   ];
 
@@ -161,6 +178,7 @@ class _PreparationAnimatedMessageState
         lineKey: line.key,
         text: line.text,
         color: line.color,
+        letterColors: line.letterColors,
         controller: _controller,
         firstVisibleLetterIndex: nextVisibleLetterIndex,
       );
@@ -198,11 +216,13 @@ class _PreparationLineSpec {
     required this.key,
     required this.text,
     required this.color,
+    this.letterColors,
   });
 
   final Key key;
   final String text;
   final Color color;
+  final List<Color>? letterColors;
 
   int get visibleLetterCount =>
       text.split('').where((character) => character.trim().isNotEmpty).length;
@@ -213,6 +233,7 @@ class _PreparationAnimatedTextLine extends StatelessWidget {
     required this.lineKey,
     required this.text,
     required this.color,
+    required this.letterColors,
     required this.controller,
     required this.firstVisibleLetterIndex,
   });
@@ -220,6 +241,7 @@ class _PreparationAnimatedTextLine extends StatelessWidget {
   final Key lineKey;
   final String text;
   final Color color;
+  final List<Color>? letterColors;
   final AnimationController controller;
   final int firstVisibleLetterIndex;
 
@@ -238,10 +260,13 @@ class _PreparationAnimatedTextLine extends StatelessWidget {
         return const SizedBox.shrink();
       }
 
+      final letterColor = letterColors == null
+          ? color
+          : letterColors![visibleLetterIndex % letterColors!.length];
       final characterWidget = _PreparationAnimatedLetter(
         characterKey: ValueKey('preparation-letter-$visibleLetterIndex'),
         character: character,
-        textStyle: textStyle,
+        textStyle: textStyle.copyWith(color: letterColor),
         controller: controller,
         letterIndex: visibleLetterIndex,
       );
