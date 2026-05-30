@@ -16,12 +16,45 @@ class Profiles extends Table {
   Set<Column<Object>>? get primaryKey => {id};
 }
 
-@DriftDatabase(tables: [Profiles])
+class CustomDecks extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get name => text().withLength(min: 1, max: 64)();
+  TextColumn get iconKey => text().withLength(min: 1, max: 32)();
+  TextColumn get colorKey => text().withLength(min: 1, max: 32)();
+  DateTimeColumn get createdAt => dateTime()();
+}
+
+class DeckQuestionEntries extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get deckId => text().withLength(min: 1, max: 64)();
+  TextColumn get builtInQuestionKey => text().nullable()();
+  TextColumn get questionText => text().withLength(min: 1, max: 280)();
+  IntColumn get sortOrder => integer()();
+  BoolColumn get isBuiltIn => boolean().withDefault(const Constant(false))();
+  BoolColumn get isDeleted => boolean().withDefault(const Constant(false))();
+  DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get updatedAt => dateTime()();
+}
+
+@DriftDatabase(tables: [Profiles, CustomDecks, DeckQuestionEntries])
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 3;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onCreate: (migrator) => migrator.createAll(),
+    onUpgrade: (migrator, from, to) async {
+      if (from < 2) {
+        await migrator.createTable(customDecks);
+      }
+      if (from < 3) {
+        await migrator.createTable(deckQuestionEntries);
+      }
+    },
+  );
 
   Future<Profile?> fetchProfile() {
     return select(profiles).getSingleOrNull();
@@ -35,6 +68,48 @@ class AppDatabase extends _$AppDatabase {
         completedAt: DateTime.now(),
       ),
     );
+  }
+
+  Stream<List<CustomDeck>> watchCustomDecks() {
+    return (select(customDecks)..orderBy([
+          (table) => OrderingTerm.desc(table.createdAt),
+          (table) => OrderingTerm.desc(table.id),
+        ]))
+        .watch();
+  }
+
+  Future<void> insertCustomDeck({
+    required String name,
+    required String iconKey,
+    required String colorKey,
+  }) {
+    return into(customDecks).insert(
+      CustomDecksCompanion.insert(
+        name: name,
+        iconKey: iconKey,
+        colorKey: colorKey,
+        createdAt: DateTime.now(),
+      ),
+    );
+  }
+
+  Future<void> updateCustomDeck({
+    required int id,
+    required String name,
+    required String iconKey,
+    required String colorKey,
+  }) {
+    return (update(customDecks)..where((table) => table.id.equals(id))).write(
+      CustomDecksCompanion(
+        name: Value(name),
+        iconKey: Value(iconKey),
+        colorKey: Value(colorKey),
+      ),
+    );
+  }
+
+  Future<void> deleteCustomDeck(int id) {
+    return (delete(customDecks)..where((table) => table.id.equals(id))).go();
   }
 }
 

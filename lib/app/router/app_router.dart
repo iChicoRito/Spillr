@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/decks/presentation/screens/decks_screen.dart';
+import '../../features/decks/presentation/screens/questions_screen.dart';
 import '../../features/game/presentation/models/game_ending_arguments.dart';
 import '../../features/game/presentation/screens/ending_page_screen.dart';
 import '../../features/game/presentation/screens/game_page_screen.dart';
@@ -12,6 +14,8 @@ import '../../features/startup/presentation/screens/startup_gate_screen.dart';
 abstract final class AppRoutes {
   static const startup = '/';
   static const onboarding = '/onboarding';
+  static const decks = '/decks';
+  static const deckQuestions = '/decks/questions';
   static const home = '/home';
   static const preparation = '/preparation';
   static const game = '/game';
@@ -35,6 +39,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const PlayPageScreen(),
       ),
       GoRoute(
+        path: AppRoutes.decks,
+        builder: (context, state) => const DecksScreen(),
+      ),
+      GoRoute(
+        path: '${AppRoutes.decks}/:deckId/questions',
+        builder: (context, state) => QuestionsScreen(
+          deckId: state.pathParameters['deckId'] ?? 'no-dead-air',
+        ),
+      ),
+      GoRoute(
         path: '${AppRoutes.preparation}/:deckId',
         builder: (context, state) => PreparationPageScreen(
           deckId: state.pathParameters['deckId'] ?? 'no-dead-air',
@@ -54,10 +68,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             return const PlayPageScreen();
           }
 
-          return EndingPageScreen(
-            deck: args.deck,
-            result: args.result,
-          );
+          return EndingPageScreen(deck: args.deck, result: args.result);
         },
       ),
     ],

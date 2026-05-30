@@ -13,9 +13,16 @@ abstract final class AppColors {
   static const blue100 = Color(0xFFDBEAFE);
   static const blue200 = Color(0xFFBFDBFE);
   static const blue500 = Color(0xFF3B82F6);
+  static const cyan100 = Color(0xFFCFFAFE);
+  static const cyan200 = Color(0xFFA5F3FC);
+  static const cyan500 = Color(0xFF06B6D4);
+  static const purple100 = Color(0xFFF3E8FF);
+  static const purple200 = Color(0xFFE9D5FF);
   static const violet100 = Color(0xFFEDE9FE);
   static const violet200 = Color(0xFFDDD6FE);
   static const violet500 = Color(0xFF8B5CF6);
+  static const purple500 = Color(0xFFA855F7);
+  static const amber100 = Color(0xFFFEF3C7);
   static const amber200 = Color(0xFFFDE68A);
   static const amber500 = Color(0xFFF59E0B);
   static const teal100 = Color(0xFFCCFBF1);

@@ -1,18 +1,39 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../data/spillr_decks.dart';
+import '../../../../shared/widgets/fallback_state_view.dart';
+import '../../../../shared/widgets/sequential_text_reveal.dart';
+import '../../../decks/presentation/providers/deck_providers.dart';
 
-class PreparationPageScreen extends StatelessWidget {
+class PreparationPageScreen extends ConsumerWidget {
   const PreparationPageScreen({required this.deckId, super.key});
 
   final String deckId;
 
   @override
-  Widget build(BuildContext context) {
-    final deck = findDeckById(deckId);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final deckAsync = ref.watch(resolvedDeckProvider(deckId));
+
+    if (deckAsync.hasError) {
+      return const Scaffold(
+        backgroundColor: AppColors.white,
+        body: SafeArea(
+          child: FallbackStateView.error(message: 'Unable to load this deck.'),
+        ),
+      );
+    }
+    if (deckAsync.isLoading) {
+      return const Scaffold(
+        backgroundColor: AppColors.white,
+        body: SafeArea(child: FallbackStateView.loading()),
+      );
+    }
+
+    final deck = deckAsync.requireValue;
+    final canStart = deck.questions.isNotEmpty;
 
     return Scaffold(
       backgroundColor: AppColors.white,
@@ -39,11 +60,14 @@ class PreparationPageScreen extends StatelessWidget {
                       height: 56,
                       child: FilledButton(
                         key: const ValueKey('preparation-continue-button'),
-                        onPressed: () =>
-                            context.go('${AppRoutes.game}/${deck.id}'),
+                        onPressed: canStart
+                            ? () => context.go('${AppRoutes.game}/${deck.id}')
+                            : null,
                         style: FilledButton.styleFrom(
                           backgroundColor: deck.badgeTextColor,
                           foregroundColor: AppColors.white,
+                          disabledBackgroundColor: deck.badgeTextColor
+                              .withValues(alpha: 0.4),
                           textStyle: const TextStyle(
                             fontSize: 18,
                             height: 1.1,
@@ -53,7 +77,13 @@ class PreparationPageScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(14),
                           ),
                         ),
+<<<<<<< HEAD
                         child: const Text("Let's Get Started"),
+=======
+                        child: Text(
+                          canStart ? "Let's Get Started" : 'Add Tea First',
+                        ),
+>>>>>>> ae7d8bc393346ef4e96598ee5e7e84c321f12025
                       ),
                     ),
                   ],
@@ -79,17 +109,30 @@ List<String> _preparationDeckTitleLines(String title) {
 List<Color>? _preparationDeckLetterColors(String deckId) {
   return switch (deckId) {
     'wildcard-tea' => const [
+<<<<<<< HEAD
         AppColors.blue500,
         AppColors.violet500,
         AppColors.teal500,
         AppColors.red500,
         AppColors.pink500,
       ],
+=======
+      AppColors.blue500,
+      AppColors.violet500,
+      AppColors.teal500,
+      AppColors.red500,
+      AppColors.pink500,
+    ],
+>>>>>>> ae7d8bc393346ef4e96598ee5e7e84c321f12025
     _ => null,
   };
 }
 
+<<<<<<< HEAD
 class _PreparationAnimatedMessage extends StatefulWidget {
+=======
+class _PreparationAnimatedMessage extends StatelessWidget {
+>>>>>>> ae7d8bc393346ef4e96598ee5e7e84c321f12025
   const _PreparationAnimatedMessage({
     required this.titleLines,
     required this.deckTitleColor,
@@ -99,6 +142,7 @@ class _PreparationAnimatedMessage extends StatefulWidget {
   final List<String> titleLines;
   final Color deckTitleColor;
   final List<Color>? titleLetterColors;
+<<<<<<< HEAD
 
   @override
   State<_PreparationAnimatedMessage> createState() =>
@@ -168,11 +212,20 @@ class _PreparationAnimatedMessageState
       milliseconds: staggeredDuration + _letterDuration.inMilliseconds,
     );
   }
+=======
+>>>>>>> ae7d8bc393346ef4e96598ee5e7e84c321f12025
 
   @override
   Widget build(BuildContext context) {
-    var nextVisibleLetterIndex = 0;
+    const introStyle = TextStyle(
+      color: AppColors.neutral700,
+      fontSize: 50,
+      height: 1,
+      fontWeight: FontWeight.w800,
+    );
+    final deckStyle = introStyle.copyWith(color: deckTitleColor);
 
+<<<<<<< HEAD
     _PreparationAnimatedTextLine buildLine(_PreparationLineSpec line) {
       final animatedLine = _PreparationAnimatedTextLine(
         lineKey: line.key,
@@ -191,26 +244,44 @@ class _PreparationAnimatedMessageState
     final deckTitleLines = _messageLines.skip(2).toList();
 
     return Column(
+=======
+    return SequentialTextReveal(
+>>>>>>> ae7d8bc393346ef4e96598ee5e7e84c321f12025
       key: const ValueKey('preparation-message'),
-      children: [
-        buildLine(firstIntroLine),
-        const SizedBox(height: 6),
-        buildLine(secondIntroLine),
-        const SizedBox(height: 6),
-        Column(
-          key: const ValueKey('preparation-intro-deck'),
-          children: [
-            for (final (index, line) in deckTitleLines.indexed) ...[
-              if (index > 0) const SizedBox(height: 2),
-              buildLine(line),
-            ],
+      textAlign: TextAlign.center,
+      lines: [
+        SequentialTextRevealLine(
+          key: const ValueKey('preparation-intro-line-one'),
+          spans: const [
+            SequentialTextRevealSpan(text: 'You are about', style: introStyle),
           ],
+          letterKeyBuilder: _preparationLetterKey,
         ),
+        SequentialTextRevealLine(
+          key: const ValueKey('preparation-intro-line-two'),
+          gapBefore: 6,
+          spans: const [
+            SequentialTextRevealSpan(text: 'to play the', style: introStyle),
+          ],
+          letterKeyBuilder: _preparationLetterKey,
+        ),
+        for (final (index, titleLine) in titleLines.indexed)
+          SequentialTextRevealLine(
+            key: ValueKey('preparation-intro-deck-line-$index'),
+            gapBefore: index == 0 ? 6 : 2,
+            spans: _buildPreparationSpans(
+              titleLine,
+              deckStyle,
+              titleLetterColors,
+            ),
+            letterKeyBuilder: _preparationLetterKey,
+          ),
       ],
     );
   }
 }
 
+<<<<<<< HEAD
 class _PreparationLineSpec {
   const _PreparationLineSpec({
     required this.key,
@@ -357,38 +428,40 @@ class _PreparationTextFlowDelegate extends FlowDelegate {
   @override
   Size getSize(BoxConstraints constraints) {
     return constraints.constrain(_measureText(text));
+=======
+Key _preparationLetterKey(int visibleLetterIndex) {
+  return ValueKey('preparation-letter-$visibleLetterIndex');
+}
+
+List<SequentialTextRevealSpan> _buildPreparationSpans(
+  String text,
+  TextStyle baseStyle,
+  List<Color>? letterColors,
+) {
+  if (letterColors == null || letterColors.isEmpty) {
+    return [SequentialTextRevealSpan(text: text, style: baseStyle)];
+>>>>>>> ae7d8bc393346ef4e96598ee5e7e84c321f12025
   }
 
-  @override
-  BoxConstraints getConstraintsForChild(int i, BoxConstraints constraints) {
-    return const BoxConstraints();
-  }
+  final spans = <SequentialTextRevealSpan>[];
+  var visibleLetterIndex = 0;
 
-  @override
-  void paintChildren(FlowPaintingContext context) {
-    for (var index = 0; index < context.childCount; index++) {
-      final leadingText = text.substring(0, index);
-      context.paintChild(
-        index,
-        transform: Matrix4.translationValues(
-          _measureText(leadingText).width * _glyphTightness,
-          0,
-          0,
-        ),
-      );
+  for (final character in text.split('')) {
+    if (character.trim().isEmpty) {
+      spans.add(SequentialTextRevealSpan(text: character, style: baseStyle));
+      continue;
     }
+
+    spans.add(
+      SequentialTextRevealSpan(
+        text: character,
+        style: baseStyle.copyWith(
+          color: letterColors[visibleLetterIndex % letterColors.length],
+        ),
+      ),
+    );
+    visibleLetterIndex++;
   }
 
-  @override
-  bool shouldRepaint(covariant _PreparationTextFlowDelegate oldDelegate) {
-    return oldDelegate.text != text || oldDelegate.style != style;
-  }
-
-  Size _measureText(String value) {
-    final textPainter = TextPainter(
-      text: TextSpan(text: value, style: style),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    return textPainter.size;
-  }
+  return spans;
 }

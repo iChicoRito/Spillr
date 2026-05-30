@@ -8,6 +8,7 @@ import '../../../../shared/widgets/fallback_state_view.dart';
 import '../../../../shared/widgets/onboarding_intro_content.dart';
 import '../../../../shared/widgets/onboarding_scaffold.dart';
 import '../../../../shared/widgets/primary_action_button.dart';
+import '../../../../shared/widgets/sequential_text_reveal.dart';
 import '../../domain/onboarding_step.dart';
 import '../providers/onboarding_providers.dart';
 
@@ -184,32 +185,56 @@ class _NameConfirmationSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final headlineStyle = theme.textTheme.headlineLarge!;
+    final subtitleStyle = theme.textTheme.bodyLarge!;
 
     return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text.rich(
-            TextSpan(
-              style: theme.textTheme.headlineLarge,
-              children: [
-                const TextSpan(text: "Let's Start\n"),
-                const TextSpan(text: 'Spilling, '),
-                TextSpan(
-                  text: displayName,
-                  style: theme.textTheme.headlineLarge?.copyWith(
-                    color: AppColors.teal500,
-                  ),
-                ),
-              ],
-            ),
-            textAlign: TextAlign.center,
+      child: SequentialTextReveal(
+        key: const ValueKey('onboarding-confirmation-message'),
+        textAlign: TextAlign.center,
+        lines: [
+          SequentialTextRevealLine(
+            key: const ValueKey('onboarding-confirmation-headline-line-0'),
+            spans: [
+              SequentialTextRevealSpan(
+                text: "Let's Start",
+                style: headlineStyle,
+              ),
+            ],
           ),
-          const SizedBox(height: 18),
-          Text(
-            'Pull a card, answer with confidence, and let the chaos begin.',
-            style: theme.textTheme.bodyLarge,
-            textAlign: TextAlign.center,
+          SequentialTextRevealLine(
+            key: const ValueKey('onboarding-confirmation-headline-line-1'),
+            spans: [
+              SequentialTextRevealSpan(text: 'Spilling,', style: headlineStyle),
+            ],
+          ),
+          SequentialTextRevealLine(
+            key: const ValueKey('onboarding-confirmation-headline-line-2'),
+            spans: [
+              SequentialTextRevealSpan(
+                text: displayName,
+                style: headlineStyle.copyWith(color: AppColors.teal500),
+              ),
+            ],
+          ),
+          SequentialTextRevealLine(
+            key: const ValueKey('onboarding-confirmation-subtitle-line-0'),
+            gapBefore: 18,
+            spans: [
+              SequentialTextRevealSpan(
+                text: 'Pull a card, answer with confidence,',
+                style: subtitleStyle,
+              ),
+            ],
+          ),
+          SequentialTextRevealLine(
+            key: const ValueKey('onboarding-confirmation-subtitle-line-1'),
+            spans: [
+              SequentialTextRevealSpan(
+                text: 'and let the chaos begin.',
+                style: subtitleStyle,
+              ),
+            ],
           ),
         ],
       ),

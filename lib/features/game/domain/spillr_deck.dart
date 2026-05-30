@@ -24,4 +24,30 @@ class SpillrDeck {
   final Color badgeTextColor;
   final Color iconColor;
   final Color cardBorderColor;
+
+  SpillrDeck copyWith({
+    String? id,
+    String? title,
+    String? description,
+    List<String>? questions,
+    Color? backgroundColor,
+    Color? borderColor,
+    Color? badgeColor,
+    Color? badgeTextColor,
+    Color? iconColor,
+    Color? cardBorderColor,
+  }) {
+    return SpillrDeck(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      questions: questions ?? this.questions,
+      backgroundColor: backgroundColor ?? this.backgroundColor,
+      borderColor: borderColor ?? this.borderColor,
+      badgeColor: badgeColor ?? this.badgeColor,
+      badgeTextColor: badgeTextColor ?? this.badgeTextColor,
+      iconColor: iconColor ?? this.iconColor,
+      cardBorderColor: cardBorderColor ?? this.cardBorderColor,
+    );
+  }
 }
