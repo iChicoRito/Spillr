@@ -77,13 +77,9 @@ class PreparationPageScreen extends ConsumerWidget {
                             borderRadius: BorderRadius.circular(14),
                           ),
                         ),
-<<<<<<< HEAD
-                        child: const Text("Let's Get Started"),
-=======
                         child: Text(
                           canStart ? "Let's Get Started" : 'Add Tea First',
                         ),
->>>>>>> ae7d8bc393346ef4e96598ee5e7e84c321f12025
                       ),
                     ),
                   ],
@@ -109,30 +105,17 @@ List<String> _preparationDeckTitleLines(String title) {
 List<Color>? _preparationDeckLetterColors(String deckId) {
   return switch (deckId) {
     'wildcard-tea' => const [
-<<<<<<< HEAD
-        AppColors.blue500,
-        AppColors.violet500,
-        AppColors.teal500,
-        AppColors.red500,
-        AppColors.pink500,
-      ],
-=======
       AppColors.blue500,
       AppColors.violet500,
       AppColors.teal500,
       AppColors.red500,
       AppColors.pink500,
     ],
->>>>>>> ae7d8bc393346ef4e96598ee5e7e84c321f12025
     _ => null,
   };
 }
 
-<<<<<<< HEAD
-class _PreparationAnimatedMessage extends StatefulWidget {
-=======
 class _PreparationAnimatedMessage extends StatelessWidget {
->>>>>>> ae7d8bc393346ef4e96598ee5e7e84c321f12025
   const _PreparationAnimatedMessage({
     required this.titleLines,
     required this.deckTitleColor,
@@ -142,78 +125,6 @@ class _PreparationAnimatedMessage extends StatelessWidget {
   final List<String> titleLines;
   final Color deckTitleColor;
   final List<Color>? titleLetterColors;
-<<<<<<< HEAD
-
-  @override
-  State<_PreparationAnimatedMessage> createState() =>
-      _PreparationAnimatedMessageState();
-}
-
-class _PreparationAnimatedMessageState
-    extends State<_PreparationAnimatedMessage>
-    with SingleTickerProviderStateMixin {
-  static const _letterStagger = Duration(milliseconds: 55);
-  static const _letterDuration = Duration(milliseconds: 260);
-
-  late final AnimationController _controller;
-
-  List<_PreparationLineSpec> get _messageLines => [
-    const _PreparationLineSpec(
-      key: ValueKey('preparation-intro-line-one'),
-      text: 'You are about',
-      color: AppColors.neutral700,
-    ),
-    const _PreparationLineSpec(
-      key: ValueKey('preparation-intro-line-two'),
-      text: 'to play the',
-      color: AppColors.neutral700,
-    ),
-    for (final (index, titleLine) in widget.titleLines.indexed)
-      _PreparationLineSpec(
-        key: ValueKey('preparation-intro-deck-line-$index'),
-        text: titleLine,
-        color: widget.deckTitleColor,
-        letterColors: widget.titleLetterColors,
-      ),
-  ];
-
-  int get _visibleLetterCount =>
-      _messageLines.fold(0, (count, line) => count + line.visibleLetterCount);
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(vsync: this);
-    _updateControllerDuration();
-    _controller.forward();
-  }
-
-  @override
-  void didUpdateWidget(covariant _PreparationAnimatedMessage oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.titleLines.join('\n') != widget.titleLines.join('\n')) {
-      _updateControllerDuration();
-      _controller.forward(from: 0);
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _updateControllerDuration() {
-    final letterCount = _visibleLetterCount;
-    final staggeredDuration = letterCount > 0
-        ? (letterCount - 1) * _letterStagger.inMilliseconds
-        : 0;
-    _controller.duration = Duration(
-      milliseconds: staggeredDuration + _letterDuration.inMilliseconds,
-    );
-  }
-=======
->>>>>>> ae7d8bc393346ef4e96598ee5e7e84c321f12025
 
   @override
   Widget build(BuildContext context) {
@@ -225,28 +136,7 @@ class _PreparationAnimatedMessageState
     );
     final deckStyle = introStyle.copyWith(color: deckTitleColor);
 
-<<<<<<< HEAD
-    _PreparationAnimatedTextLine buildLine(_PreparationLineSpec line) {
-      final animatedLine = _PreparationAnimatedTextLine(
-        lineKey: line.key,
-        text: line.text,
-        color: line.color,
-        letterColors: line.letterColors,
-        controller: _controller,
-        firstVisibleLetterIndex: nextVisibleLetterIndex,
-      );
-      nextVisibleLetterIndex += line.visibleLetterCount;
-      return animatedLine;
-    }
-
-    final firstIntroLine = _messageLines[0];
-    final secondIntroLine = _messageLines[1];
-    final deckTitleLines = _messageLines.skip(2).toList();
-
-    return Column(
-=======
     return SequentialTextReveal(
->>>>>>> ae7d8bc393346ef4e96598ee5e7e84c321f12025
       key: const ValueKey('preparation-message'),
       textAlign: TextAlign.center,
       lines: [
@@ -281,154 +171,6 @@ class _PreparationAnimatedMessageState
   }
 }
 
-<<<<<<< HEAD
-class _PreparationLineSpec {
-  const _PreparationLineSpec({
-    required this.key,
-    required this.text,
-    required this.color,
-    this.letterColors,
-  });
-
-  final Key key;
-  final String text;
-  final Color color;
-  final List<Color>? letterColors;
-
-  int get visibleLetterCount =>
-      text.split('').where((character) => character.trim().isNotEmpty).length;
-}
-
-class _PreparationAnimatedTextLine extends StatelessWidget {
-  const _PreparationAnimatedTextLine({
-    required this.lineKey,
-    required this.text,
-    required this.color,
-    required this.letterColors,
-    required this.controller,
-    required this.firstVisibleLetterIndex,
-  });
-
-  final Key lineKey;
-  final String text;
-  final Color color;
-  final List<Color>? letterColors;
-  final AnimationController controller;
-  final int firstVisibleLetterIndex;
-
-  @override
-  Widget build(BuildContext context) {
-    final textStyle = TextStyle(
-      color: color,
-      fontSize: 50,
-      height: 1,
-      fontWeight: FontWeight.w800,
-    );
-    var visibleLetterIndex = firstVisibleLetterIndex;
-
-    final characters = text.split('').map<Widget>((character) {
-      if (character.trim().isEmpty) {
-        return const SizedBox.shrink();
-      }
-
-      final letterColor = letterColors == null
-          ? color
-          : letterColors![visibleLetterIndex % letterColors!.length];
-      final characterWidget = _PreparationAnimatedLetter(
-        characterKey: ValueKey('preparation-letter-$visibleLetterIndex'),
-        character: character,
-        textStyle: textStyle.copyWith(color: letterColor),
-        controller: controller,
-        letterIndex: visibleLetterIndex,
-      );
-      visibleLetterIndex++;
-      return characterWidget;
-    }).toList();
-
-    return Semantics(
-      key: lineKey,
-      label: text,
-      child: ExcludeSemantics(
-        child: Flow(
-          delegate: _PreparationTextFlowDelegate(text: text, style: textStyle),
-          children: characters,
-        ),
-      ),
-    );
-  }
-}
-
-class _PreparationAnimatedLetter extends StatelessWidget {
-  const _PreparationAnimatedLetter({
-    required this.characterKey,
-    required this.character,
-    required this.textStyle,
-    required this.controller,
-    required this.letterIndex,
-  });
-
-  static const _letterStagger = Duration(milliseconds: 55);
-  static const _letterDuration = Duration(milliseconds: 260);
-
-  final Key characterKey;
-  final String character;
-  final TextStyle textStyle;
-  final AnimationController controller;
-  final int letterIndex;
-
-  @override
-  Widget build(BuildContext context) {
-    final totalDuration = controller.duration ?? _letterDuration;
-    final startMilliseconds = letterIndex * _letterStagger.inMilliseconds;
-    final endMilliseconds = startMilliseconds + _letterDuration.inMilliseconds;
-    final start = startMilliseconds / totalDuration.inMilliseconds;
-    final end = endMilliseconds / totalDuration.inMilliseconds;
-    final animation = CurvedAnimation(
-      parent: controller,
-      curve: Interval(
-        start.clamp(0, 1).toDouble(),
-        end.clamp(0, 1).toDouble(),
-        curve: Curves.easeInOut,
-      ),
-    );
-
-    return AnimatedBuilder(
-      animation: animation,
-      child: Text(
-        character,
-        style: textStyle,
-        maxLines: 1,
-        overflow: TextOverflow.visible,
-        softWrap: false,
-      ),
-      builder: (context, child) {
-        final progress = animation.value.clamp(0, 1).toDouble();
-        return Opacity(
-          key: characterKey,
-          opacity: progress,
-          child: Transform.scale(
-            scale: 0.84 + (progress * 0.16),
-            alignment: Alignment.bottomCenter,
-            child: child,
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _PreparationTextFlowDelegate extends FlowDelegate {
-  const _PreparationTextFlowDelegate({required this.text, required this.style});
-
-  static const double _glyphTightness = 0.90;
-
-  final String text;
-  final TextStyle style;
-
-  @override
-  Size getSize(BoxConstraints constraints) {
-    return constraints.constrain(_measureText(text));
-=======
 Key _preparationLetterKey(int visibleLetterIndex) {
   return ValueKey('preparation-letter-$visibleLetterIndex');
 }
@@ -440,7 +182,6 @@ List<SequentialTextRevealSpan> _buildPreparationSpans(
 ) {
   if (letterColors == null || letterColors.isEmpty) {
     return [SequentialTextRevealSpan(text: text, style: baseStyle)];
->>>>>>> ae7d8bc393346ef4e96598ee5e7e84c321f12025
   }
 
   final spans = <SequentialTextRevealSpan>[];

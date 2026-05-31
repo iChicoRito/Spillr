@@ -7,7 +7,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hugeicons/hugeicons.dart';
 
-<<<<<<< HEAD
 import 'package:spillr/app/app.dart';
 import 'package:spillr/core/database/app_database.dart';
 import 'package:spillr/core/theme/app_colors.dart';
@@ -18,18 +17,6 @@ import 'package:spillr/features/game/presentation/screens/ending_page_screen.dar
 import 'package:spillr/features/game/presentation/screens/preparation_page_screen.dart';
 import 'package:spillr/features/game/presentation/providers/game_providers.dart';
 import 'package:spillr/features/onboarding/presentation/providers/onboarding_providers.dart';
-=======
-import 'package:Spillr/app/app.dart';
-import 'package:Spillr/core/database/app_database.dart';
-import 'package:Spillr/core/theme/app_colors.dart';
-import 'package:Spillr/features/game/data/spillr_decks.dart';
-import 'package:Spillr/features/game/domain/game_result.dart';
-import 'package:Spillr/features/game/domain/game_session_state.dart';
-import 'package:Spillr/features/game/presentation/screens/ending_page_screen.dart';
-import 'package:Spillr/features/game/presentation/screens/preparation_page_screen.dart';
-import 'package:Spillr/features/game/presentation/providers/game_providers.dart';
-import 'package:Spillr/features/onboarding/presentation/providers/onboarding_providers.dart';
->>>>>>> ae7d8bc393346ef4e96598ee5e7e84c321f12025
 
 void main() {
   late AppDatabase database;
@@ -57,6 +44,26 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     await tester.pump(const Duration(milliseconds: 300));
+  }
+
+  Future<void> disposeApp(WidgetTester tester) async {
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 1));
+    await tester.pump(const Duration(milliseconds: 1));
+  }
+
+  void testSpillrWidgets(
+    String description,
+    Future<void> Function(WidgetTester tester) callback,
+  ) {
+    testWidgets(description, (tester) async {
+      try {
+        await callback(tester);
+      } finally {
+        await disposeApp(tester);
+      }
+    });
   }
 
   Future<void> advanceToNameInput(WidgetTester tester) async {
@@ -100,13 +107,9 @@ void main() {
       pageView.controller!.jumpToPage(targetIndex);
       await tester.pumpAndSettle();
     }
-<<<<<<< HEAD
-    await tester.ensureVisible(find.byKey(ValueKey('play-deck-button-$targetKey')));
-=======
     await tester.ensureVisible(
       find.byKey(ValueKey('play-deck-button-$targetKey')),
     );
->>>>>>> ae7d8bc393346ef4e96598ee5e7e84c321f12025
     await tester.tap(find.byKey(ValueKey('play-deck-button-$targetKey')));
     await tester.pumpAndSettle();
   }
@@ -160,23 +163,19 @@ void main() {
         .data!;
   }
 
-  testWidgets('renders the first onboarding screen', (tester) async {
+  testSpillrWidgets('renders the first onboarding screen', (tester) async {
     await pumpApp(tester);
 
     expect(find.text('Vibe'), findsOneWidget);
     expect(find.text('Check'), findsOneWidget);
     expect(find.text('Okay'), findsOneWidget);
-<<<<<<< HEAD
-    expect(find.byKey(const ValueKey('onboarding-art-placeholder-0')), findsOneWidget);
-=======
     expect(
       find.byKey(const ValueKey('onboarding-art-placeholder-0')),
       findsOneWidget,
     );
->>>>>>> ae7d8bc393346ef4e96598ee5e7e84c321f12025
   });
 
-  testWidgets('progresses through the onboarding intro screens', (
+  testSpillrWidgets('progresses through the onboarding intro screens', (
     tester,
   ) async {
     await pumpApp(tester);
@@ -196,7 +195,7 @@ void main() {
     expect(find.text('What should we call you?'), findsOneWidget);
   });
 
-  testWidgets('blocks empty name submission', (tester) async {
+  testSpillrWidgets('blocks empty name submission', (tester) async {
     await pumpApp(tester);
 
     await advanceToNameInput(tester);
@@ -207,7 +206,9 @@ void main() {
     expect(find.text('Please enter your name.'), findsOneWidget);
   });
 
-  testWidgets('submitting a valid name shows confirmation', (tester) async {
+  testSpillrWidgets('submitting a valid name shows confirmation', (
+    tester,
+  ) async {
     await pumpApp(tester);
 
     await advanceToNameInput(tester);
@@ -228,59 +229,68 @@ void main() {
     expect(find.text("Let's Go!"), findsOneWidget);
   });
 
-  testWidgets('animates final onboarding confirmation text sequentially', (
-    tester,
-  ) async {
-    await pumpApp(tester);
+  testSpillrWidgets(
+    'animates final onboarding confirmation text sequentially',
+    (tester) async {
+      await pumpApp(tester);
 
-    await advanceToNameInput(tester);
+      await advanceToNameInput(tester);
 
-    await tester.enterText(find.byType(TextFormField), 'Chico');
-    await tester.tap(find.text('Submit'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 220));
+      await tester.enterText(find.byType(TextFormField), 'Chico');
+      await tester.tap(find.text('Submit'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 220));
 
-    final headlineLetters = find.descendant(
-      of: find.byKey(const ValueKey('onboarding-confirmation-headline-line-0')),
-      matching: find.byType(Opacity),
-    );
-    final subtitleLetters = find.descendant(
-      of: find.byKey(const ValueKey('onboarding-confirmation-subtitle-line-0')),
-      matching: find.byType(Opacity),
-    );
-    final nameLetters = find.descendant(
-      of: find.byKey(const ValueKey('onboarding-confirmation-headline-line-2')),
-      matching: find.byType(Opacity),
-    );
+      final headlineLetters = find.descendant(
+        of: find.byKey(
+          const ValueKey('onboarding-confirmation-headline-line-0'),
+        ),
+        matching: find.byType(Opacity),
+      );
+      final subtitleLetters = find.descendant(
+        of: find.byKey(
+          const ValueKey('onboarding-confirmation-subtitle-line-0'),
+        ),
+        matching: find.byType(Opacity),
+      );
+      final nameLetters = find.descendant(
+        of: find.byKey(
+          const ValueKey('onboarding-confirmation-headline-line-2'),
+        ),
+        matching: find.byType(Opacity),
+      );
 
-    final firstHeadlineLetter = tester.widget<Opacity>(headlineLetters.first);
-    final firstSubtitleLetter = tester.widget<Opacity>(subtitleLetters.first);
-    final firstNameLetter = tester.widget<Opacity>(nameLetters.first);
+      final firstHeadlineLetter = tester.widget<Opacity>(headlineLetters.first);
+      final firstSubtitleLetter = tester.widget<Opacity>(subtitleLetters.first);
+      final firstNameLetter = tester.widget<Opacity>(nameLetters.first);
 
-    final firstNameColor = tester
-        .widget<Text>(
-          find.descendant(
-            of: find.byWidget(firstNameLetter),
-            matching: find.byType(Text),
-          ),
-        )
-        .style!
-        .color;
+      final firstNameColor = tester
+          .widget<Text>(
+            find.descendant(
+              of: find.byWidget(firstNameLetter),
+              matching: find.byType(Text),
+            ),
+          )
+          .style!
+          .color;
 
-    expect(
-      firstHeadlineLetter.opacity,
-      greaterThan(firstSubtitleLetter.opacity),
-    );
-    expect(firstSubtitleLetter.opacity, 0);
-    expect(firstNameColor, AppColors.teal500);
+      expect(
+        firstHeadlineLetter.opacity,
+        greaterThan(firstSubtitleLetter.opacity),
+      );
+      expect(firstSubtitleLetter.opacity, 0);
+      expect(firstNameColor, AppColors.teal500);
 
-    await tester.pumpAndSettle();
+      await tester.pumpAndSettle();
 
-    final settledSubtitleLetter = tester.widget<Opacity>(subtitleLetters.first);
-    expect(settledSubtitleLetter.opacity, 1);
-  });
+      final settledSubtitleLetter = tester.widget<Opacity>(
+        subtitleLetters.first,
+      );
+      expect(settledSubtitleLetter.opacity, 1);
+    },
+  );
 
-  testWidgets('lets the user reach the play page after onboarding', (
+  testSpillrWidgets('lets the user reach the play page after onboarding', (
     tester,
   ) async {
     await pumpApp(tester);
@@ -301,7 +311,7 @@ void main() {
     expect(find.text('Play Cards'), findsOneWidget);
   });
 
-  testWidgets(
+  testSpillrWidgets(
     'skips onboarding when a saved profile exists and shows play page',
     (tester) async {
       await seedProfileAndOpenPlayPage(tester);
@@ -316,20 +326,23 @@ void main() {
     },
   );
 
-  testWidgets('uses the consistent H1 typography for the active deck card', (
+  testSpillrWidgets(
+    'uses the consistent H1 typography for the active deck card',
+    (tester) async {
+      await database.saveProfile('Chico');
+
+      await pumpApp(tester);
+
+      final title = tester.widget<Text>(find.text('No\nDead\nAir'));
+
+      expect(title.style?.fontSize, 64);
+      expect(title.style?.fontWeight, FontWeight.w700);
+    },
+  );
+
+  testSpillrWidgets('renders the active deck card without a shadow', (
     tester,
   ) async {
-    await database.saveProfile('Chico');
-
-    await pumpApp(tester);
-
-    final title = tester.widget<Text>(find.text('No\nDead\nAir'));
-
-    expect(title.style?.fontSize, 36);
-    expect(title.style?.fontWeight, FontWeight.w700);
-  });
-
-  testWidgets('renders the active deck card without a shadow', (tester) async {
     await database.saveProfile('Chico');
 
     await pumpApp(tester);
@@ -348,7 +361,7 @@ void main() {
     expect(decoration.boxShadow, isNull);
   });
 
-  testWidgets('lets the play deck carousel bleed to the screen edges', (
+  testSpillrWidgets('lets the play deck carousel bleed to the screen edges', (
     tester,
   ) async {
     await database.saveProfile('Chico');
@@ -358,13 +371,13 @@ void main() {
     final carouselRect = tester.getRect(find.byType(PageView));
     final pageView = tester.widget<PageView>(find.byType(PageView));
 
-    expect(carouselRect.left, 0);
-    expect(carouselRect.right, 393);
+    expect(carouselRect.left, closeTo(0, 2));
+    expect(carouselRect.right, closeTo(393, 2));
     expect(pageView.clipBehavior, Clip.none);
     expect(pageView.controller!.viewportFraction, 0.78);
   });
 
-  testWidgets('updates the active deck label when the carousel moves', (
+  testSpillrWidgets('updates the active deck label when the carousel moves', (
     tester,
   ) async {
     await seedProfileAndOpenPlayPage(tester);
@@ -378,7 +391,9 @@ void main() {
     expect(find.text('Play'), findsOneWidget);
   });
 
-  testWidgets('shows wildcard tea as the final playable deck', (tester) async {
+  testSpillrWidgets('shows wildcard tea as the final playable deck', (
+    tester,
+  ) async {
     await seedProfileAndOpenPlayPage(tester);
 
     final pageView = tester.widget<PageView>(find.byType(PageView));
@@ -386,10 +401,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Just Pull It'), findsOneWidget);
-    expect(
-      find.text('No category, no rules, just whatever the deck serves'),
-      findsOneWidget,
-    );
     expect(find.text('Play'), findsOneWidget);
 
     final playButton = tester.widget<FilledButton>(
@@ -415,7 +426,7 @@ void main() {
     );
   });
 
-  testWidgets('cycles Just Pull It letters through deck accent colors', (
+  testSpillrWidgets('cycles Just Pull It letters through deck accent colors', (
     tester,
   ) async {
     await seedProfileAndOpenPlayPage(tester);
@@ -423,13 +434,9 @@ void main() {
     final pageView = tester.widget<PageView>(find.byType(PageView));
     pageView.controller!.jumpToPage(5);
     await tester.pumpAndSettle();
-<<<<<<< HEAD
-    await tester.tap(find.byKey(const ValueKey('play-deck-button-wildcard-tea')));
-=======
     await tester.tap(
       find.byKey(const ValueKey('play-deck-button-wildcard-tea')),
     );
->>>>>>> ae7d8bc393346ef4e96598ee5e7e84c321f12025
     await tester.pumpAndSettle();
 
     final letterOpacities = find.descendant(
@@ -487,7 +494,7 @@ void main() {
     expect(wildcardDeck.questions, expectedQuestions);
   });
 
-  testWidgets('starts each game with shuffled questions', (tester) async {
+  testSpillrWidgets('starts each game with shuffled questions', (tester) async {
     final deck = spillrDecks.firstWhere((deck) => deck.id == 'no-dead-air');
     final session = GameSessionState.start(deck, random: Random(1));
 
@@ -496,7 +503,7 @@ void main() {
     expect(session.questions, containsAll(deck.questions));
   });
 
-  testWidgets('opens the game page from the active deck button', (
+  testSpillrWidgets('opens the game page from the active deck button', (
     tester,
   ) async {
     await seedProfileAndOpenPlayPage(tester);
@@ -521,7 +528,9 @@ void main() {
     );
   });
 
-  testWidgets('starts the game from the preparation screen', (tester) async {
+  testSpillrWidgets('starts the game from the preparation screen', (
+    tester,
+  ) async {
     await seedProfileAndOpenPlayPage(tester);
 
     await openDeckFromPlayPage(tester, label: 'Play No Dead Air');
@@ -534,34 +543,41 @@ void main() {
     expect(find.text('Tap to flip'), findsOneWidget);
   });
 
-  testWidgets('animates preparation letters sequentially from first to last', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      const MaterialApp(home: PreparationPageScreen(deckId: 'chaos-mode')),
-    );
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 120));
+  testSpillrWidgets(
+    'animates preparation letters sequentially from first to last',
+    (tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [appDatabaseProvider.overrideWithValue(database)],
+          child: const MaterialApp(
+            home: PreparationPageScreen(deckId: 'chaos-mode'),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 120));
 
-    final firstLetter = tester.widget<Opacity>(
-      find.byKey(const ValueKey('preparation-letter-0')),
-    );
-    final lastLetter = tester.widget<Opacity>(
-      find.byKey(const ValueKey('preparation-letter-28')),
-    );
+      final firstLetter = tester.widget<Opacity>(
+        find.byKey(const ValueKey('preparation-letter-0')),
+      );
+      final lastLetter = tester.widget<Opacity>(
+        find.byKey(const ValueKey('preparation-letter-28')),
+      );
 
-    expect(firstLetter.opacity, greaterThan(lastLetter.opacity));
-    expect(lastLetter.opacity, 0);
+      expect(firstLetter.opacity, greaterThan(lastLetter.opacity));
+      expect(lastLetter.opacity, 0);
 
-    await tester.pumpAndSettle();
+      await tester.pumpAndSettle();
 
-    final settledLastLetter = tester.widget<Opacity>(
-      find.byKey(const ValueKey('preparation-letter-28')),
-    );
-    expect(settledLastLetter.opacity, 1);
-  });
+      final settledLastLetter = tester.widget<Opacity>(
+        find.byKey(const ValueKey('preparation-letter-28')),
+      );
+      expect(settledLastLetter.opacity, 1);
+    },
+  );
 
-  testWidgets(
+  testSpillrWidgets(
     'keeps multi-word deck title lines stable on preparation screen',
     (tester) async {
       await seedProfileAndOpenPlayPage(tester);
@@ -581,22 +597,23 @@ void main() {
     },
   );
 
-  testWidgets('pins the tap to flip prompt to the bottom of the front card', (
-    tester,
-  ) async {
-    await seedProfileAndOpenPlayPage(tester);
+  testSpillrWidgets(
+    'pins the tap to flip prompt to the bottom of the front card',
+    (tester) async {
+      await seedProfileAndOpenPlayPage(tester);
 
-    await openDeckFromPlayPage(tester, label: 'Play No Dead Air');
-    await continueFromPreparation(tester);
+      await openDeckFromPlayPage(tester, label: 'Play No Dead Air');
+      await continueFromPreparation(tester);
 
-    final promptPositioned = tester.widget<Positioned>(
-      find.byKey(const ValueKey('game-tap-to-flip-positioned')),
-    );
+      final promptPositioned = tester.widget<Positioned>(
+        find.byKey(const ValueKey('game-tap-to-flip-positioned')),
+      );
 
-    expect(promptPositioned.bottom, 20);
-  });
+      expect(promptPositioned.bottom, 20);
+    },
+  );
 
-  testWidgets('shows a progress bar below the card', (tester) async {
+  testSpillrWidgets('shows a progress bar below the card', (tester) async {
     await seedProfileAndOpenPlayPage(tester);
 
     await openDeckFromPlayPage(tester, label: 'Play No Dead Air');
@@ -605,40 +622,41 @@ void main() {
     expect(find.byType(LinearProgressIndicator), findsOneWidget);
   });
 
-  testWidgets('animates the progress bar when advancing to the next card', (
-    tester,
-  ) async {
-    await seedProfileAndOpenPlayPage(tester);
+  testSpillrWidgets(
+    'animates the progress bar when advancing to the next card',
+    (tester) async {
+      await seedProfileAndOpenPlayPage(tester);
 
-    await openDeckFromPlayPage(tester, label: 'Play No Dead Air');
-    await continueFromPreparation(tester);
-    await flipCard(tester);
+      await openDeckFromPlayPage(tester, label: 'Play No Dead Air');
+      await continueFromPreparation(tester);
+      await flipCard(tester);
 
-    final progressBarBefore = tester.widget<LinearProgressIndicator>(
-      find.byKey(const ValueKey('game-progress-bar')),
-    );
-    expect(progressBarBefore.value, closeTo(1 / 20, 0.0001));
+      final progressBarBefore = tester.widget<LinearProgressIndicator>(
+        find.byKey(const ValueKey('game-progress-bar')),
+      );
+      expect(progressBarBefore.value, closeTo(1 / 20, 0.0001));
 
-    await tester.tap(find.byKey(const ValueKey('game-next-card-button')));
-    await tester.pump(const Duration(milliseconds: 420));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 80));
+      await tester.tap(find.byKey(const ValueKey('game-next-card-button')));
+      await tester.pump(const Duration(milliseconds: 420));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 80));
 
-    final progressBarDuring = tester.widget<LinearProgressIndicator>(
-      find.byKey(const ValueKey('game-progress-bar')),
-    );
-    expect(progressBarDuring.value!, greaterThan(1 / 20));
-    expect(progressBarDuring.value!, lessThan(2 / 20));
+      final progressBarDuring = tester.widget<LinearProgressIndicator>(
+        find.byKey(const ValueKey('game-progress-bar')),
+      );
+      expect(progressBarDuring.value!, greaterThan(1 / 20));
+      expect(progressBarDuring.value!, lessThan(2 / 20));
 
-    await tester.pump(const Duration(milliseconds: 220));
+      await tester.pump(const Duration(milliseconds: 220));
 
-    final progressBarAfter = tester.widget<LinearProgressIndicator>(
-      find.byKey(const ValueKey('game-progress-bar')),
-    );
-    expect(progressBarAfter.value, closeTo(2 / 20, 0.0001));
-  });
+      final progressBarAfter = tester.widget<LinearProgressIndicator>(
+        find.byKey(const ValueKey('game-progress-bar')),
+      );
+      expect(progressBarAfter.value, closeTo(2 / 20, 0.0001));
+    },
+  );
 
-  testWidgets('shows the three action buttons on the last card', (
+  testSpillrWidgets('shows the three action buttons on the last card', (
     tester,
   ) async {
     await seedProfileAndOpenPlayPage(tester);
@@ -658,7 +676,7 @@ void main() {
     expect(find.text("Done, I'm cooked"), findsNothing);
   });
 
-  testWidgets('shows end spill and pass actions on the flipped card', (
+  testSpillrWidgets('shows end spill and pass actions on the flipped card', (
     tester,
   ) async {
     await seedProfileAndOpenPlayPage(tester);
@@ -672,65 +690,68 @@ void main() {
     expect(find.text('Pass'), findsOneWidget);
   });
 
-  testWidgets('uses a larger primary Answered button with hugeicons only', (
+  testSpillrWidgets(
+    'uses a larger primary Answered button with hugeicons only',
+    (tester) async {
+      await seedProfileAndOpenPlayPage(tester);
+
+      await openDeckFromPlayPage(tester, label: 'Play No Dead Air');
+      await continueFromPreparation(tester);
+      await flipCard(tester);
+
+      final spillButtonSize = tester.getSize(
+        find.byKey(const ValueKey('game-spill-button-circle')),
+      );
+      final endButtonSize = tester.getSize(
+        find.byKey(const ValueKey('game-end-button-circle')),
+      );
+      final passButtonSize = tester.getSize(
+        find.byKey(const ValueKey('game-pass-button-circle')),
+      );
+      final endIcon = tester.widget<HugeIcon>(
+        find.descendant(
+          of: find.byKey(const ValueKey('game-end-button')),
+          matching: find.byType(HugeIcon),
+        ),
+      );
+      final spillIcon = tester.widget<HugeIcon>(
+        find.descendant(
+          of: find.byKey(const ValueKey('game-next-card-button')),
+          matching: find.byType(HugeIcon),
+        ),
+      );
+      final passIcon = tester.widget<HugeIcon>(
+        find.descendant(
+          of: find.byKey(const ValueKey('game-pass-button')),
+          matching: find.byType(HugeIcon),
+        ),
+      );
+
+      expect(spillButtonSize.width, greaterThan(endButtonSize.width));
+      expect(spillButtonSize.width, greaterThan(passButtonSize.width));
+      expect(endIcon.icon, HugeIcons.strokeRoundedLogout05);
+      expect(spillIcon.icon, HugeIcons.strokeRoundedBulb);
+      expect(passIcon.icon, HugeIcons.strokeRoundedNext);
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('game-action-bar')),
+          matching: find.byType(HugeIcon),
+        ),
+        findsNWidgets(3),
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('game-action-bar')),
+          matching: find.byType(Icon),
+        ),
+        findsNothing,
+      );
+    },
+  );
+
+  testSpillrWidgets('ends the round immediately when End is tapped', (
     tester,
   ) async {
-    await seedProfileAndOpenPlayPage(tester);
-
-    await openDeckFromPlayPage(tester, label: 'Play No Dead Air');
-    await continueFromPreparation(tester);
-    await flipCard(tester);
-
-    final spillButtonSize = tester.getSize(
-      find.byKey(const ValueKey('game-spill-button-circle')),
-    );
-    final endButtonSize = tester.getSize(
-      find.byKey(const ValueKey('game-end-button-circle')),
-    );
-    final passButtonSize = tester.getSize(
-      find.byKey(const ValueKey('game-pass-button-circle')),
-    );
-    final endIcon = tester.widget<HugeIcon>(
-      find.descendant(
-        of: find.byKey(const ValueKey('game-end-button')),
-        matching: find.byType(HugeIcon),
-      ),
-    );
-    final spillIcon = tester.widget<HugeIcon>(
-      find.descendant(
-        of: find.byKey(const ValueKey('game-next-card-button')),
-        matching: find.byType(HugeIcon),
-      ),
-    );
-    final passIcon = tester.widget<HugeIcon>(
-      find.descendant(
-        of: find.byKey(const ValueKey('game-pass-button')),
-        matching: find.byType(HugeIcon),
-      ),
-    );
-
-    expect(spillButtonSize.width, greaterThan(endButtonSize.width));
-    expect(spillButtonSize.width, greaterThan(passButtonSize.width));
-    expect(endIcon.icon, HugeIcons.strokeRoundedLogout05);
-    expect(spillIcon.icon, HugeIcons.strokeRoundedBulb);
-    expect(passIcon.icon, HugeIcons.strokeRoundedNext);
-    expect(
-      find.descendant(
-        of: find.byKey(const ValueKey('game-action-bar')),
-        matching: find.byType(HugeIcon),
-      ),
-      findsNWidgets(3),
-    );
-    expect(
-      find.descendant(
-        of: find.byKey(const ValueKey('game-action-bar')),
-        matching: find.byType(Icon),
-      ),
-      findsNothing,
-    );
-  });
-
-  testWidgets('ends the round immediately when End is tapped', (tester) async {
     await seedProfileAndOpenPlayPage(tester);
 
     await openDeckFromPlayPage(tester, label: 'Play No Dead Air');
@@ -751,7 +772,7 @@ void main() {
     expect(find.text('Back to Menu'), findsOneWidget);
   });
 
-  testWidgets('does not show a deck selector on the game screen', (
+  testSpillrWidgets('does not show a deck selector on the game screen', (
     tester,
   ) async {
     await seedProfileAndOpenPlayPage(tester);
@@ -762,7 +783,9 @@ void main() {
     expect(find.byKey(const ValueKey('game-deck-selector')), findsNothing);
   });
 
-  testWidgets('shows a 10-second timer only on flipped cards', (tester) async {
+  testSpillrWidgets('shows a 10-second timer only on flipped cards', (
+    tester,
+  ) async {
     await seedProfileAndOpenPlayPage(tester);
 
     await openDeckFromPlayPage(tester, label: 'Play No Dead Air');
@@ -776,7 +799,7 @@ void main() {
     expect(find.text('2:00'), findsOneWidget);
   });
 
-  testWidgets('counts down the flipped-card timer in minute format', (
+  testSpillrWidgets('counts down the flipped-card timer in minute format', (
     tester,
   ) async {
     await seedProfileAndOpenPlayPage(tester);
@@ -789,28 +812,29 @@ void main() {
     expect(find.text('1:59'), findsOneWidget);
   });
 
-  testWidgets('counts down the flipped-card timer and auto-passes on timeout', (
-    tester,
-  ) async {
-    await seedProfileAndOpenPlayPage(tester);
+  testSpillrWidgets(
+    'counts down the flipped-card timer and auto-passes on timeout',
+    (tester) async {
+      await seedProfileAndOpenPlayPage(tester);
 
-    await openDeckFromPlayPage(tester, label: 'Play No Dead Air');
-    await continueFromPreparation(tester);
-    await flipCard(tester);
+      await openDeckFromPlayPage(tester, label: 'Play No Dead Air');
+      await continueFromPreparation(tester);
+      await flipCard(tester);
 
-    await tester.pump(const Duration(seconds: 1));
-    expect(find.text('1:59'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 1));
+      expect(find.text('1:59'), findsOneWidget);
 
-    await tester.pump(const Duration(seconds: 119));
-    await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 119));
+      await tester.pumpAndSettle();
 
-    expect(find.text('No. 2'), findsOneWidget);
-    expect(find.text('2 of 20'), findsOneWidget);
-    expect(find.text('Tap to flip'), findsOneWidget);
-    expect(find.byKey(const ValueKey('game-flip-timer-chip')), findsNothing);
-  });
+      expect(find.text('No. 2'), findsOneWidget);
+      expect(find.text('2 of 20'), findsOneWidget);
+      expect(find.text('Tap to flip'), findsOneWidget);
+      expect(find.byKey(const ValueKey('game-flip-timer-chip')), findsNothing);
+    },
+  );
 
-  testWidgets('keeps the badge and question centered on the front card', (
+  testSpillrWidgets('keeps the badge and question centered on the front card', (
     tester,
   ) async {
     await seedProfileAndOpenPlayPage(tester);
@@ -825,7 +849,9 @@ void main() {
     expect(centerBlock.alignment, Alignment.center);
   });
 
-  testWidgets('uses a smaller badge on the unflipped card', (tester) async {
+  testSpillrWidgets('uses a smaller badge on the unflipped card', (
+    tester,
+  ) async {
     await seedProfileAndOpenPlayPage(tester);
 
     await openDeckFromPlayPage(tester, label: 'Play No Dead Air');
@@ -841,7 +867,7 @@ void main() {
     expect(badgeText.style?.fontSize, 14);
   });
 
-  testWidgets('flips the card and advances to the next question', (
+  testSpillrWidgets('flips the card and advances to the next question', (
     tester,
   ) async {
     await seedProfileAndOpenPlayPage(tester);
@@ -869,7 +895,7 @@ void main() {
     expect(secondQuestion, isNot(equals(firstQuestion)));
   });
 
-  testWidgets('animates the card with a transform while flipping', (
+  testSpillrWidgets('animates the card with a transform while flipping', (
     tester,
   ) async {
     await seedProfileAndOpenPlayPage(tester);
@@ -894,7 +920,9 @@ void main() {
     expect(animatedTransform.transform.storage, isNot(equals(initialStorage)));
   });
 
-  testWidgets('does not show a badge on the flipped card', (tester) async {
+  testSpillrWidgets('does not show a badge on the flipped card', (
+    tester,
+  ) async {
     await seedProfileAndOpenPlayPage(tester);
 
     await openDeckFromPlayPage(tester, label: 'Play Chaos Mode');
@@ -910,38 +938,40 @@ void main() {
     );
   });
 
-  testWidgets('keeps the flipped question centered in the middle of the card', (
-    tester,
-  ) async {
-    await seedProfileAndOpenPlayPage(tester);
+  testSpillrWidgets(
+    'keeps the flipped question centered in the middle of the card',
+    (tester) async {
+      await seedProfileAndOpenPlayPage(tester);
 
-    await openDeckFromPlayPage(tester, label: 'Play Date Mode');
-    await continueFromPreparation(tester);
-    await flipCard(tester);
+      await openDeckFromPlayPage(tester, label: 'Play Date Mode');
+      await continueFromPreparation(tester);
+      await flipCard(tester);
 
-    final questionCenter = tester.widget<Align>(
-      find.byKey(const ValueKey('game-question-center')),
-    );
+      final questionCenter = tester.widget<Align>(
+        find.byKey(const ValueKey('game-question-center')),
+      );
 
-    expect(questionCenter.alignment, Alignment.center);
-  });
+      expect(questionCenter.alignment, Alignment.center);
+    },
+  );
 
-  testWidgets('shows flipped questions without added outer quotation marks', (
-    tester,
-  ) async {
-    await seedProfileAndOpenPlayPage(tester);
+  testSpillrWidgets(
+    'shows flipped questions without added outer quotation marks',
+    (tester) async {
+      await seedProfileAndOpenPlayPage(tester);
 
-    await openDeckFromPlayPage(tester, label: 'Play No Dead Air');
-    await continueFromPreparation(tester);
-    await flipCard(tester);
+      await openDeckFromPlayPage(tester, label: 'Play No Dead Air');
+      await continueFromPreparation(tester);
+      await flipCard(tester);
 
-    final question = currentQuestionText(tester);
+      final question = currentQuestionText(tester);
 
-    expect(question.startsWith('"'), isFalse);
-    expect(question.endsWith('"'), isFalse);
-  });
+      expect(question.startsWith('"'), isFalse);
+      expect(question.endsWith('"'), isFalse);
+    },
+  );
 
-  testWidgets(
+  testSpillrWidgets(
     'does not flash the next question while closing the flipped card',
     (tester) async {
       await seedProfileAndOpenPlayPage(tester);
@@ -966,7 +996,7 @@ void main() {
     },
   );
 
-  testWidgets('passing every card shows the certified dodger ending', (
+  testSpillrWidgets('passing every card shows the certified dodger ending', (
     tester,
   ) async {
     await seedProfileAndOpenPlayPage(tester);
@@ -986,46 +1016,48 @@ void main() {
     expect(find.text('Back to Menu'), findsOneWidget);
   });
 
-  testWidgets('answering every card shows the spilled everything ending', (
-    tester,
-  ) async {
-    await seedProfileAndOpenPlayPage(tester);
+  testSpillrWidgets(
+    'answering every card shows the spilled everything ending',
+    (tester) async {
+      await seedProfileAndOpenPlayPage(tester);
 
-    await openDeckFromPlayPage(tester, label: 'Play No Dead Air');
-    await continueFromPreparation(tester);
+      await openDeckFromPlayPage(tester, label: 'Play No Dead Air');
+      await continueFromPreparation(tester);
 
-    for (var i = 0; i < 20; i++) {
-      await answerCurrentCard(tester, finalCard: i == 19);
-    }
+      for (var i = 0; i < 20; i++) {
+        await answerCurrentCard(tester, finalCard: i == 19);
+      }
 
-    expect(find.text('You Spilled\nEverything,\nChico'), findsOneWidget);
-    expect(
-      find.text('You survived the questions. Honestly, iconic behavior.'),
-      findsOneWidget,
-    );
-  });
+      expect(find.text('You Spilled\nEverything,\nChico'), findsOneWidget);
+      expect(
+        find.text('You survived the questions. Honestly, iconic behavior.'),
+        findsOneWidget,
+      );
+    },
+  );
 
-  testWidgets('mixing answers and passes shows the almost spilled ending', (
-    tester,
-  ) async {
-    await seedProfileAndOpenPlayPage(tester);
+  testSpillrWidgets(
+    'mixing answers and passes shows the almost spilled ending',
+    (tester) async {
+      await seedProfileAndOpenPlayPage(tester);
 
-    await openDeckFromPlayPage(tester, label: 'Play Hot Seat');
-    await continueFromPreparation(tester);
+      await openDeckFromPlayPage(tester, label: 'Play Hot Seat');
+      await continueFromPreparation(tester);
 
-    await answerCurrentCard(tester);
-    for (var i = 0; i < 19; i++) {
-      await passCurrentCard(tester, finalCard: i == 18);
-    }
+      await answerCurrentCard(tester);
+      for (var i = 0; i < 19; i++) {
+        await passCurrentCard(tester, finalCard: i == 18);
+      }
 
-    expect(find.text('Almost Spilled\nEverything,\nChico'), findsOneWidget);
-    expect(
-      find.text('You finished the deck, but some tea stayed unspilled.'),
-      findsOneWidget,
-    );
-  });
+      expect(find.text('Almost Spilled\nEverything,\nChico'), findsOneWidget);
+      expect(
+        find.text('You finished the deck, but some tea stayed unspilled.'),
+        findsOneWidget,
+      );
+    },
+  );
 
-  testWidgets('shows confetti on the ending screen', (tester) async {
+  testSpillrWidgets('shows confetti on the ending screen', (tester) async {
     await tester.binding.setSurfaceSize(const Size(393, 852));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 

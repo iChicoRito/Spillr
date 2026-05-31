@@ -1,3 +1,1 @@
-# MediaPipe optional proto classes referenced by flutter_gemma dependencies.
--dontwarn com.google.mediapipe.proto.CalculatorProfileProto$CalculatorProfile
--dontwarn com.google.mediapipe.proto.GraphTemplateProto$CalculatorGraphTemplate
+# No custom release rules are required for the prototype-only build.

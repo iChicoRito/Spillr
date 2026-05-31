@@ -6,13 +6,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:Spillr/app/app.dart';
-import 'package:Spillr/core/database/app_database.dart';
-import 'package:Spillr/core/theme/app_colors.dart';
-import 'package:Spillr/features/decks/data/question_generation_service.dart';
-import 'package:Spillr/features/decks/presentation/providers/deck_providers.dart';
-import 'package:Spillr/features/game/domain/spillr_deck.dart';
-import 'package:Spillr/features/onboarding/presentation/providers/onboarding_providers.dart';
+import 'package:spillr/app/app.dart';
+import 'package:spillr/core/database/app_database.dart';
+import 'package:spillr/core/theme/app_colors.dart';
+import 'package:spillr/features/decks/data/question_generation_service.dart';
+import 'package:spillr/features/decks/presentation/providers/deck_providers.dart';
+import 'package:spillr/features/game/domain/spillr_deck.dart';
+import 'package:spillr/features/onboarding/presentation/providers/onboarding_providers.dart';
 
 void main() {
   late AppDatabase database;
@@ -58,8 +58,7 @@ void main() {
 
   Future<void> openDecksScreen(WidgetTester tester) async {
     await tester.tap(find.byKey(const ValueKey('bottom-nav-decks')));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
   }
 
   Future<void> openCreateSheet(WidgetTester tester) async {
@@ -117,9 +116,11 @@ void main() {
 
     expect(find.text('Create your'), findsOneWidget);
     expect(find.text('Custom Deck'), findsOneWidget);
-    expect(find.text('Deep Spill'), findsOneWidget);
+    expect(find.byKey(const ValueKey('decks-row-deep-spill')), findsOneWidget);
     expect(find.text('All'), findsOneWidget);
     expect(find.byKey(const ValueKey('bottom-nav-decks')), findsOneWidget);
+
+    await disposeApp(tester);
   });
 
   testWidgets('uses the consistent typography scale on the decks page', (
@@ -131,12 +132,12 @@ void main() {
 
     expectTextTypography(
       tester.widget<Text>(find.text('Create your')).style,
-      fontSize: 28,
+      fontSize: 24,
       fontWeight: FontWeight.w700,
     );
     expectTextTypography(
       tester.widget<Text>(find.text('Custom Deck')).style,
-      fontSize: 28,
+      fontSize: 24,
       fontWeight: FontWeight.w700,
     );
     expectTextTypography(
@@ -153,7 +154,7 @@ void main() {
       fontWeight: FontWeight.w600,
     );
     expectTextTypography(
-      tester.widget<Text>(find.text('x20 Cards')).style,
+      tester.widgetList<Text>(find.text('x20 Cards')).first.style,
       fontSize: 14,
       fontWeight: FontWeight.w400,
     );
@@ -166,6 +167,8 @@ void main() {
       fontSize: 18,
       fontWeight: FontWeight.w500,
     );
+
+    await disposeApp(tester);
   });
 
   testWidgets('returns to the play page from the decks bottom navigation', (
@@ -179,6 +182,8 @@ void main() {
 
     expect(find.text('Choose Your Deck'), findsOneWidget);
     expect(find.text('Ready to Spill?'), findsOneWidget);
+
+    await disposeApp(tester);
   });
 
   testWidgets('filters the deck list by chip and restores it with All', (
@@ -187,17 +192,23 @@ void main() {
     await seedProfileAndOpenPlayPage(tester);
 
     await openDecksScreen(tester);
-    await tester.tap(find.byKey(const ValueKey('decks-filter-no-dead-air')));
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('built-in-no-dead-air')),
+    );
+    await tester.tap(find.byKey(const ValueKey('built-in-no-dead-air')));
     await tester.pumpAndSettle();
 
-    expect(find.text('No Dead Air'), findsOneWidget);
-    expect(find.text('Deep Spill'), findsNothing);
+    expect(find.byKey(const ValueKey('decks-row-no-dead-air')), findsOneWidget);
+    expect(find.byKey(const ValueKey('decks-row-deep-spill')), findsNothing);
 
-    await tester.tap(find.byKey(const ValueKey('decks-filter-all')));
+    await tester.ensureVisible(find.byKey(const ValueKey('built-in-all')));
+    await tester.tap(find.byKey(const ValueKey('built-in-all')));
     await tester.pumpAndSettle();
 
-    expect(find.text('No Dead Air'), findsOneWidget);
-    expect(find.text('Deep Spill'), findsOneWidget);
+    expect(find.byKey(const ValueKey('decks-row-no-dead-air')), findsOneWidget);
+    expect(find.byKey(const ValueKey('decks-row-deep-spill')), findsOneWidget);
+
+    await disposeApp(tester);
   });
 
   testWidgets('opens the create deck bottom sheet with the expected fields', (
@@ -219,6 +230,8 @@ void main() {
       find.byKey(const ValueKey('decks-sheet-submit-button')),
       findsOneWidget,
     );
+
+    await disposeApp(tester);
   });
 
   testWidgets('uses the consistent typography scale in the create deck sheet', (
@@ -231,10 +244,10 @@ void main() {
     expectTextTypography(
       tester
           .widgetList<Text>(find.text('Create Deck'))
-          .firstWhere((text) => text.style?.fontSize == 24)
+          .firstWhere((text) => text.style?.fontSize == 18)
           .style,
-      fontSize: 24,
-      fontWeight: FontWeight.w700,
+      fontSize: 18,
+      fontWeight: FontWeight.w600,
     );
     for (final label in ['Deck Name', 'Icon', 'Color Selection']) {
       expectTextTypography(
@@ -258,9 +271,11 @@ void main() {
     );
     expectTextTypography(
       submitButton.style?.textStyle?.resolve(const <WidgetState>{}),
-      fontSize: 18,
+      fontSize: 16,
       fontWeight: FontWeight.w500,
     );
+
+    await disposeApp(tester);
   });
 
   testWidgets('validates an empty custom deck name', (tester) async {
@@ -271,6 +286,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Please enter a deck name.'), findsOneWidget);
+
+    await disposeApp(tester);
   });
 
   testWidgets('creates a custom deck and shows it as x0 Cards', (tester) async {
@@ -284,8 +301,10 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('decks-sheet-submit-button')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Weird Humor'), findsOneWidget);
+    expect(find.byKey(const ValueKey('decks-row-custom-1')), findsOneWidget);
     expect(find.text('x0 Cards'), findsOneWidget);
+
+    await disposeApp(tester);
   });
 
   testWidgets('shows the custom deck long-press actions', (tester) async {
@@ -306,6 +325,8 @@ void main() {
 
     expect(find.text('Edit Deck'), findsOneWidget);
     expect(find.text('Delete'), findsOneWidget);
+
+    await disposeApp(tester);
   });
 
   testWidgets('opens a built-in deck questions page from the deck row', (
@@ -325,6 +346,8 @@ void main() {
       find.text("What's something you wish people understood about you?"),
       findsOneWidget,
     );
+
+    await disposeApp(tester);
   });
 
   testWidgets('edits and deletes a built-in question from its row menu', (
@@ -375,6 +398,8 @@ void main() {
 
     expect(find.text('What truth are you avoiding right now?'), findsNothing);
     expect(find.text('Deep Spill has total of 19 Cards'), findsOneWidget);
+
+    await disposeApp(tester);
   });
 
   testWidgets('creates a custom deck question and shows it on the play page', (
@@ -426,6 +451,8 @@ void main() {
       find.byKey(const ValueKey('play-deck-button-custom-1')),
       findsOneWidget,
     );
+
+    await disposeApp(tester);
   });
 
   testWidgets('shows the AI question generator below the create action', (
@@ -729,106 +756,6 @@ void main() {
   );
 
   testWidgets(
-    'unavailable AI generation shows a message and leaves field empty',
-    (tester) async {
-      const message =
-          'AI question generation is only available on supported Android devices.';
-      await seedProfileAndOpenPlayPage(
-        tester,
-        questionGenerationService: _FakeQuestionGenerationService([
-          const QuestionGenerationUnavailableException(message),
-        ]),
-      );
-
-      await createCustomDeckAndOpenQuestionSheet(tester);
-      await tester.tap(
-        find.byKey(const ValueKey('question-ai-generate-button')),
-      );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-      await tester.pump(const Duration(milliseconds: 300));
-
-      final field = tester.widget<TextFormField>(
-        find.byKey(const ValueKey('question-sheet-text-field')),
-      );
-      expect(field.controller?.text, isEmpty);
-      expect(find.text(message), findsOneWidget);
-
-      await tester.binding.handlePopRoute();
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-      await disposeApp(tester);
-    },
-  );
-
-  testWidgets('missing bundled AI model shows an actionable error message', (
-    tester,
-  ) async {
-    await seedProfileAndOpenPlayPage(
-      tester,
-      questionGenerationService: _FakeQuestionGenerationService([
-        const QuestionGenerationUnavailableException(
-          missingBundledGemmaModelMessage,
-        ),
-      ]),
-    );
-
-    await createCustomDeckAndOpenQuestionSheet(tester);
-    await tester.tap(find.byKey(const ValueKey('question-ai-generate-button')));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
-    await tester.pump(const Duration(milliseconds: 300));
-
-    expect(find.text(missingBundledGemmaModelMessage), findsOneWidget);
-    expect(find.text('Create Question'), findsOneWidget);
-
-    final field = tester.widget<TextFormField>(
-      find.byKey(const ValueKey('question-sheet-text-field')),
-    );
-    expect(field.controller?.text, isEmpty);
-
-    await tester.binding.handlePopRoute();
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
-    await disposeApp(tester);
-  });
-
-  testWidgets(
-    'timed out AI generation shows a retry message and leaves field empty',
-    (tester) async {
-      await seedProfileAndOpenPlayPage(
-        tester,
-        questionGenerationService: _FakeQuestionGenerationService([
-          const QuestionGenerationTimeoutException(
-            questionGenerationTimeoutMessage,
-          ),
-        ]),
-      );
-
-      await createCustomDeckAndOpenQuestionSheet(tester);
-      await tester.tap(
-        find.byKey(const ValueKey('question-ai-generate-button')),
-      );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-      await tester.pump(const Duration(milliseconds: 300));
-
-      expect(find.text(questionGenerationTimeoutMessage), findsOneWidget);
-      expect(find.text('Create Question'), findsOneWidget);
-
-      final field = tester.widget<TextFormField>(
-        find.byKey(const ValueKey('question-sheet-text-field')),
-      );
-      expect(field.controller?.text, isEmpty);
-
-      await tester.binding.handlePopRoute();
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-      await disposeApp(tester);
-    },
-  );
-
-  testWidgets(
     'preparation screen reflects the first newly added custom deck question in the same session',
     (tester) async {
       await seedProfileAndOpenPlayPage(tester);
@@ -876,6 +803,8 @@ void main() {
 
       expect(find.text("Let's Get Started"), findsOneWidget);
       expect(find.text('Add Tea First'), findsNothing);
+
+      await disposeApp(tester);
     },
   );
 }

@@ -15,7 +15,7 @@ final deckRepositoryProvider = Provider<DeckRepository>((ref) {
 final questionGenerationServiceProvider = Provider<QuestionGenerationService>((
   ref,
 ) {
-  return GemmaQuestionGenerationService();
+  return const PrototypeQuestionGenerationService();
 });
 
 final deckFilterProvider =

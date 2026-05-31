@@ -1,4 +1,4 @@
-name: Spillr
+name: spillr
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -44,7 +44,6 @@ dependencies:
   flutter_svg: ^2.3.0
   pretty_animated_text: 2.0.0
   flutter_confetti: ^0.5.1
-  flutter_gemma: ^0.13.6
 
 dev_dependencies:
   flutter_test:
@@ -72,7 +71,6 @@ flutter:
   assets:
     - assets/svg/Spillr.svg
     - assets/svg/streak-icon.svg
-    - assets/models/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

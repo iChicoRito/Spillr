@@ -1,9 +1,9 @@
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:Spillr/core/database/app_database.dart';
-import 'package:Spillr/features/decks/data/deck_repository.dart';
-import 'package:Spillr/features/decks/domain/deck_catalog.dart';
+import 'package:spillr/core/database/app_database.dart';
+import 'package:spillr/features/decks/data/deck_repository.dart';
+import 'package:spillr/features/decks/domain/deck_catalog.dart';
 
 void main() {
   late AppDatabase database;

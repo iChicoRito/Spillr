@@ -6,9 +6,6 @@
 
 #include "generated_plugin_registrant.h"
 
-#include <flutter_gemma/flutter_gemma_plugin.h>
 
 void RegisterPlugins(flutter::PluginRegistry* registry) {
-  FlutterGemmaPluginRegisterWithRegistrar(
-      registry->GetRegistrarForPlugin("FlutterGemmaPlugin"));
 }

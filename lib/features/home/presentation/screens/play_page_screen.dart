@@ -25,16 +25,9 @@ class _PlayPageScreenState extends ConsumerState<PlayPageScreen> {
   late final PageController _pageController;
   double _currentPage = 1;
   int _activeIndex = 1;
-<<<<<<< HEAD
-  static const _carouselViewportFraction = 0.64;
-  static const _activeCardWidth = 180.0;
-  static const _activeCardHeight = 456.0;
-  static const _inactiveCardWidth = 188.0;
-=======
   static const _carouselViewportFraction = 0.78;
   static const _cardWidthFactor = 0.84;
   static const _activeCardHeight = 456.0;
->>>>>>> ae7d8bc393346ef4e96598ee5e7e84c321f12025
   static const _inactiveVerticalInset = 48.0;
 
   @override
@@ -247,15 +240,11 @@ class _PlayPageScreenState extends ConsumerState<PlayPageScreen> {
                           left: 16,
                           right: 16,
                           bottom: 10,
-<<<<<<< HEAD
-                          child: const _BottomNavigationBar(),
-=======
                           child: SpillrBottomNavigation(
                             selectedTab: SpillrBottomNavTab.play,
                             onDecksTap: () => context.go(AppRoutes.decks),
                             onPlayTap: () {},
                           ),
->>>>>>> ae7d8bc393346ef4e96598ee5e7e84c321f12025
                         ),
                       ],
                     );
@@ -414,21 +403,10 @@ class _DeckCard extends StatelessWidget {
       builder: (context, constraints) {
         final isCompact = constraints.maxHeight < 340;
         final titleSize = isActive
-<<<<<<< HEAD
-            ? (isCompact ? 34.0 : 50.0)
-            : (isCompact ? 30.0 : 40.0);
-        final descriptionSize = isActive
-            ? (isCompact ? 12.0 : 16.0)
-            : (isCompact ? 8.0 : 14.0);
-        final cardIconSize = isActive ? (isCompact ? 16.0 : 18.0) : 14.0;
-        final cardIconBoxSize = isActive ? (isCompact ? 34.0 : 40.0) : 34.0;
-        final bottomGap = isActive ? (isCompact ? 8.0 : 8.0) : 6.0;
-=======
             ? (isCompact ? 32.0 : 64.0)
             : (isCompact ? 28.0 : 38.0);
         final cardIconSize = isActive ? (isCompact ? 16.0 : 18.0) : 13.0;
         final cardIconBoxSize = isActive ? (isCompact ? 34.0 : 40.0) : 32.0;
->>>>>>> ae7d8bc393346ef4e96598ee5e7e84c321f12025
         final contentPadding = isActive
             ? EdgeInsets.fromLTRB(
                 isCompact ? 14 : 16,
@@ -502,33 +480,12 @@ class _DeckCard extends StatelessWidget {
                       ],
                     ),
                     const Spacer(),
-<<<<<<< HEAD
-                    Text(
-                      _deckDisplayDescription(deck.description),
-                      maxLines: isActive ? 3 : 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: AppColors.white.withValues(alpha: 0.78),
-                        fontSize: descriptionSize,
-                        height: 1.35,
-                      ),
-                    ),
-                    if (isActive) ...[
-                      SizedBox(height: bottomGap),
-=======
                     if (isActive)
->>>>>>> ae7d8bc393346ef4e96598ee5e7e84c321f12025
                       SizedBox(
                         width: double.infinity,
                         height: 56,
                         child: FilledButton(
                           key: ValueKey('play-deck-button-${deck.id}'),
-<<<<<<< HEAD
-                          onPressed: onPlay,
-                          style: FilledButton.styleFrom(
-                            backgroundColor: AppColors.white,
-                            foregroundColor: deck.backgroundColor,
-=======
                           onPressed: canPlay ? onPlay : null,
                           style: FilledButton.styleFrom(
                             backgroundColor: AppColors.white,
@@ -538,7 +495,6 @@ class _DeckCard extends StatelessWidget {
                             ),
                             disabledForegroundColor: deck.backgroundColor
                                 .withValues(alpha: 0.7),
->>>>>>> ae7d8bc393346ef4e96598ee5e7e84c321f12025
                             textStyle: const TextStyle(
                               fontSize: 18,
                               height: 1.1,
@@ -548,11 +504,7 @@ class _DeckCard extends StatelessWidget {
                               borderRadius: BorderRadius.circular(14),
                             ),
                           ),
-<<<<<<< HEAD
-                          child: const Text('Play'),
-=======
                           child: Text(canPlay ? 'Play' : 'Add Tea First'),
->>>>>>> ae7d8bc393346ef4e96598ee5e7e84c321f12025
                         ),
                       ),
                   ],
@@ -638,81 +590,6 @@ class _DeckCardPattern extends StatelessWidget {
   }
 }
 
-<<<<<<< HEAD
-class _BottomNavigationBar extends StatelessWidget {
-  const _BottomNavigationBar();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 64,
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.neutral100),
-      ),
-      child: const Row(
-        children: [
-          Expanded(
-            child: _BottomNavItem(
-              label: 'Decks',
-              icon: HugeIcons.strokeRoundedCards01,
-            ),
-          ),
-          Expanded(
-            child: _BottomNavItem(
-              label: 'Play Cards',
-              icon: HugeIcons.strokeRoundedPlay,
-              selected: true,
-            ),
-          ),
-          Expanded(
-            child: _BottomNavItem(
-              label: 'Profile',
-              icon: HugeIcons.strokeRoundedUser,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _BottomNavItem extends StatelessWidget {
-  const _BottomNavItem({
-    required this.label,
-    required this.icon,
-    this.selected = false,
-  });
-
-  final String label;
-  final List<List<dynamic>> icon;
-  final bool selected;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = selected ? AppColors.teal500 : AppColors.neutral300;
-
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        HugeIcon(icon: icon, size: 24, color: color, strokeWidth: 1.9),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            fontSize: 12,
-            color: color,
-            fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-=======
->>>>>>> ae7d8bc393346ef4e96598ee5e7e84c321f12025
 String _deckDisplayTitle(String title) {
   return switch (title) {
     'Deep Spill' => 'Deep\nSpill',
@@ -723,20 +600,3 @@ String _deckDisplayTitle(String title) {
     _ => title,
   };
 }
-<<<<<<< HEAD
-
-String _deckDisplayDescription(String description) {
-  return switch (description) {
-    'More meaningful conversation' => 'More meaningful\nconversation',
-    'Easy questions to start the vibe' => 'Easy questions to start the\nvibe',
-    'Funny, random, and unhinged questions' =>
-      'Funny, random, and\nunhinged questions',
-    'Bold questions for brave players' => 'Bold questions for\nbrave players',
-    'Getting to know someone better' => 'Getting to know\nsomeone better',
-    _ => description,
-  };
-}
-
-final _playDecks = spillrDecks;
-=======
->>>>>>> ae7d8bc393346ef4e96598ee5e7e84c321f12025
