@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hugeicons/hugeicons.dart';
 
 import 'package:spillr/features/decks/data/question_generation_service.dart';
 import 'package:spillr/features/game/domain/spillr_deck.dart';
@@ -24,6 +25,7 @@ void main() {
     badgeColor: Colors.black,
     badgeTextColor: Colors.white,
     iconColor: Colors.black,
+    icon: HugeIcons.strokeRoundedSmile,
     cardBorderColor: Colors.black,
   );
 

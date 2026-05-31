@@ -1,4 +1,7 @@
 import '../../../core/theme/app_colors.dart';
+import 'package:hugeicons/hugeicons.dart';
+
+import '../../decks/domain/deck_catalog.dart';
 import '../domain/spillr_deck.dart';
 
 const _baseSpillrDecks = [
@@ -11,6 +14,7 @@ const _baseSpillrDecks = [
     badgeColor: AppColors.blue100,
     badgeTextColor: AppColors.blue500,
     iconColor: AppColors.blue500,
+    icon: HugeIcons.strokeRoundedDroplet,
     cardBorderColor: AppColors.blue200,
     questions: [
       "What's something you wish people understood about you?",
@@ -44,6 +48,7 @@ const _baseSpillrDecks = [
     badgeColor: AppColors.violet100,
     badgeTextColor: AppColors.violet500,
     iconColor: AppColors.violet500,
+    icon: HugeIcons.strokeRoundedChat,
     cardBorderColor: AppColors.violet200,
     questions: [
       "What's your go-to comfort food?",
@@ -77,6 +82,7 @@ const _baseSpillrDecks = [
     badgeColor: AppColors.teal100,
     badgeTextColor: AppColors.teal500,
     iconColor: AppColors.teal500,
+    icon: HugeIcons.strokeRoundedSmile,
     cardBorderColor: AppColors.teal200,
     questions: [
       "What's your most unserious fear?",
@@ -110,6 +116,7 @@ const _baseSpillrDecks = [
     badgeColor: AppColors.red100,
     badgeTextColor: AppColors.red500,
     iconColor: AppColors.red500,
+    icon: HugeIcons.strokeRoundedFire,
     cardBorderColor: AppColors.red200,
     questions: [
       'Who in this group is the most dramatic?',
@@ -143,6 +150,7 @@ const _baseSpillrDecks = [
     badgeColor: AppColors.pink100,
     badgeTextColor: AppColors.pink500,
     iconColor: AppColors.pink500,
+    icon: HugeIcons.strokeRoundedHeartAdd,
     cardBorderColor: AppColors.pink200,
     questions: [
       "What's your ideal first date?",
@@ -184,6 +192,7 @@ final spillrDecks = List<SpillrDeck>.unmodifiable([
     badgeColor: AppColors.neutral100,
     badgeTextColor: AppColors.neutral700,
     iconColor: AppColors.neutral700,
+    icon: HugeIcons.strokeRoundedCards01,
     cardBorderColor: AppColors.neutral200,
     questions: _wildcardTeaQuestions,
   ),

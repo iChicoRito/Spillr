@@ -11,6 +11,7 @@ class SpillrDeck {
     required this.badgeColor,
     required this.badgeTextColor,
     required this.iconColor,
+    required this.icon,
     required this.cardBorderColor,
   });
 
@@ -23,6 +24,7 @@ class SpillrDeck {
   final Color badgeColor;
   final Color badgeTextColor;
   final Color iconColor;
+  final List<List<dynamic>> icon;
   final Color cardBorderColor;
 
   SpillrDeck copyWith({
@@ -35,6 +37,7 @@ class SpillrDeck {
     Color? badgeColor,
     Color? badgeTextColor,
     Color? iconColor,
+    List<List<dynamic>>? icon,
     Color? cardBorderColor,
   }) {
     return SpillrDeck(
@@ -47,6 +50,7 @@ class SpillrDeck {
       badgeColor: badgeColor ?? this.badgeColor,
       badgeTextColor: badgeTextColor ?? this.badgeTextColor,
       iconColor: iconColor ?? this.iconColor,
+      icon: icon ?? this.icon,
       cardBorderColor: cardBorderColor ?? this.cardBorderColor,
     );
   }

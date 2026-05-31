@@ -453,7 +453,7 @@ void main() {
     pageView.controller!.jumpToPage(0);
     await tester.pumpAndSettle();
 
-    expect(find.text('Weird Humor'), findsOneWidget);
+    expect(find.text('Weird\nHumor'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('play-deck-button-custom-1')),
       findsOneWidget,

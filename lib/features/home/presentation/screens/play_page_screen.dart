@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -187,27 +188,27 @@ class _PlayPageScreenState extends ConsumerState<PlayPageScreen> {
                                     itemCount: decks.length,
                                     itemBuilder: (context, index) {
                                       final deck = decks[index];
-                                      final delta = (_currentPage - index)
-                                          .abs();
+                                      final delta = (_currentPage - index).abs();
+                                      final activation = (1 - delta).clamp(
+                                        0.0,
+                                        1.0,
+                                      );
                                       final scale = (1 - (delta * 0.14)).clamp(
                                         0.88,
                                         1.0,
                                       );
                                       final opacity = (1 - (delta * 0.22))
                                           .clamp(0.68, 1.0);
+                                      final verticalInset = ui.lerpDouble(
+                                        _inactiveVerticalInset,
+                                        0,
+                                        activation,
+                                      )!;
 
-                                      return AnimatedContainer(
-                                        duration: const Duration(
-                                          milliseconds: 180,
-                                        ),
-                                        curve: Curves.easeOutCubic,
+                                      return Padding(
                                         padding: EdgeInsets.only(
-                                          top: index == _activeIndex
-                                              ? 0
-                                              : _inactiveVerticalInset,
-                                          bottom: index == _activeIndex
-                                              ? 0
-                                              : _inactiveVerticalInset,
+                                          top: verticalInset,
+                                          bottom: verticalInset,
                                         ),
                                         child: Transform.scale(
                                           scale: scale,
@@ -216,6 +217,7 @@ class _PlayPageScreenState extends ConsumerState<PlayPageScreen> {
                                             child: _DeckCard(
                                               deck: deck,
                                               isActive: index == _activeIndex,
+                                              activation: activation,
                                               width: cardWidth,
                                               onPlay: () {
                                                 context.go(
@@ -385,12 +387,14 @@ class _DeckCard extends StatelessWidget {
   const _DeckCard({
     required this.deck,
     required this.isActive,
+    required this.activation,
     required this.width,
     required this.onPlay,
   });
 
   final SpillrDeck deck;
   final bool isActive;
+  final double activation;
   final double width;
   final VoidCallback onPlay;
 
@@ -398,119 +402,240 @@ class _DeckCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final canPlay = deck.questions.isNotEmpty;
+    final titleWords = _deckTitleWords(deck.title);
 
     return LayoutBuilder(
       builder: (context, constraints) {
         final isCompact = constraints.maxHeight < 340;
-        final titleSize = isActive
-            ? (isCompact ? 32.0 : 64.0)
-            : (isCompact ? 28.0 : 38.0);
-        final cardIconSize = isActive ? (isCompact ? 16.0 : 18.0) : 13.0;
-        final cardIconBoxSize = isActive ? (isCompact ? 34.0 : 40.0) : 32.0;
-        final contentPadding = isActive
-            ? EdgeInsets.fromLTRB(
-                isCompact ? 14 : 16,
-                isCompact ? 12 : 16,
-                isCompact ? 14 : 16,
-                isCompact ? 12 : 16,
-              )
-            : const EdgeInsets.fromLTRB(14, 14, 14, 12);
+        final titleSize = _deckTitleFontSize(
+          wordCount: titleWords.length,
+          titleLength: deck.title.trim().length,
+          activation: activation,
+          isCompact: isCompact,
+        );
+        final detailOpacity = Curves.easeOutCubic.transform(
+          _normalizedProgress(activation, start: 0.34, end: 1),
+        );
+        final buttonOpacity = Curves.easeOutCubic.transform(
+          _normalizedProgress(activation, start: 0.72, end: 1),
+        );
+        final extraTitleLines = math.max(0, titleWords.length - 2);
+        final activeDetailLift =
+            ui.lerpDouble(0, isCompact ? 34 : 38, activation)! +
+            (extraTitleLines * (isCompact ? 24.0 : 28.0) * activation);
+        final topArcHeight = ui.lerpDouble(54, isCompact ? 58 : 70, activation)!;
+        final topArcHiddenTop = -(topArcHeight + 12);
+        final topArcTop = ui.lerpDouble(-14, topArcHiddenTop, activation)!;
+        final topArcOpacity = 1 -
+            Curves.easeInCubic.transform(
+              _normalizedProgress(activation, start: 0.46, end: 1),
+            );
+        final bottomArcHeight = ui.lerpDouble(
+          88,
+          isCompact ? 128 : 148,
+          activation,
+        )!;
+        final bottomArcBottom = ui.lerpDouble(-34, -10, activation)!;
+        final badgeSize = ui.lerpDouble(48, isCompact ? 58 : 64, activation)!;
+        final activeBadgeBottom =
+            bottomArcBottom + bottomArcHeight - (badgeSize / 2);
+        final badgeBottom = ui.lerpDouble(18, activeBadgeBottom, activation)!;
+        final bottomArcColor = Color.lerp(
+          AppColors.white.withValues(alpha: 0.96),
+          deck.badgeColor,
+          Curves.easeOutCubic.transform(activation),
+        )!;
+        final activeTextColor = Color.lerp(
+          AppColors.white.withValues(alpha: 0.8),
+          AppColors.white,
+          detailOpacity,
+        )!;
+        final maxTitleWidth = math.max(0.0, width - 48);
 
         return Container(
+          key: ValueKey('play-deck-shell-${deck.id}'),
           width: width,
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: isActive
-                  ? [
-                      deck.backgroundColor,
-                      deck.backgroundColor.withValues(alpha: 0.9),
-                    ]
-                  : [
-                      deck.backgroundColor.withValues(alpha: 0.92),
-                      deck.backgroundColor,
-                    ],
-            ),
-            borderRadius: BorderRadius.circular(24),
+            color: deck.backgroundColor,
+            borderRadius: BorderRadius.circular(30),
             border: Border.all(color: deck.borderColor, width: 2),
           ),
-          child: Stack(
-            children: [
-              const Positioned.fill(child: _DeckCardPattern()),
-              Padding(
-                padding: contentPadding,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            _deckDisplayTitle(deck.title),
-                            style: theme.textTheme.headlineLarge?.copyWith(
-                              color: AppColors.white,
-                              fontSize: titleSize,
-                              height: isActive ? 1.0 : 1.05,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Padding(
-                          padding: const EdgeInsets.only(top: 2),
-                          child: Container(
-                            width: cardIconBoxSize,
-                            height: cardIconBoxSize,
-                            decoration: const BoxDecoration(
-                              color: AppColors.white,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Center(
-                              child: HugeIcon(
-                                icon: HugeIcons.strokeRoundedCards01,
-                                size: cardIconSize,
-                                color: deck.backgroundColor,
-                                strokeWidth: isActive ? 1.9 : 1.6,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Spacer(),
-                    if (isActive)
-                      SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: FilledButton(
-                          key: ValueKey('play-deck-button-${deck.id}'),
-                          onPressed: canPlay ? onPlay : null,
-                          style: FilledButton.styleFrom(
-                            backgroundColor: AppColors.white,
-                            foregroundColor: deck.backgroundColor,
-                            disabledBackgroundColor: AppColors.white.withValues(
-                              alpha: 0.72,
-                            ),
-                            disabledForegroundColor: deck.backgroundColor
-                                .withValues(alpha: 0.7),
-                            textStyle: const TextStyle(
-                              fontSize: 18,
-                              height: 1.1,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                          ),
-                          child: Text(canPlay ? 'Play' : 'Add Tea First'),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(28),
+            child: Stack(
+              children: [
+                Positioned(
+                  top: topArcTop,
+                  left: 8,
+                  right: 8,
+                  child: Opacity(
+                    opacity: topArcOpacity,
+                    child: DecoratedBox(
+                      key: ValueKey('play-deck-top-arc-${deck.id}'),
+                      decoration: BoxDecoration(
+                        color: AppColors.white.withValues(alpha: 0.88),
+                        borderRadius: BorderRadius.vertical(
+                          bottom: Radius.elliptical(width, topArcHeight),
                         ),
                       ),
-                  ],
+                      child: SizedBox(height: topArcHeight),
+                    ),
+                  ),
                 ),
-              ),
-            ],
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: bottomArcBottom,
+                  child: DecoratedBox(
+                    key: ValueKey('play-deck-bottom-arc-${deck.id}'),
+                    decoration: BoxDecoration(
+                      color: bottomArcColor,
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.elliptical(240, 132),
+                      ),
+                    ),
+                    child: SizedBox(height: bottomArcHeight),
+                  ),
+                ),
+                Positioned.fill(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      isCompact ? 18 : 22,
+                      isCompact ? 22 : 28,
+                      isCompact ? 18 : 22,
+                      isCompact ? 18 : 22,
+                    ),
+                    child: Align(
+                      key: ValueKey('play-deck-card-main-center-${deck.id}'),
+                      alignment: const Alignment(0, -0.08),
+                      child: Opacity(
+                        key: ValueKey('play-deck-detail-opacity-${deck.id}'),
+                        opacity: detailOpacity,
+                        child: Transform.translate(
+                          offset: Offset(
+                            0,
+                            ui.lerpDouble(18, -activeDetailLift, detailOpacity)!,
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SizedBox(
+                                width: maxTitleWidth,
+                                height: titleSize * titleWords.length * 1.08,
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    _deckDisplayTitle(deck.title),
+                                    textAlign: TextAlign.center,
+                                    maxLines: titleWords.length,
+                                    softWrap: true,
+                                    style: theme.textTheme.headlineLarge
+                                        ?.copyWith(
+                                          color: activeTextColor,
+                                          fontSize: titleSize,
+                                          height: 1.0,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: isCompact ? 12 : 18),
+                              Container(
+                                key: ValueKey('play-deck-count-pill-${deck.id}'),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.white,
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                                child: Text(
+                                  'x${deck.questions.length} Cards',
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: deck.iconColor,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    height: 1.1,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: badgeBottom,
+                  child: Center(
+                    child: Container(
+                      key: ValueKey('play-deck-bottom-icon-badge-${deck.id}'),
+                      width: badgeSize,
+                      height: badgeSize,
+                      decoration: BoxDecoration(
+                        color: AppColors.white,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: deck.iconColor, width: 2.4),
+                      ),
+                      child: Center(
+                        child: HugeIcon(
+                          icon: deck.icon,
+                          size: ui.lerpDouble(18, 28, activation)!,
+                          color: deck.iconColor,
+                          strokeWidth: 1.5,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                if (isActive)
+                  Positioned(
+                    left: isCompact ? 18 : 20,
+                    right: isCompact ? 18 : 20,
+                    bottom: isCompact ? 24 : 28,
+                    child: Opacity(
+                      opacity: buttonOpacity,
+                      child: Transform.translate(
+                        offset: Offset(
+                          0,
+                          ui.lerpDouble(16, 0, buttonOpacity)!,
+                        ),
+                        child: SizedBox(
+                          width: double.infinity,
+                          height: isCompact ? 54 : 56,
+                          child: FilledButton(
+                            key: ValueKey('play-deck-button-${deck.id}'),
+                            onPressed: canPlay ? onPlay : null,
+                            style: FilledButton.styleFrom(
+                              elevation: 0,
+                              backgroundColor: deck.backgroundColor,
+                              foregroundColor: AppColors.white,
+                              disabledBackgroundColor: deck.backgroundColor
+                                  .withValues(alpha: 0.58),
+                              disabledForegroundColor: AppColors.white
+                                  .withValues(alpha: 0.78),
+                              textStyle: const TextStyle(
+                                fontSize: 18,
+                                height: 1.1,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(22),
+                              ),
+                            ),
+                            child: Text(canPlay ? 'Play' : 'Add Tea First'),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
         );
       },
@@ -518,85 +643,65 @@ class _DeckCard extends StatelessWidget {
   }
 }
 
-class _DeckCardPattern extends StatelessWidget {
-  const _DeckCardPattern();
+List<String> _deckTitleWords(String title) {
+  final words = title
+      .trim()
+      .split(RegExp(r'\s+'))
+      .where((word) => word.isNotEmpty)
+      .toList(growable: false);
 
-  @override
-  Widget build(BuildContext context) {
-    final borderColor = AppColors.white.withValues(alpha: 0.12);
+  return words.isEmpty ? [title] : words;
+}
 
-    return Stack(
-      children: [
-        Positioned(
-          top: 28,
-          left: 90,
-          child: Container(
-            width: 16,
-            height: 16,
-            decoration: BoxDecoration(
-              border: Border.all(color: borderColor),
-              shape: BoxShape.circle,
-            ),
-          ),
-        ),
-        Positioned(
-          top: 86,
-          right: 44,
-          child: Transform.rotate(
-            angle: math.pi / 8,
-            child: Container(
-              width: 10,
-              height: 10,
-              decoration: BoxDecoration(border: Border.all(color: borderColor)),
-            ),
-          ),
-        ),
-        Positioned(
-          top: 130,
-          left: 30,
-          child: Transform.rotate(
-            angle: math.pi / 4,
-            child: Container(
-              width: 12,
-              height: 12,
-              decoration: BoxDecoration(border: Border.all(color: borderColor)),
-            ),
-          ),
-        ),
-        Positioned(
-          top: 178,
-          right: 30,
-          child: HugeIcon(
-            icon: HugeIcons.strokeRoundedSparkles,
-            size: 16,
-            color: AppColors.white.withValues(alpha: 0.16),
-            strokeWidth: 1.5,
-          ),
-        ),
-        Positioned(
-          top: 218,
-          left: 82,
-          child: Container(
-            width: 18,
-            height: 18,
-            decoration: BoxDecoration(
-              border: Border.all(color: borderColor),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-        ),
-      ],
-    );
+double _deckTitleFontSize({
+  required int wordCount,
+  required int titleLength,
+  required double activation,
+  required bool isCompact,
+}) {
+  final activeBaseSize = isCompact ? 54.0 : 60.0;
+  final inactiveBaseSize = isCompact ? 30.0 : 38.0;
+  final activeMinimumSize = isCompact ? 24.0 : 28.0;
+  final inactiveMinimumSize = isCompact ? 20.0 : 24.0;
+  final activeLengthReduction = math.max(0, titleLength - 11) * 1.25;
+  final activeWordReduction = math.max(0, wordCount - 2) * 12.0;
+  final activeSize = wordCount <= 3
+      ? activeBaseSize
+      : math.max(
+          activeMinimumSize,
+          activeBaseSize - ((wordCount - 3) * 16.0),
+        );
+  final inactiveSize = wordCount <= 2
+      ? inactiveBaseSize
+      : math.max(
+          inactiveMinimumSize,
+          inactiveBaseSize - ((wordCount - 2) * 8.0),
+        );
+
+  final adjustedActiveSize = math.max(
+    activeMinimumSize,
+    activeSize - activeWordReduction - activeLengthReduction,
+  );
+
+  return ui.lerpDouble(inactiveSize, adjustedActiveSize, activation)!;
+}
+
+double _normalizedProgress(
+  double value, {
+  required double start,
+  required double end,
+}) {
+  if (value <= start) {
+    return 0;
   }
+
+  if (value >= end) {
+    return 1;
+  }
+
+  return (value - start) / (end - start);
 }
 
 String _deckDisplayTitle(String title) {
-  return switch (title) {
-    'Deep Spill' => 'Deep\nSpill',
-    'No Dead Air' => 'No\nDead\nAir',
-    'Chaos Mode' => 'Chaos\nMode',
-    'Hot Seat' => 'Hot\nSeat',
-    'Date Mode' => 'Date\nMode',
-    _ => title,
-  };
+  return _deckTitleWords(title).join('\n');
 }

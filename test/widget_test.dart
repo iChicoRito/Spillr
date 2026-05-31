@@ -80,6 +80,38 @@ void main() {
     await pumpApp(tester);
   }
 
+  Future<void> seedProfileWithCustomDeckAndOpenPlayPage(
+    WidgetTester tester, {
+    required String deckName,
+  }) async {
+    final now = DateTime(2026, 5, 31, 12, 0);
+
+    await database.saveProfile('Chico');
+    await database
+        .into(database.customDecks)
+        .insert(
+          CustomDecksCompanion.insert(
+            name: deckName,
+            iconKey: 'leaf',
+            colorKey: 'teal',
+            createdAt: now,
+          ),
+        );
+    await database
+        .into(database.deckQuestionEntries)
+        .insert(
+          DeckQuestionEntriesCompanion.insert(
+            deckId: 'custom-1',
+            questionText: 'What joke still makes you laugh?',
+            sortOrder: 0,
+            createdAt: now,
+            updatedAt: now,
+          ),
+        );
+
+    await pumpApp(tester);
+  }
+
   Future<void> openDeckFromPlayPage(
     WidgetTester tester, {
     required String label,
@@ -335,7 +367,214 @@ void main() {
 
       final title = tester.widget<Text>(find.text('No\nDead\nAir'));
 
-      expect(title.style?.fontSize, 64);
+      expect(title.style?.fontSize, lessThanOrEqualTo(56));
+      expect(title.style?.fontWeight, FontWeight.w700);
+    },
+  );
+
+  testSpillrWidgets(
+    'shows the redesigned active card count pill and bottom icon cradle',
+    (tester) async {
+      await seedProfileAndOpenPlayPage(tester);
+
+      expect(
+        find.byKey(const ValueKey('play-deck-count-pill-no-dead-air')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('play-deck-count-pill-no-dead-air')),
+          matching: find.text('x20 Cards'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('play-deck-bottom-icon-badge-no-dead-air')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('play-deck-bottom-arc-no-dead-air')),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testSpillrWidgets(
+    'reveals card details only for the active deck as the carousel changes',
+    (tester) async {
+      await seedProfileAndOpenPlayPage(tester);
+
+      final initialActiveDetails = tester.widget<Opacity>(
+        find.byKey(const ValueKey('play-deck-detail-opacity-no-dead-air')),
+      );
+      final initialInactiveDetails = tester.widget<Opacity>(
+        find.byKey(const ValueKey('play-deck-detail-opacity-deep-spill')),
+      );
+
+      expect(initialActiveDetails.opacity, 1);
+      expect(initialInactiveDetails.opacity, lessThan(0.2));
+
+      final pageView = tester.widget<PageView>(find.byType(PageView));
+      pageView.controller!.jumpToPage(0);
+      await tester.pump();
+
+      final nextActiveDetails = tester.widget<Opacity>(
+        find.byKey(const ValueKey('play-deck-detail-opacity-deep-spill')),
+      );
+      final nextInactiveDetails = tester.widget<Opacity>(
+        find.byKey(const ValueKey('play-deck-detail-opacity-no-dead-air')),
+      );
+
+      expect(nextActiveDetails.opacity, 1);
+      expect(nextInactiveDetails.opacity, lessThan(0.2));
+    },
+  );
+
+  testSpillrWidgets(
+    'slides the active top arc fully above the card while inactive arcs remain visible',
+    (tester) async {
+      await seedProfileAndOpenPlayPage(tester);
+
+      final activeCardRect = tester.getRect(
+        find.byKey(const ValueKey('play-deck-shell-no-dead-air')),
+      );
+      final activeTopArcRect = tester.getRect(
+        find.byKey(const ValueKey('play-deck-top-arc-no-dead-air')),
+      );
+      final inactiveCardRect = tester.getRect(
+        find.byKey(const ValueKey('play-deck-shell-deep-spill')),
+      );
+      final inactiveTopArcRect = tester.getRect(
+        find.byKey(const ValueKey('play-deck-top-arc-deep-spill')),
+      );
+
+      expect(activeTopArcRect.bottom, lessThanOrEqualTo(activeCardRect.top));
+      expect(inactiveTopArcRect.bottom, greaterThan(inactiveCardRect.top));
+    },
+  );
+
+  testSpillrWidgets(
+    'keeps the active count pill visible above the bottom badge for tall three-line titles',
+    (tester) async {
+      await seedProfileWithCustomDeckAndOpenPlayPage(
+        tester,
+        deckName: 'The Loud Yanner',
+      );
+
+      final pageView = tester.widget<PageView>(find.byType(PageView));
+      pageView.controller!.jumpToPage(0);
+      await tester.pumpAndSettle();
+
+      final countPillRect = tester.getRect(
+        find.byKey(const ValueKey('play-deck-count-pill-custom-1')),
+      );
+      final badgeRect = tester.getRect(
+        find.byKey(const ValueKey('play-deck-bottom-icon-badge-custom-1')),
+      );
+
+      expect(countPillRect.bottom, lessThan(badgeRect.top - 8));
+    },
+  );
+
+  testSpillrWidgets(
+    'keeps the rounded active icon badge compact',
+    (tester) async {
+      await seedProfileAndOpenPlayPage(tester);
+
+      final badgeRect = tester.getRect(
+        find.byKey(const ValueKey('play-deck-bottom-icon-badge-no-dead-air')),
+      );
+
+      expect(badgeRect.width, lessThanOrEqualTo(68));
+      expect(badgeRect.height, lessThanOrEqualTo(68));
+    },
+  );
+
+  testSpillrWidgets(
+    'uses a fixed stroke width of 1.5 for the deck badge icons',
+    (tester) async {
+      await seedProfileAndOpenPlayPage(tester);
+
+      final icon = tester.widget<HugeIcon>(
+        find.descendant(
+          of: find.byKey(
+            const ValueKey('play-deck-bottom-icon-badge-no-dead-air'),
+          ),
+          matching: find.byType(HugeIcon),
+        ),
+      );
+
+      expect(icon.strokeWidth, 1.5);
+      expect(icon.icon, HugeIcons.strokeRoundedChat);
+    },
+  );
+
+  testSpillrWidgets(
+    'shows the custom deck badge with the same icon it was created with',
+    (tester) async {
+      await seedProfileWithCustomDeckAndOpenPlayPage(
+        tester,
+        deckName: 'Tea Lab',
+      );
+
+      final icon = tester.widget<HugeIcon>(
+        find.descendant(
+          of: find.byKey(
+            const ValueKey('play-deck-bottom-icon-badge-custom-1'),
+          ),
+          matching: find.byType(HugeIcon),
+        ),
+      );
+
+      expect(icon.icon, HugeIcons.strokeRoundedLeaf01);
+    },
+  );
+
+  testSpillrWidgets(
+    'balances No Dead Air title count badge and icon on the active arc',
+    (tester) async {
+      await seedProfileAndOpenPlayPage(tester);
+
+      final cardRect = tester.getRect(
+        find.byKey(const ValueKey('play-deck-shell-no-dead-air')),
+      );
+      final titleRect = tester.getRect(find.text('No\nDead\nAir'));
+      final countPillRect = tester.getRect(
+        find.byKey(const ValueKey('play-deck-count-pill-no-dead-air')),
+      );
+      final bottomArcRect = tester.getRect(
+        find.byKey(const ValueKey('play-deck-bottom-arc-no-dead-air')),
+      );
+      final badgeRect = tester.getRect(
+        find.byKey(const ValueKey('play-deck-bottom-icon-badge-no-dead-air')),
+      );
+
+      expect(titleRect.top, greaterThan(cardRect.top + 28));
+      expect(titleRect.top, lessThan(cardRect.top + 64));
+      expect(countPillRect.top, greaterThan(titleRect.bottom + 18));
+      expect(countPillRect.bottom, lessThan(badgeRect.top - 20));
+      expect(
+        badgeRect.center.dy,
+        closeTo(bottomArcRect.top, 8),
+      );
+    },
+  );
+
+  testSpillrWidgets(
+    'shrinks a longer active title so it stays centered with comfortable side margins',
+    (tester) async {
+      await seedProfileWithCustomDeckAndOpenPlayPage(
+        tester,
+        deckName: 'The Loud Yapper',
+      );
+
+      final pageView = tester.widget<PageView>(find.byType(PageView));
+      pageView.controller!.jumpToPage(0);
+      await tester.pumpAndSettle();
+
+      final title = tester.widget<Text>(find.text('The\nLoud\nYapper'));
+
+      expect(title.style?.fontSize, lessThan(58));
       expect(title.style?.fontWeight, FontWeight.w700);
     },
   );
@@ -400,7 +639,7 @@ void main() {
     pageView.controller!.jumpToPage(5);
     await tester.pumpAndSettle();
 
-    expect(find.text('Just Pull It'), findsOneWidget);
+    expect(find.text('Just\nPull\nIt'), findsOneWidget);
     expect(find.text('Play'), findsOneWidget);
 
     final playButton = tester.widget<FilledButton>(
@@ -418,13 +657,52 @@ void main() {
     );
     expect(
       playButtonStyle.backgroundColor?.resolve(const <WidgetState>{}),
-      AppColors.white,
+      AppColors.neutral700,
     );
     expect(
       playButtonStyle.foregroundColor?.resolve(const <WidgetState>{}),
-      AppColors.neutral700,
+      AppColors.white,
     );
   });
+
+  testSpillrWidgets('anchors the active deck icon and title block above center', (
+    tester,
+  ) async {
+    await seedProfileAndOpenPlayPage(tester);
+
+    final centerBlock = tester.widget<Align>(
+      find.byKey(const ValueKey('play-deck-card-main-center-no-dead-air')),
+    );
+    final alignment = centerBlock.alignment as Alignment;
+
+    expect(alignment.x, 0);
+    expect(alignment.y, closeTo(-0.08, 0.01));
+  });
+
+  testSpillrWidgets(
+    'shrinks long custom play titles while keeping each word on its own line',
+    (tester) async {
+      await seedProfileWithCustomDeckAndOpenPlayPage(
+        tester,
+        deckName: 'Very Long Custom Deck Title',
+      );
+
+      final pageView = tester.widget<PageView>(find.byType(PageView));
+      pageView.controller!.jumpToPage(0);
+      await tester.pumpAndSettle();
+
+      final title = tester.widget<Text>(
+        find.text('Very\nLong\nCustom\nDeck\nTitle'),
+      );
+
+      expect(title.style?.fontSize, isNotNull);
+      expect(title.style!.fontSize!, lessThan(64));
+      expect(
+        find.byKey(const ValueKey('play-deck-button-custom-1')),
+        findsOneWidget,
+      );
+    },
+  );
 
   testSpillrWidgets('cycles Just Pull It letters through deck accent colors', (
     tester,

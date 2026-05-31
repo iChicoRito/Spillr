@@ -407,6 +407,7 @@ class DeckRepository {
       badgeColor: palette.badgeColor,
       badgeTextColor: palette.badgeTextColor,
       iconColor: palette.badgeTextColor,
+      icon: CustomDeckIconKey.fromValue(deck.iconKey).icon,
       cardBorderColor: palette.borderColor,
     );
   }
