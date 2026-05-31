@@ -4,31 +4,161 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 
-class DeckPatternBackground extends StatelessWidget {
-  const DeckPatternBackground({super.key});
+class DeckPatternBackground extends StatefulWidget {
+  const DeckPatternBackground({
+    super.key,
+    this.animateInTests = false,
+  });
+
+  final bool animateInTests;
+
+  @override
+  State<DeckPatternBackground> createState() => _DeckPatternBackgroundState();
+}
+
+class _DeckPatternBackgroundState extends State<DeckPatternBackground>
+    with SingleTickerProviderStateMixin {
+  static const Duration _scrollDuration = Duration(seconds: 48);
+  static const ValueKey<String> _scrollKey = ValueKey<String>(
+    'deck-pattern-background-scroll',
+  );
+
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: _scrollDuration,
+    );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _syncAnimationState();
+  }
+
+  void _syncAnimationState() {
+    final shouldAnimate = _shouldAnimate(context);
+
+    if (shouldAnimate) {
+      if (!_controller.isAnimating) {
+        _controller.repeat();
+      }
+      return;
+    }
+
+    _controller.stop();
+    _controller.value = 0;
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final color = AppColors.white.withValues(alpha: 0.14);
+    final shouldAnimate = _shouldAnimate(context);
 
     return IgnorePointer(
-      child: Stack(
-        children: [
-          for (final item in _patternItems)
-            Positioned(
-              left: item.left,
-              top: item.top,
-              child: Transform.rotate(
-                angle: item.rotation,
-                child: _PatternShape(
-                  kind: item.kind,
-                  color: color,
-                  size: item.size,
-                ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final viewportHeight = math.max(
+            1.0,
+            constraints.hasBoundedHeight && constraints.maxHeight > 0
+                ? constraints.maxHeight
+                : MediaQuery.sizeOf(context).height,
+          );
+
+          if (!shouldAnimate) {
+            return ClipRect(
+              child: SizedBox.expand(
+                key: _scrollKey,
+                child: _PatternLayer(color: color),
+              ),
+            );
+          }
+
+          return ClipRect(
+            child: AnimatedBuilder(
+              animation: _controller,
+              builder: (context, _) {
+                final offset = _controller.value * viewportHeight;
+                return Stack(
+                  clipBehavior: Clip.none,
+                  alignment: Alignment.topLeft,
+                  children: [
+                    Positioned(
+                      top: offset,
+                      left: 0,
+                      right: 0,
+                      height: viewportHeight,
+                      child: SizedBox.expand(
+                        key: _scrollKey,
+                        child: _PatternLayer(color: color),
+                      ),
+                    ),
+                    Positioned(
+                      top: offset - viewportHeight,
+                      left: 0,
+                      right: 0,
+                      height: viewportHeight,
+                      child: _PatternLayer(color: color),
+                    ),
+                  ],
+                );
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  bool _shouldAnimate(BuildContext context) {
+    if (MediaQuery.maybeDisableAnimationsOf(context) ?? false) {
+      return false;
+    }
+
+    final isWidgetTest =
+        WidgetsBinding.instance.runtimeType.toString().contains(
+          'TestWidgetsFlutterBinding',
+        );
+
+    return !isWidgetTest || widget.animateInTests;
+  }
+}
+
+class _PatternLayer extends StatelessWidget {
+  const _PatternLayer({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      alignment: Alignment.topLeft,
+      children: [
+        for (final item in _patternItems)
+          Positioned(
+            left: item.left,
+            top: item.top,
+            child: Transform.rotate(
+              angle: item.rotation,
+              child: _PatternShape(
+                kind: item.kind,
+                color: color,
+                size: item.size,
               ),
             ),
-        ],
-      ),
+          ),
+      ],
     );
   }
 }

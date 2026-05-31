@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'spillr_tab_shell.dart';
 import '../../features/decks/presentation/screens/decks_screen.dart';
 import '../../features/decks/presentation/screens/questions_screen.dart';
 import '../../features/game/presentation/models/game_ending_arguments.dart';
@@ -34,19 +35,37 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.onboarding,
         builder: (context, state) => const OnboardingFlowScreen(),
       ),
-      GoRoute(
-        path: AppRoutes.home,
-        builder: (context, state) => const PlayPageScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.decks,
-        builder: (context, state) => const DecksScreen(),
-      ),
-      GoRoute(
-        path: '${AppRoutes.decks}/:deckId/questions',
-        builder: (context, state) => QuestionsScreen(
-          deckId: state.pathParameters['deckId'] ?? 'no-dead-air',
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) => SpillrTabShell(
+          navigationShell: navigationShell,
+          location: state.matchedLocation,
         ),
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.home,
+                builder: (context, state) => const PlayPageScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.decks,
+                builder: (context, state) => const DecksScreen(),
+                routes: [
+                  GoRoute(
+                    path: ':deckId/questions',
+                    builder: (context, state) => QuestionsScreen(
+                      deckId: state.pathParameters['deckId'] ?? 'no-dead-air',
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
       ),
       GoRoute(
         path: '${AppRoutes.preparation}/:deckId',

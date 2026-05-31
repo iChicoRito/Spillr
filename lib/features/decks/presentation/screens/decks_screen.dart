@@ -6,7 +6,6 @@ import 'package:hugeicons/hugeicons.dart';
 import '../../../../app/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/fallback_state_view.dart';
-import '../../../../shared/widgets/spillr_bottom_navigation.dart';
 import '../../../../shared/widgets/spillr_bottom_sheet_scaffold.dart';
 import '../../../../shared/widgets/spillr_confirm_dialog.dart';
 import '../../domain/deck_catalog.dart';
@@ -72,13 +71,13 @@ class DecksScreen extends ConsumerWidget {
                               ),
                         ),
                       ),
-                      const SliverToBoxAdapter(child: SizedBox(height: 220)),
+                      const SliverToBoxAdapter(child: SizedBox(height: 140)),
                     ],
                   ),
                 ),
                 Positioned(
                   right: 16,
-                  bottom: 108,
+                  bottom: 28,
                   child: FilledButton.icon(
                     key: const ValueKey('decks-open-create-sheet-button'),
                     onPressed: () => showModalBottomSheet<void>(
@@ -111,16 +110,6 @@ class DecksScreen extends ConsumerWidget {
                       strokeWidth: 1.8,
                     ),
                     label: const Text('Create Deck'),
-                  ),
-                ),
-                Positioned(
-                  left: 16,
-                  right: 16,
-                  bottom: 10,
-                  child: SpillrBottomNavigation(
-                    selectedTab: SpillrBottomNavTab.decks,
-                    onDecksTap: () {},
-                    onPlayTap: () => context.go(AppRoutes.home),
                   ),
                 ),
               ],

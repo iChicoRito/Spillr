@@ -1,7 +1,6 @@
 import '../../../core/theme/app_colors.dart';
 import 'package:hugeicons/hugeicons.dart';
 
-import '../../decks/domain/deck_catalog.dart';
 import '../domain/spillr_deck.dart';
 
 const _baseSpillrDecks = [

@@ -11,6 +11,7 @@ class GameSessionState {
     required this.answeredCount,
     required this.passedCount,
     required this.isFlipped,
+    required this.hasFlippedCard,
   });
 
   factory GameSessionState.start(SpillrDeck deck, {Random? random}) {
@@ -23,6 +24,7 @@ class GameSessionState {
       answeredCount: 0,
       passedCount: 0,
       isFlipped: false,
+      hasFlippedCard: false,
     );
   }
 
@@ -32,13 +34,17 @@ class GameSessionState {
   final int answeredCount;
   final int passedCount;
   final bool isFlipped;
+  final bool hasFlippedCard;
 
   int get totalQuestions => questions.length;
   int get displayIndex => currentIndex + 1;
   String get currentQuestion => questions[currentIndex];
 
   GameSessionState flip() {
-    return copyWith(isFlipped: !isFlipped);
+    return copyWith(
+      isFlipped: !isFlipped,
+      hasFlippedCard: true,
+    );
   }
 
   GameSessionState nextAnswered() {
@@ -96,6 +102,7 @@ class GameSessionState {
     int? answeredCount,
     int? passedCount,
     bool? isFlipped,
+    bool? hasFlippedCard,
   }) {
     return GameSessionState(
       deck: deck ?? this.deck,
@@ -104,6 +111,7 @@ class GameSessionState {
       answeredCount: answeredCount ?? this.answeredCount,
       passedCount: passedCount ?? this.passedCount,
       isFlipped: isFlipped ?? this.isFlipped,
+      hasFlippedCard: hasFlippedCard ?? this.hasFlippedCard,
     );
   }
 

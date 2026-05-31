@@ -10,7 +10,6 @@ import 'package:hugeicons/hugeicons.dart';
 import '../../../../app/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/fallback_state_view.dart';
-import '../../../../shared/widgets/spillr_bottom_navigation.dart';
 import '../../../decks/presentation/providers/deck_providers.dart';
 import '../../../game/domain/spillr_deck.dart';
 import '../../../onboarding/presentation/providers/onboarding_providers.dart';
@@ -188,7 +187,8 @@ class _PlayPageScreenState extends ConsumerState<PlayPageScreen> {
                                     itemCount: decks.length,
                                     itemBuilder: (context, index) {
                                       final deck = decks[index];
-                                      final delta = (_currentPage - index).abs();
+                                      final delta = (_currentPage - index)
+                                          .abs();
                                       final activation = (1 - delta).clamp(
                                         0.0,
                                         1.0,
@@ -233,19 +233,9 @@ class _PlayPageScreenState extends ConsumerState<PlayPageScreen> {
                                 ),
                               ),
                               const SliverToBoxAdapter(
-                                child: SizedBox(height: 106),
+                                child: SizedBox(height: 26),
                               ),
                             ],
-                          ),
-                        ),
-                        Positioned(
-                          left: 16,
-                          right: 16,
-                          bottom: 10,
-                          child: SpillrBottomNavigation(
-                            selectedTab: SpillrBottomNavTab.play,
-                            onDecksTap: () => context.go(AppRoutes.decks),
-                            onPlayTap: () {},
                           ),
                         ),
                       ],
@@ -423,10 +413,15 @@ class _DeckCard extends StatelessWidget {
         final activeDetailLift =
             ui.lerpDouble(0, isCompact ? 34 : 38, activation)! +
             (extraTitleLines * (isCompact ? 24.0 : 28.0) * activation);
-        final topArcHeight = ui.lerpDouble(54, isCompact ? 58 : 70, activation)!;
+        final topArcHeight = ui.lerpDouble(
+          54,
+          isCompact ? 58 : 70,
+          activation,
+        )!;
         final topArcHiddenTop = -(topArcHeight + 12);
         final topArcTop = ui.lerpDouble(-14, topArcHiddenTop, activation)!;
-        final topArcOpacity = 1 -
+        final topArcOpacity =
+            1 -
             Curves.easeInCubic.transform(
               _normalizedProgress(activation, start: 0.46, end: 1),
             );
@@ -514,7 +509,11 @@ class _DeckCard extends StatelessWidget {
                         child: Transform.translate(
                           offset: Offset(
                             0,
-                            ui.lerpDouble(18, -activeDetailLift, detailOpacity)!,
+                            ui.lerpDouble(
+                              18,
+                              -activeDetailLift,
+                              detailOpacity,
+                            )!,
                           ),
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
@@ -542,7 +541,9 @@ class _DeckCard extends StatelessWidget {
                               ),
                               SizedBox(height: isCompact ? 12 : 18),
                               Container(
-                                key: ValueKey('play-deck-count-pill-${deck.id}'),
+                                key: ValueKey(
+                                  'play-deck-count-pill-${deck.id}',
+                                ),
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 20,
                                   vertical: 8,
@@ -601,10 +602,7 @@ class _DeckCard extends StatelessWidget {
                     child: Opacity(
                       opacity: buttonOpacity,
                       child: Transform.translate(
-                        offset: Offset(
-                          0,
-                          ui.lerpDouble(16, 0, buttonOpacity)!,
-                        ),
+                        offset: Offset(0, ui.lerpDouble(16, 0, buttonOpacity)!),
                         child: SizedBox(
                           width: double.infinity,
                           height: isCompact ? 54 : 56,
@@ -667,10 +665,7 @@ double _deckTitleFontSize({
   final activeWordReduction = math.max(0, wordCount - 2) * 12.0;
   final activeSize = wordCount <= 3
       ? activeBaseSize
-      : math.max(
-          activeMinimumSize,
-          activeBaseSize - ((wordCount - 3) * 16.0),
-        );
+      : math.max(activeMinimumSize, activeBaseSize - ((wordCount - 3) * 16.0));
   final inactiveSize = wordCount <= 2
       ? inactiveBaseSize
       : math.max(

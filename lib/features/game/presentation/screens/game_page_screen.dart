@@ -10,6 +10,7 @@ import 'package:hugeicons/hugeicons.dart';
 import '../../../../app/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/fallback_state_view.dart';
+import '../../../../shared/widgets/spillr_confirm_dialog.dart';
 import '../../../decks/presentation/providers/deck_providers.dart';
 import '../../../onboarding/presentation/providers/onboarding_providers.dart';
 import '../../domain/game_result.dart';
@@ -94,6 +95,40 @@ class _GamePageScreenState extends ConsumerState<GamePageScreen> {
         ref.read(onboardingProfileProvider).value?.displayName ?? 'Spiller';
     final result = _session!.endedResult(displayName);
     _goToEnding(result);
+  }
+
+  Future<bool> _handleBackRequested() async {
+    if (_session == null) {
+      context.go(AppRoutes.home);
+      return false;
+    }
+
+    if (!_session!.hasFlippedCard) {
+      context.go(AppRoutes.home);
+      return false;
+    }
+
+    await showDialog<void>(
+      context: context,
+      barrierColor: AppColors.black.withValues(alpha: 0.34),
+      builder: (dialogContext) {
+        return SpillrConfirmDialog(
+          title: 'Leaving Already?',
+          message:
+              'You haven’t spilled all the cards yet. Want to exit anyway?',
+          confirmLabel: 'Yes, Exit',
+          cancelLabel: 'Cancel',
+          onConfirm: () {
+            Navigator.of(dialogContext).pop();
+            if (mounted) {
+              context.go(AppRoutes.home);
+            }
+          },
+        );
+      },
+    );
+
+    return false;
   }
 
   void _goToEnding(GameResult result) {
@@ -226,74 +261,86 @@ class _GamePageScreenState extends ConsumerState<GamePageScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.white,
-      body: SafeArea(
-        top: false,
-        bottom: false,
-        child: Column(
-          children: [
-            SizedBox(height: MediaQuery.paddingOf(context).top),
-            Expanded(
-              child: Container(
-                color: deck.backgroundColor,
-                child: Stack(
-                  children: [
-                    const Positioned.fill(child: DeckPatternBackground()),
-                    SafeArea(
-                      top: false,
-                      bottom: false,
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-                        child: Column(
-                          children: [
-                            _TopBar(onBack: () => context.go(AppRoutes.home)),
-                            const SizedBox(height: 30),
-                            SizedBox(
-                              height: 52,
-                              child: Center(
-                                child: session.isFlipped
-                                    ? _FlipTimerChip(
-                                        secondsRemaining: _secondsRemaining,
-                                        rotationTick: _timerRotationTick,
-                                        accentColor: deck.badgeTextColor,
-                                      )
-                                    : const SizedBox.shrink(),
+      body: PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+          if (!didPop) {
+            unawaited(_handleBackRequested());
+          }
+        },
+        child: SafeArea(
+          top: false,
+          bottom: false,
+          child: Column(
+            children: [
+              SizedBox(height: MediaQuery.paddingOf(context).top),
+              Expanded(
+                child: Container(
+                  color: deck.backgroundColor,
+                  child: Stack(
+                    children: [
+                      const Positioned.fill(child: DeckPatternBackground()),
+                      SafeArea(
+                        top: false,
+                        bottom: false,
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                          child: Column(
+                            children: [
+                              _TopBar(
+                                onBack: () {
+                                  unawaited(_handleBackRequested());
+                                },
                               ),
-                            ),
-                            const SizedBox(height: 26),
-                            Expanded(
-                              child: GestureDetector(
-                                key: const ValueKey('game-flip-card'),
-                                onTap:
-                                    session.isFlipped ||
-                                        _pendingAdvanceAction != null
-                                    ? null
-                                    : _toggleFlip,
-                                child: _FlipCard(session: session),
+                              const SizedBox(height: 30),
+                              SizedBox(
+                                height: 52,
+                                child: Center(
+                                  child: session.isFlipped
+                                      ? _FlipTimerChip(
+                                          secondsRemaining: _secondsRemaining,
+                                          rotationTick: _timerRotationTick,
+                                          accentColor: deck.badgeTextColor,
+                                        )
+                                      : const SizedBox.shrink(),
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 18),
-                            _ProgressIndicator(session: session),
-                            const SizedBox(height: 20),
-                            if (session.isFlipped) ...[
-                              _FlipActionBar(
-                                deck: deck,
-                                enabled: _pendingAdvanceAction == null,
-                                onEnd: _endRound,
-                                onSpill: _spillCard,
-                                onPass: _passCard,
+                              const SizedBox(height: 26),
+                              Expanded(
+                                child: GestureDetector(
+                                  key: const ValueKey('game-flip-card'),
+                                  onTap:
+                                      session.isFlipped ||
+                                          _pendingAdvanceAction != null
+                                      ? null
+                                      : _toggleFlip,
+                                  child: _FlipCard(session: session),
+                                ),
                               ),
-                            ] else
-                              const SizedBox(height: 136),
-                          ],
+                              const SizedBox(height: 18),
+                              _ProgressIndicator(session: session),
+                              const SizedBox(height: 20),
+                              if (session.isFlipped) ...[
+                                _FlipActionBar(
+                                  deck: deck,
+                                  enabled: _pendingAdvanceAction == null,
+                                  onEnd: _endRound,
+                                  onSpill: _spillCard,
+                                  onPass: _passCard,
+                                ),
+                              ] else
+                                const SizedBox(height: 136),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
-            SizedBox(height: MediaQuery.paddingOf(context).bottom),
-          ],
+              SizedBox(height: MediaQuery.paddingOf(context).bottom),
+            ],
+          ),
         ),
       ),
     );

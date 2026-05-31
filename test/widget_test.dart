@@ -17,6 +17,7 @@ import 'package:spillr/features/game/presentation/screens/ending_page_screen.dar
 import 'package:spillr/features/game/presentation/screens/preparation_page_screen.dart';
 import 'package:spillr/features/game/presentation/providers/game_providers.dart';
 import 'package:spillr/features/onboarding/presentation/providers/onboarding_providers.dart';
+import 'package:spillr/shared/widgets/spillr_bottom_navigation.dart';
 
 void main() {
   late AppDatabase database;
@@ -358,6 +359,66 @@ void main() {
     },
   );
 
+  testSpillrWidgets('uses the full-width Remindly-style bottom nav shell', (
+    tester,
+  ) async {
+    await seedProfileAndOpenPlayPage(tester);
+
+    final navFinder = find.byType(SpillrBottomNavigation);
+
+    expect(navFinder, findsOneWidget);
+    expect(tester.getSize(navFinder), const Size(393, 80));
+    expect(
+      find.descendant(
+        of: navFinder,
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is AnimatedPositioned &&
+              widget.duration == const Duration(milliseconds: 220) &&
+              widget.curve == Curves.easeOutCubic,
+        ),
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testSpillrWidgets(
+    'switches tabs instantly while the nav indicator keeps animating',
+    (tester) async {
+      await seedProfileAndOpenPlayPage(tester);
+
+      final navFinder = find.byType(SpillrBottomNavigation);
+      final indicatorFinder = find.descendant(
+        of: navFinder,
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is AnimatedPositioned &&
+              widget.duration == const Duration(milliseconds: 220) &&
+              widget.curve == Curves.easeOutCubic,
+        ),
+      );
+      final initialDx = tester.getTopLeft(indicatorFinder).dx;
+
+      await tester.tap(find.byKey(const ValueKey('bottom-nav-decks')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(navFinder, findsOneWidget);
+
+      final midDx = tester.getTopLeft(indicatorFinder).dx;
+
+      expect(find.text('Create your'), findsOneWidget);
+      expect(find.text('Ready to Spill?'), findsNothing);
+
+      await tester.pumpAndSettle();
+
+      final finalDx = tester.getTopLeft(indicatorFinder).dx;
+
+      expect(midDx, lessThan(initialDx));
+      expect(midDx, greaterThan(finalDx));
+    },
+  );
+
   testSpillrWidgets(
     'uses the consistent H1 typography for the active deck card',
     (tester) async {
@@ -476,19 +537,18 @@ void main() {
     },
   );
 
-  testSpillrWidgets(
-    'keeps the rounded active icon badge compact',
-    (tester) async {
-      await seedProfileAndOpenPlayPage(tester);
+  testSpillrWidgets('keeps the rounded active icon badge compact', (
+    tester,
+  ) async {
+    await seedProfileAndOpenPlayPage(tester);
 
-      final badgeRect = tester.getRect(
-        find.byKey(const ValueKey('play-deck-bottom-icon-badge-no-dead-air')),
-      );
+    final badgeRect = tester.getRect(
+      find.byKey(const ValueKey('play-deck-bottom-icon-badge-no-dead-air')),
+    );
 
-      expect(badgeRect.width, lessThanOrEqualTo(68));
-      expect(badgeRect.height, lessThanOrEqualTo(68));
-    },
-  );
+    expect(badgeRect.width, lessThanOrEqualTo(68));
+    expect(badgeRect.height, lessThanOrEqualTo(68));
+  });
 
   testSpillrWidgets(
     'uses a fixed stroke width of 1.5 for the deck badge icons',
@@ -553,10 +613,7 @@ void main() {
       expect(titleRect.top, lessThan(cardRect.top + 64));
       expect(countPillRect.top, greaterThan(titleRect.bottom + 18));
       expect(countPillRect.bottom, lessThan(badgeRect.top - 20));
-      expect(
-        badgeRect.center.dy,
-        closeTo(bottomArcRect.top, 8),
-      );
+      expect(badgeRect.center.dy, closeTo(bottomArcRect.top, 8));
     },
   );
 
@@ -665,19 +722,20 @@ void main() {
     );
   });
 
-  testSpillrWidgets('anchors the active deck icon and title block above center', (
-    tester,
-  ) async {
-    await seedProfileAndOpenPlayPage(tester);
+  testSpillrWidgets(
+    'anchors the active deck icon and title block above center',
+    (tester) async {
+      await seedProfileAndOpenPlayPage(tester);
 
-    final centerBlock = tester.widget<Align>(
-      find.byKey(const ValueKey('play-deck-card-main-center-no-dead-air')),
-    );
-    final alignment = centerBlock.alignment as Alignment;
+      final centerBlock = tester.widget<Align>(
+        find.byKey(const ValueKey('play-deck-card-main-center-no-dead-air')),
+      );
+      final alignment = centerBlock.alignment as Alignment;
 
-    expect(alignment.x, 0);
-    expect(alignment.y, closeTo(-0.08, 0.01));
-  });
+      expect(alignment.x, 0);
+      expect(alignment.y, closeTo(-0.08, 0.01));
+    },
+  );
 
   testSpillrWidgets(
     'shrinks long custom play titles while keeping each word on its own line',
@@ -1172,6 +1230,50 @@ void main() {
     final secondQuestion = currentQuestionText(tester);
     expect(secondQuestion, isNot(equals(firstQuestion)));
   });
+
+  testSpillrWidgets(
+    'prompts before leaving the game after at least one card is flipped',
+    (tester) async {
+      await seedProfileAndOpenPlayPage(tester);
+
+      await openDeckFromPlayPage(tester, label: 'Play No Dead Air');
+      await continueFromPreparation(tester);
+      await flipCard(tester);
+
+      await tester.tap(find.text('Back'));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const ValueKey('spillr-confirm-dialog')), findsOneWidget);
+      expect(find.text('Leaving Already?'), findsOneWidget);
+      expect(
+        find.text(
+          "You haven’t spilled all the cards yet. Want to exit anyway?",
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Cancel'), findsOneWidget);
+      expect(find.text('Yes, Exit'), findsOneWidget);
+    },
+  );
+
+  testSpillrWidgets(
+    'exits to the home page when the leave confirmation is accepted',
+    (tester) async {
+      await seedProfileAndOpenPlayPage(tester);
+
+      await openDeckFromPlayPage(tester, label: 'Play No Dead Air');
+      await continueFromPreparation(tester);
+      await flipCard(tester);
+
+      await tester.tap(find.text('Back'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('confirm-dialog-confirm')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Hey, Chico'), findsOneWidget);
+      expect(find.byKey(const ValueKey('game-flip-card')), findsNothing);
+    },
+  );
 
   testSpillrWidgets('animates the card with a transform while flipping', (
     tester,
