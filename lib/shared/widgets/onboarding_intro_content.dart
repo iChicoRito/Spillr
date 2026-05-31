@@ -27,9 +27,7 @@ class OnboardingIntroContent extends StatelessWidget {
         Expanded(
           child: SizedBox(
             key: ValueKey('onboarding-art-placeholder-$stepIndex'),
-            child: const Center(
-              child: SizedBox(width: 280, height: 320),
-            ),
+            child: const Center(child: SizedBox(width: 280, height: 320)),
           ),
         ),
         const SizedBox(height: 20),

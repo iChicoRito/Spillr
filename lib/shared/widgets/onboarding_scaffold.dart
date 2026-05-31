@@ -18,9 +18,7 @@ class OnboardingScaffold extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
           child: Column(
             children: [
-              Expanded(
-                child: body,
-              ),
+              Expanded(child: body),
               footer,
             ],
           ),

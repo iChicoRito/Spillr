@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -115,10 +117,27 @@ class _QuestionsContent extends ConsumerWidget {
         generatedQuestion = await ref
             .read(questionGenerationControllerProvider.notifier)
             .generateQuestion(deck: deck, excludedQuestions: rejectedQuestions);
-      } catch (error) {
+      } on QuestionGenerationException catch (error) {
         if (context.mounted) {
           Navigator.of(context, rootNavigator: true).pop();
-          _showGenerationMessage(context, error);
+          await _showQuestionGenerationErrorDialog(context, error);
+          _scheduleCreateQuestionSheet(
+            context,
+            ref,
+            initialQuestion: draftQuestion,
+          );
+        }
+        return;
+      } catch (_) {
+        if (context.mounted) {
+          Navigator.of(context, rootNavigator: true).pop();
+          await _showQuestionGenerationErrorDialog(
+            context,
+            const QuestionGenerationApiException(
+              message:
+                  'We could not generate a question right now. Please try again.',
+            ),
+          );
           _scheduleCreateQuestionSheet(
             context,
             ref,
@@ -133,12 +152,17 @@ class _QuestionsContent extends ConsumerWidget {
       }
       Navigator.of(context, rootNavigator: true).pop();
 
+      final usageState = await ref.read(questionGenerationUsageProvider.future);
+      final usageMessage = _questionGenerationUsageMessage(usageState);
+
       final action = await showDialog<_QuestionGenerationReviewAction>(
         context: context,
         barrierDismissible: false,
         barrierColor: AppColors.black.withValues(alpha: 0.42),
-        builder: (context) =>
-            _QuestionGenerationReadyDialog(question: generatedQuestion),
+        builder: (context) => _QuestionGenerationReadyDialog(
+          question: generatedQuestion,
+          usageMessage: usageMessage,
+        ),
       );
 
       if (!context.mounted) {
@@ -150,6 +174,10 @@ class _QuestionsContent extends ConsumerWidget {
           ref,
           initialQuestion: generatedQuestion,
         );
+        return;
+      }
+
+      if (action != _QuestionGenerationReviewAction.regenerate) {
         return;
       }
 
@@ -197,7 +225,7 @@ class _QuestionsContent extends ConsumerWidget {
               Text(
                 "Lists of tea's for ",
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontSize: 16,
+                  fontSize: 24,
                   fontWeight: FontWeight.w600,
                   color: AppColors.neutral700,
                 ),
@@ -205,20 +233,12 @@ class _QuestionsContent extends ConsumerWidget {
               Text(
                 deck.title,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontSize: 16,
+                  fontSize: 24,
                   fontWeight: FontWeight.w600,
                   color: deck.badgeTextColor,
                 ),
               ),
             ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            '${deck.title} has total of ${questions.length} Cards',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontSize: 14,
-              color: AppColors.neutral400,
-            ),
           ),
           const SizedBox(height: 12),
           Expanded(
@@ -472,6 +492,17 @@ class _CreateQuestionSheetState extends ConsumerState<_CreateQuestionSheet> {
   Widget build(BuildContext context) {
     final mutationState = ref.watch(questionMutationControllerProvider);
     final isBusy = mutationState.isLoading;
+    final usageAsync = ref.watch(questionGenerationUsageProvider);
+    final usageState = usageAsync.maybeWhen(
+      data: (state) => state,
+      orElse: () => null,
+    );
+    final usageMessage = _questionGenerationUsageMessage(usageState);
+    final isGenerationBlocked = usageAsync.when(
+      data: (state) => state.isBlockedAt(DateTime.now()),
+      loading: () => false,
+      error: (error, stackTrace) => false,
+    );
 
     return SpillrBottomSheetScaffold(
       title: 'Create Question',
@@ -484,7 +515,11 @@ class _CreateQuestionSheetState extends ConsumerState<_CreateQuestionSheet> {
       secondaryActionLabel: 'Generate with AI',
       secondaryActionIcon: const Icon(Icons.auto_awesome, size: 20),
       onSecondaryAction: _requestAiGeneration,
-      isSecondaryActionEnabled: !isBusy,
+      isSecondaryActionEnabled: !isBusy && !isGenerationBlocked,
+      secondaryActionFooter: _QuestionGenerationUsageNotice(
+        key: const ValueKey('question-ai-usage-indicator'),
+        message: usageMessage,
+      ),
       child: Form(
         key: _formKey,
         child: Column(
@@ -594,9 +629,13 @@ class _QuestionGenerationLoadingDialog extends StatelessWidget {
 }
 
 class _QuestionGenerationReadyDialog extends StatelessWidget {
-  const _QuestionGenerationReadyDialog({required this.question});
+  const _QuestionGenerationReadyDialog({
+    required this.question,
+    required this.usageMessage,
+  });
 
   final String question;
+  final String usageMessage;
 
   @override
   Widget build(BuildContext context) {
@@ -604,115 +643,142 @@ class _QuestionGenerationReadyDialog extends StatelessWidget {
       key: const ValueKey('question-ai-ready-dialog'),
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 26),
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(24, 34, 24, 28),
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(28),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Center(child: _QuestionGenerationIcon()),
-            const SizedBox(height: 22),
-            Text(
-              'Question Ready!',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: AppColors.neutral700,
-              ),
+      child: Stack(
+        children: [
+          Container(
+            padding: const EdgeInsets.fromLTRB(24, 34, 24, 28),
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(28),
             ),
-            const SizedBox(height: 16),
-            Text(
-              "New question generated. Let's keep the chat moving.",
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontSize: 16,
-                color: AppColors.neutral400,
-                height: 1.18,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-              decoration: BoxDecoration(
-                color: AppColors.white,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.neutral200),
-              ),
-              child: Column(
-                children: [
-                  Text(
-                    'Question Generated:',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.neutral400,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    question,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontSize: 16,
-                      color: AppColors.neutral700,
-                      height: 1.24,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 18),
-            SizedBox(
-              height: 58,
-              child: FilledButton(
-                key: const ValueKey('question-ai-accept-button'),
-                onPressed: () => Navigator.of(
-                  context,
-                ).pop(_QuestionGenerationReviewAction.accept),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.teal500,
-                  foregroundColor: AppColors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  textStyle: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Center(child: _QuestionGenerationIcon()),
+                const SizedBox(height: 22),
+                Text(
+                  'Question Ready!',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.neutral700,
                   ),
                 ),
-                child: const Text("I'll take it"),
-              ),
-            ),
-            const SizedBox(height: 10),
-            SizedBox(
-              height: 52,
-              child: OutlinedButton(
-                key: const ValueKey('question-ai-generate-again-button'),
-                onPressed: () => Navigator.of(
-                  context,
-                ).pop(_QuestionGenerationReviewAction.regenerate),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.teal500,
-                  side: const BorderSide(color: AppColors.teal500),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  textStyle: const TextStyle(
+                const SizedBox(height: 16),
+                Text(
+                  "New question generated. Let's keep the chat moving.",
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                    color: AppColors.neutral400,
+                    height: 1.18,
                   ),
                 ),
-                child: const Text('Re-Generate'),
-              ),
+                const SizedBox(height: 20),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 18,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.neutral200),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        'Question Generated:',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.neutral400,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        question,
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontSize: 16,
+                          color: AppColors.neutral700,
+                          height: 1.24,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 18),
+                SizedBox(
+                  height: 58,
+                  child: FilledButton(
+                    key: const ValueKey('question-ai-accept-button'),
+                    onPressed: () => Navigator.of(
+                      context,
+                    ).pop(_QuestionGenerationReviewAction.accept),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.teal500,
+                      foregroundColor: AppColors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      textStyle: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    child: const Text("I'll take it"),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  height: 52,
+                  child: OutlinedButton(
+                    key: const ValueKey('question-ai-generate-again-button'),
+                    onPressed: () => Navigator.of(
+                      context,
+                    ).pop(_QuestionGenerationReviewAction.regenerate),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.teal500,
+                      side: const BorderSide(color: AppColors.teal500),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      textStyle: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    child: const Text('Re-Generate'),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                _QuestionGenerationUsageNotice(
+                  key: const ValueKey('question-ai-ready-usage-indicator'),
+                  message: usageMessage,
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+          Positioned(
+            top: 8,
+            right: 8,
+            child: IconButton(
+              key: const ValueKey('question-ai-close-button'),
+              tooltip: 'Close',
+              style: IconButton.styleFrom(
+                foregroundColor: AppColors.neutral400,
+              ),
+              onPressed: () => Navigator.of(
+                context,
+              ).pop(_QuestionGenerationReviewAction.cancel),
+              icon: const Icon(Icons.close_rounded),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -735,26 +801,134 @@ class _QuestionGenerationIcon extends StatelessWidget {
   }
 }
 
-enum _QuestionGenerationReviewAction { accept, regenerate }
+enum _QuestionGenerationReviewAction { accept, regenerate, cancel }
 
-void _showGenerationMessage(BuildContext context, Object error) {
-  final message = _questionGenerationErrorMessage(error);
-  ScaffoldMessenger.of(context)
-    ..hideCurrentSnackBar()
-    ..showSnackBar(
-      SnackBar(
-        content: Text(message),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.neutral700,
-      ),
-    );
+String _questionGenerationUsageMessage(QuestionGenerationUsageState? state) {
+  if (state == null || state.attemptCount == 0) {
+    return 'You can generate up to 15 times per hour';
+  }
+
+  if (state.isBlockedAt(DateTime.now()) || state.hasReachedLimit) {
+    return "You've hit the 15-request hourly limit. Please wait until your quota resets.";
+  }
+
+  return 'You’ve used ${state.attemptCount} of 15 requests this hour';
 }
 
-String _questionGenerationErrorMessage(Object error) {
-  if (error is QuestionGenerationException) {
-    return error.message;
+class _QuestionGenerationUsageNotice extends StatelessWidget {
+  const _QuestionGenerationUsageNotice({required this.message, super.key});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: Text(
+        message,
+        textAlign: TextAlign.center,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          fontSize: 12,
+          color: AppColors.neutral400,
+          height: 1.25,
+        ),
+      ),
+    );
   }
-  return 'Unable to generate a question right now.';
+}
+
+Future<void> _showQuestionGenerationErrorDialog(
+  BuildContext context,
+  QuestionGenerationException error,
+) {
+  return showDialog<void>(
+    context: context,
+    barrierDismissible: false,
+    barrierColor: AppColors.black.withValues(alpha: 0.42),
+    builder: (context) => _QuestionGenerationErrorDialog(error: error),
+  );
+}
+
+class _QuestionGenerationErrorDialog extends StatelessWidget {
+  const _QuestionGenerationErrorDialog({required this.error});
+
+  final QuestionGenerationException error;
+
+  @override
+  Widget build(BuildContext context) {
+    final icon = switch (error) {
+      QuestionGenerationOfflineException() => Icons.wifi_off_rounded,
+      QuestionGenerationLimitExceededException() => Icons.lock_clock_rounded,
+      _ => Icons.error_outline_rounded,
+    };
+
+    return Dialog(
+      key: const ValueKey('question-ai-error-dialog'),
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 28),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(24, 30, 24, 24),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(28),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 68,
+              height: 68,
+              decoration: const BoxDecoration(
+                color: AppColors.red100,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: AppColors.red500, size: 30),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              error.title,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: AppColors.neutral700,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              error.message,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontSize: 16,
+                color: AppColors.neutral400,
+                height: 1.22,
+              ),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: FilledButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.teal500,
+                  foregroundColor: AppColors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  textStyle: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                child: const Text('Okay'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _EditQuestionSheet extends ConsumerStatefulWidget {

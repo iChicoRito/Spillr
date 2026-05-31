@@ -133,10 +133,7 @@ class DecksScreen extends ConsumerWidget {
 }
 
 class _DecksHeader extends ConsumerWidget {
-  const _DecksHeader({
-    required this.selectedFilter,
-    required this.filterChips,
-  });
+  const _DecksHeader({required this.selectedFilter, required this.filterChips});
 
   final DeckFilterSelection selectedFilter;
   final List<DeckFilterChip> filterChips;
@@ -208,8 +205,9 @@ class _DecksHeader extends ConsumerWidget {
 
   DeckFilterSelection _selectionFor(DeckFilterChip filter) {
     return switch (filter) {
-      BuiltInDeckFilterChip(:final filter) =>
-        DeckFilterSelection.builtIn(filter),
+      BuiltInDeckFilterChip(:final filter) => DeckFilterSelection.builtIn(
+        filter,
+      ),
       CustomDeckFilterChip(:final deckId) => DeckFilterSelection.custom(deckId),
     };
   }
@@ -229,9 +227,7 @@ class _DeckFilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      key: ValueKey(
-        filter.id,
-      ),
+      key: ValueKey(filter.id),
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
       child: AnimatedContainer(
@@ -373,10 +369,7 @@ class _DeckRow extends ConsumerWidget {
         ),
         const PopupMenuItem<_DeckAction>(
           value: _DeckAction.delete,
-          child: Text(
-            'Delete',
-            style: TextStyle(color: AppColors.red500),
-          ),
+          child: Text('Delete', style: TextStyle(color: AppColors.red500)),
         ),
       ],
     );
@@ -438,9 +431,9 @@ class _CreateDeckSheetState extends ConsumerState<_CreateDeckSheet> {
         );
 
     if (mounted && !ref.read(deckCreationControllerProvider).hasError) {
-      ref.read(deckFilterProvider.notifier).select(
-        const DeckFilterSelection.all(),
-      );
+      ref
+          .read(deckFilterProvider.notifier)
+          .select(const DeckFilterSelection.all());
       Navigator.of(context).pop();
     }
   }

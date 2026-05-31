@@ -36,12 +36,29 @@ class DeckQuestionEntries extends Table {
   DateTimeColumn get updatedAt => dateTime()();
 }
 
-@DriftDatabase(tables: [Profiles, CustomDecks, DeckQuestionEntries])
+class QuestionGenerationUsageEntries extends Table {
+  IntColumn get id => integer()();
+  IntColumn get attemptCount => integer().withDefault(const Constant(0))();
+  DateTimeColumn get limitReachedAt => dateTime().nullable()();
+  DateTimeColumn get updatedAt => dateTime()();
+
+  @override
+  Set<Column<Object>>? get primaryKey => {id};
+}
+
+@DriftDatabase(
+  tables: [
+    Profiles,
+    CustomDecks,
+    DeckQuestionEntries,
+    QuestionGenerationUsageEntries,
+  ],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -52,6 +69,9 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 3) {
         await migrator.createTable(deckQuestionEntries);
+      }
+      if (from < 4) {
+        await migrator.createTable(questionGenerationUsageEntries);
       }
     },
   );

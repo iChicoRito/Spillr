@@ -28,6 +28,7 @@ void main() {
   Future<void> pumpApp(
     WidgetTester tester, {
     QuestionGenerationService? questionGenerationService,
+    QuestionGenerationUsageStore? questionGenerationUsageStore,
   }) async {
     await tester.binding.setSurfaceSize(const Size(393, 852));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -38,6 +39,10 @@ void main() {
           if (questionGenerationService != null)
             questionGenerationServiceProvider.overrideWithValue(
               questionGenerationService,
+            ),
+          if (questionGenerationUsageStore != null)
+            questionGenerationUsageRepositoryProvider.overrideWithValue(
+              questionGenerationUsageStore,
             ),
         ],
         child: const SpillrApp(),
@@ -51,9 +56,14 @@ void main() {
   Future<void> seedProfileAndOpenPlayPage(
     WidgetTester tester, {
     QuestionGenerationService? questionGenerationService,
+    QuestionGenerationUsageStore? questionGenerationUsageStore,
   }) async {
     await database.saveProfile('Chico');
-    await pumpApp(tester, questionGenerationService: questionGenerationService);
+    await pumpApp(
+      tester,
+      questionGenerationService: questionGenerationService,
+      questionGenerationUsageStore: questionGenerationUsageStore,
+    );
   }
 
   Future<void> openDecksScreen(WidgetTester tester) async {
@@ -341,7 +351,6 @@ void main() {
 
     expect(find.byKey(const ValueKey('questions-page')), findsOneWidget);
     expect(find.text('Deep Spill'), findsAtLeastNWidgets(1));
-    expect(find.text('Deep Spill has total of 20 Cards'), findsOneWidget);
     expect(
       find.text("What's something you wish people understood about you?"),
       findsOneWidget,
@@ -397,7 +406,6 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.text('What truth are you avoiding right now?'), findsNothing);
-    expect(find.text('Deep Spill has total of 19 Cards'), findsOneWidget);
 
     await disposeApp(tester);
   });
@@ -430,7 +438,6 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
-    expect(find.text('Weird Humor has total of 1 Cards'), findsOneWidget);
     expect(find.text('What joke still makes you laugh?'), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('questions-back-button')));
@@ -460,9 +467,13 @@ void main() {
   ) async {
     await seedProfileAndOpenPlayPage(
       tester,
-      questionGenerationService: _FakeQuestionGenerationService([
-        'What snack could start a debate?',
-      ]),
+      questionGenerationUsageStore: _FixedQuestionGenerationUsageStore(
+        QuestionGenerationUsageState(
+          attemptCount: 0,
+          limitReachedAt: null,
+          updatedAt: DateTime(2026, 5, 31, 12, 0),
+        ),
+      ),
     );
 
     await createCustomDeckAndOpenQuestionSheet(tester);
@@ -483,6 +494,10 @@ void main() {
     expect(
       generateButton.style?.foregroundColor?.resolve(const <WidgetState>{}),
       AppColors.teal500,
+    );
+    expect(
+      find.text('You can generate up to 15 times per hour'),
+      findsOneWidget,
     );
 
     await tester.binding.handlePopRoute();
@@ -604,13 +619,138 @@ void main() {
       find.byKey(const ValueKey('question-sheet-text-field')),
     );
     expect(field.controller?.text, generatedQuestion);
-    expect(find.text('Weird Humor has total of 0 Cards'), findsOneWidget);
 
     await tester.binding.handlePopRoute();
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     await disposeApp(tester);
   });
+
+  testWidgets(
+    'shows the usage count below Generate with AI and in the generated dialog after it has been used',
+    (tester) async {
+      final usageStore = _MutableQuestionGenerationUsageStore(
+        QuestionGenerationUsageState(
+          attemptCount: 2,
+          limitReachedAt: null,
+          updatedAt: DateTime(2026, 5, 31, 12, 0),
+        ),
+      );
+      await seedProfileAndOpenPlayPage(
+        tester,
+        questionGenerationService: _UsageAwareQuestionGenerationService([
+          'What harmless choice starts your villain era?',
+        ], usageStore: usageStore),
+        questionGenerationUsageStore: usageStore,
+      );
+
+      await createCustomDeckAndOpenQuestionSheet(tester);
+      expect(
+        find.text('You’ve used 2 of 15 requests this hour'),
+        findsOneWidget,
+      );
+
+      await tester.tap(
+        find.byKey(const ValueKey('question-ai-generate-button')),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(
+        find.byKey(const ValueKey('question-ai-ready-dialog')),
+        findsOneWidget,
+      );
+      expect(find.text('Question Ready!'), findsOneWidget);
+      expect(
+        find.text('You’ve used 3 of 15 requests this hour'),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.byKey(const ValueKey('question-ai-accept-button')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(
+        find.text('You’ve used 3 of 15 requests this hour'),
+        findsOneWidget,
+      );
+      expect(find.text('Create Question'), findsOneWidget);
+
+      await tester.binding.handlePopRoute();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await disposeApp(tester);
+    },
+  );
+
+  testWidgets(
+    'shows the hourly limit message below Generate with AI and in the generated dialog when the cap is hit',
+    (tester) async {
+      final now = DateTime(2026, 5, 31, 12, 0);
+      final usageStore = _MutableQuestionGenerationUsageStore(
+        QuestionGenerationUsageState(
+          attemptCount: 14,
+          limitReachedAt: null,
+          updatedAt: now,
+        ),
+      );
+      await seedProfileAndOpenPlayPage(
+        tester,
+        questionGenerationService: _UsageAwareQuestionGenerationService([
+          'What tiny inconvenience ruins your whole vibe?',
+        ], usageStore: usageStore),
+        questionGenerationUsageStore: usageStore,
+      );
+
+      await createCustomDeckAndOpenQuestionSheet(tester);
+      expect(
+        find.text('You’ve used 14 of 15 requests this hour'),
+        findsOneWidget,
+      );
+
+      await tester.tap(
+        find.byKey(const ValueKey('question-ai-generate-button')),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(
+        find.byKey(const ValueKey('question-ai-ready-dialog')),
+        findsOneWidget,
+      );
+      expect(
+        find.text(
+          "You've hit the 15-request hourly limit. Please wait until your quota resets.",
+        ),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.byKey(const ValueKey('question-ai-accept-button')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(
+        find.text(
+          "You've hit the 15-request hourly limit. Please wait until your quota resets.",
+        ),
+        findsOneWidget,
+      );
+      final generateButton = tester.widget<FilledButton>(
+        find.byKey(const ValueKey('question-ai-generate-button')),
+      );
+      expect(generateButton.onPressed, isNull);
+      expect(find.text('Create Question'), findsOneWidget);
+
+      await tester.binding.handlePopRoute();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await disposeApp(tester);
+    },
+  );
 
   testWidgets('generate again replaces the reviewed AI question', (
     tester,
@@ -651,6 +791,114 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     await disposeApp(tester);
   });
+
+  testWidgets(
+    'tapping the X closes the generated question dialog without starting another generation',
+    (tester) async {
+      const firstQuestion = 'What harmless choice starts your villain era?';
+      const secondQuestion = 'What snack would you defend in court?';
+      final generator = _RecordingQuestionGenerationService([
+        firstQuestion,
+        secondQuestion,
+      ]);
+      await seedProfileAndOpenPlayPage(
+        tester,
+        questionGenerationService: generator,
+      );
+
+      await createCustomDeckAndOpenQuestionSheet(tester);
+      await tester.tap(
+        find.byKey(const ValueKey('question-ai-generate-button')),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.text(firstQuestion), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('question-ai-close-button')),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.byKey(const ValueKey('question-ai-close-button')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pumpAndSettle();
+
+      expect(generator.excludedQuestionsLog, hasLength(1));
+      expect(generator.excludedQuestionsLog.first, isEmpty);
+      expect(
+        find.byKey(const ValueKey('question-ai-loading-dialog')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey('question-ai-ready-dialog')),
+        findsNothing,
+      );
+      expect(find.text(secondQuestion), findsNothing);
+      expect(find.text('Create Question'), findsNothing);
+      expect(
+        find.byKey(const ValueKey('questions-add-button')),
+        findsOneWidget,
+      );
+
+      await tester.binding.handlePopRoute();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await disposeApp(tester);
+    },
+  );
+
+  testWidgets(
+    'pressing back on the generated question dialog exits without starting another generation',
+    (tester) async {
+      const firstQuestion = 'What tiny inconvenience ruins your whole vibe?';
+      const secondQuestion = 'What snack would you defend in court?';
+      final generator = _RecordingQuestionGenerationService([
+        firstQuestion,
+        secondQuestion,
+      ]);
+      await seedProfileAndOpenPlayPage(
+        tester,
+        questionGenerationService: generator,
+      );
+
+      await createCustomDeckAndOpenQuestionSheet(tester);
+      await tester.tap(
+        find.byKey(const ValueKey('question-ai-generate-button')),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      await tester.binding.handlePopRoute();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pumpAndSettle();
+
+      expect(generator.excludedQuestionsLog, hasLength(1));
+      expect(generator.excludedQuestionsLog.first, isEmpty);
+      expect(
+        find.byKey(const ValueKey('question-ai-loading-dialog')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey('question-ai-ready-dialog')),
+        findsNothing,
+      );
+      expect(find.text(secondQuestion), findsNothing);
+      expect(find.text('Create Question'), findsNothing);
+      expect(
+        find.byKey(const ValueKey('questions-add-button')),
+        findsOneWidget,
+      );
+
+      await tester.binding.handlePopRoute();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await disposeApp(tester);
+    },
+  );
 
   testWidgets(
     're-generating returns to the centered loading dialog before showing the next question',
@@ -755,6 +1003,162 @@ void main() {
     },
   );
 
+  testWidgets('disables Generate with AI when the usage limit is active', (
+    tester,
+  ) async {
+    final now = DateTime.now();
+    await seedProfileAndOpenPlayPage(
+      tester,
+      questionGenerationUsageStore: _FixedQuestionGenerationUsageStore(
+        QuestionGenerationUsageState(
+          attemptCount: kQuestionGenerationMaxAttempts,
+          limitReachedAt: now.subtract(const Duration(minutes: 10)),
+          updatedAt: now,
+        ),
+      ),
+    );
+
+    await createCustomDeckAndOpenQuestionSheet(tester);
+
+    final generateButton = tester.widget<FilledButton>(
+      find.byKey(const ValueKey('question-ai-generate-button')),
+    );
+    expect(generateButton.onPressed, isNull);
+    expect(find.text('Generate with AI'), findsOneWidget);
+    expect(
+      find.text(
+        "You've hit the 15-request hourly limit. Please wait until your quota resets.",
+      ),
+      findsOneWidget,
+    );
+
+    await tester.binding.handlePopRoute();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await disposeApp(tester);
+  });
+
+  testWidgets(
+    'shows an offline dialog when generation cannot reach the network',
+    (tester) async {
+      await seedProfileAndOpenPlayPage(
+        tester,
+        questionGenerationService: _FakeQuestionGenerationService([
+          const QuestionGenerationOfflineException(),
+        ]),
+      );
+
+      await createCustomDeckAndOpenQuestionSheet(tester);
+      await tester.tap(
+        find.byKey(const ValueKey('question-ai-generate-button')),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(
+        find.byKey(const ValueKey('question-ai-error-dialog')),
+        findsOneWidget,
+      );
+      expect(find.text('No Internet Connection'), findsOneWidget);
+      expect(
+        find.text('You need an internet connection to generate a question.'),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.text('Okay'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.text('Create Question'), findsOneWidget);
+
+      await tester.binding.handlePopRoute();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await disposeApp(tester);
+    },
+  );
+
+  testWidgets('shows a limit dialog when AI generation is exhausted', (
+    tester,
+  ) async {
+    await seedProfileAndOpenPlayPage(
+      tester,
+      questionGenerationService: _FakeQuestionGenerationService([
+        QuestionGenerationLimitExceededException(
+          retryAt: DateTime(2026, 5, 31, 13, 0),
+          message: 'You have used all 15 AI generations. Try again in 1 hour.',
+        ),
+      ]),
+    );
+
+    await createCustomDeckAndOpenQuestionSheet(tester);
+    await tester.tap(find.byKey(const ValueKey('question-ai-generate-button')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(
+      find.byKey(const ValueKey('question-ai-error-dialog')),
+      findsOneWidget,
+    );
+    expect(find.text('Generation Limit Reached'), findsOneWidget);
+    expect(
+      find.text('You have used all 15 AI generations. Try again in 1 hour.'),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.text('Okay'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('Create Question'), findsOneWidget);
+
+    await tester.binding.handlePopRoute();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await disposeApp(tester);
+  });
+
+  testWidgets(
+    'shows a generic dialog when the AI generator fails unexpectedly',
+    (tester) async {
+      await seedProfileAndOpenPlayPage(
+        tester,
+        questionGenerationService: _FakeQuestionGenerationService([
+          StateError('boom'),
+        ]),
+      );
+
+      await createCustomDeckAndOpenQuestionSheet(tester);
+      await tester.tap(
+        find.byKey(const ValueKey('question-ai-generate-button')),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(
+        find.byKey(const ValueKey('question-ai-error-dialog')),
+        findsOneWidget,
+      );
+      expect(find.text('Unable to Generate Question'), findsOneWidget);
+      expect(
+        find.text(
+          'We could not generate a question right now. Please try again.',
+        ),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.text('Okay'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('Create Question'), findsOneWidget);
+
+      await tester.binding.handlePopRoute();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await disposeApp(tester);
+    },
+  );
+
   testWidgets(
     'preparation screen reflects the first newly added custom deck question in the same session',
     (tester) async {
@@ -821,11 +1225,24 @@ class _FakeQuestionGenerationService implements QuestionGenerationService {
     List<String> excludedQuestions = const [],
   }) async {
     final response = _responses.removeFirst();
-    if (response is Exception) {
-      throw response;
+    if (response is String) {
+      return response;
     }
-    return response as String;
+    throw response;
   }
+}
+
+class _FixedQuestionGenerationUsageStore
+    implements QuestionGenerationUsageStore {
+  _FixedQuestionGenerationUsageStore(this.state);
+
+  final QuestionGenerationUsageState state;
+
+  @override
+  Future<QuestionGenerationUsageState> readStatus() async => state;
+
+  @override
+  Future<QuestionGenerationUsageState> reserveAttempt() async => state;
 }
 
 class _PendingQuestionGenerationService implements QuestionGenerationService {
@@ -886,5 +1303,73 @@ class _StagedQuestionGenerationService implements QuestionGenerationService {
     if (completer != null && !completer.isCompleted) {
       completer.complete(question);
     }
+  }
+}
+
+class _MutableQuestionGenerationUsageStore
+    implements QuestionGenerationUsageStore {
+  _MutableQuestionGenerationUsageStore(this._state, {DateTime Function()? now})
+    : _now = now ?? DateTime.now;
+
+  QuestionGenerationUsageState _state;
+  final DateTime Function() _now;
+
+  @override
+  Future<QuestionGenerationUsageState> readStatus() async {
+    final now = _now();
+    if (_state.shouldResetAt(now)) {
+      _state = QuestionGenerationUsageState(
+        attemptCount: 0,
+        limitReachedAt: null,
+        updatedAt: now,
+      );
+    }
+    return _state;
+  }
+
+  @override
+  Future<QuestionGenerationUsageState> reserveAttempt() async {
+    final now = _now();
+    if (_state.isBlockedAt(now)) {
+      throw QuestionGenerationLimitExceededException(
+        retryAt: _state.cooldownEndsAt!,
+        message:
+            "You've hit the 15-request hourly limit. Please wait until your quota resets.",
+      );
+    }
+
+    final nextAttemptCount = _state.attemptCount + 1;
+    _state = QuestionGenerationUsageState(
+      attemptCount: nextAttemptCount,
+      limitReachedAt: nextAttemptCount >= kQuestionGenerationMaxAttempts
+          ? now
+          : null,
+      updatedAt: now,
+    );
+    return _state;
+  }
+}
+
+class _UsageAwareQuestionGenerationService
+    implements QuestionGenerationService {
+  _UsageAwareQuestionGenerationService(
+    List<Object> responses, {
+    required this.usageStore,
+  }) : _responses = Queue<Object>.of(responses);
+
+  final Queue<Object> _responses;
+  final QuestionGenerationUsageStore usageStore;
+
+  @override
+  Future<String> generateQuestion({
+    required SpillrDeck deck,
+    List<String> excludedQuestions = const [],
+  }) async {
+    await usageStore.reserveAttempt();
+    final response = _responses.removeFirst();
+    if (response is String) {
+      return response;
+    }
+    throw response;
   }
 }

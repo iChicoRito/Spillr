@@ -83,11 +83,7 @@ class _PatternShape extends StatelessWidget {
           ),
         );
       case _PatternKind.line:
-        return Container(
-          width: size,
-          height: 1.4,
-          color: color,
-        );
+        return Container(width: size, height: 1.4, color: color);
       case _PatternKind.arc:
         return CustomPaint(
           size: Size.square(size),

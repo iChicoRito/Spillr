@@ -18,6 +18,7 @@ class SpillrBottomSheetScaffold extends StatelessWidget {
     this.secondaryActionLabel,
     this.secondaryActionIcon,
     this.onSecondaryAction,
+    this.secondaryActionFooter,
     this.secondaryActionBackgroundColor = AppColors.teal100,
     this.secondaryActionForegroundColor = AppColors.teal500,
     this.isSecondaryActionEnabled = true,
@@ -37,6 +38,7 @@ class SpillrBottomSheetScaffold extends StatelessWidget {
   final String? secondaryActionLabel;
   final Widget? secondaryActionIcon;
   final VoidCallback? onSecondaryAction;
+  final Widget? secondaryActionFooter;
   final Color secondaryActionBackgroundColor;
   final Color secondaryActionForegroundColor;
   final bool isSecondaryActionEnabled;
@@ -162,6 +164,10 @@ class SpillrBottomSheetScaffold extends StatelessWidget {
                         label: Text(secondaryActionLabel!),
                       ),
                     ),
+                    if (secondaryActionFooter != null) ...[
+                      const SizedBox(height: 8),
+                      secondaryActionFooter!,
+                    ],
                   ],
                 ],
               ),

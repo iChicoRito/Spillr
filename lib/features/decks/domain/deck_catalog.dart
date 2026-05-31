@@ -55,10 +55,10 @@ sealed class DeckFilterChip {
 
 class BuiltInDeckFilterChip extends DeckFilterChip {
   BuiltInDeckFilterChip({required this.filter})
-      : super(
-          id: 'built-in-${filter.builtInDeckId ?? "all"}',
-          label: filter.label,
-        );
+    : super(
+        id: 'built-in-${filter.builtInDeckId ?? "all"}',
+        label: filter.label,
+      );
 
   final DeckFilter filter;
 
@@ -67,10 +67,8 @@ class BuiltInDeckFilterChip extends DeckFilterChip {
 }
 
 class CustomDeckFilterChip extends DeckFilterChip {
-  CustomDeckFilterChip({
-    required this.deckId,
-    required super.label,
-  }) : super(id: deckId);
+  CustomDeckFilterChip({required this.deckId, required super.label})
+    : super(id: deckId);
 
   final String deckId;
 }

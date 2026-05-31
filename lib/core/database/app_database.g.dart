@@ -1200,6 +1200,331 @@ class DeckQuestionEntriesCompanion extends UpdateCompanion<DeckQuestionEntry> {
   }
 }
 
+class $QuestionGenerationUsageEntriesTable
+    extends QuestionGenerationUsageEntries
+    with
+        TableInfo<
+          $QuestionGenerationUsageEntriesTable,
+          QuestionGenerationUsageEntry
+        > {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $QuestionGenerationUsageEntriesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _attemptCountMeta = const VerificationMeta(
+    'attemptCount',
+  );
+  @override
+  late final GeneratedColumn<int> attemptCount = GeneratedColumn<int>(
+    'attempt_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _limitReachedAtMeta = const VerificationMeta(
+    'limitReachedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> limitReachedAt =
+      GeneratedColumn<DateTime>(
+        'limit_reached_at',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    attemptCount,
+    limitReachedAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'question_generation_usage_entries';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<QuestionGenerationUsageEntry> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('attempt_count')) {
+      context.handle(
+        _attemptCountMeta,
+        attemptCount.isAcceptableOrUnknown(
+          data['attempt_count']!,
+          _attemptCountMeta,
+        ),
+      );
+    }
+    if (data.containsKey('limit_reached_at')) {
+      context.handle(
+        _limitReachedAtMeta,
+        limitReachedAt.isAcceptableOrUnknown(
+          data['limit_reached_at']!,
+          _limitReachedAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  QuestionGenerationUsageEntry map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return QuestionGenerationUsageEntry(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      attemptCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}attempt_count'],
+      )!,
+      limitReachedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}limit_reached_at'],
+      ),
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $QuestionGenerationUsageEntriesTable createAlias(String alias) {
+    return $QuestionGenerationUsageEntriesTable(attachedDatabase, alias);
+  }
+}
+
+class QuestionGenerationUsageEntry extends DataClass
+    implements Insertable<QuestionGenerationUsageEntry> {
+  final int id;
+  final int attemptCount;
+  final DateTime? limitReachedAt;
+  final DateTime updatedAt;
+  const QuestionGenerationUsageEntry({
+    required this.id,
+    required this.attemptCount,
+    this.limitReachedAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['attempt_count'] = Variable<int>(attemptCount);
+    if (!nullToAbsent || limitReachedAt != null) {
+      map['limit_reached_at'] = Variable<DateTime>(limitReachedAt);
+    }
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  QuestionGenerationUsageEntriesCompanion toCompanion(bool nullToAbsent) {
+    return QuestionGenerationUsageEntriesCompanion(
+      id: Value(id),
+      attemptCount: Value(attemptCount),
+      limitReachedAt: limitReachedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(limitReachedAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory QuestionGenerationUsageEntry.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return QuestionGenerationUsageEntry(
+      id: serializer.fromJson<int>(json['id']),
+      attemptCount: serializer.fromJson<int>(json['attemptCount']),
+      limitReachedAt: serializer.fromJson<DateTime?>(json['limitReachedAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'attemptCount': serializer.toJson<int>(attemptCount),
+      'limitReachedAt': serializer.toJson<DateTime?>(limitReachedAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  QuestionGenerationUsageEntry copyWith({
+    int? id,
+    int? attemptCount,
+    Value<DateTime?> limitReachedAt = const Value.absent(),
+    DateTime? updatedAt,
+  }) => QuestionGenerationUsageEntry(
+    id: id ?? this.id,
+    attemptCount: attemptCount ?? this.attemptCount,
+    limitReachedAt: limitReachedAt.present
+        ? limitReachedAt.value
+        : this.limitReachedAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  QuestionGenerationUsageEntry copyWithCompanion(
+    QuestionGenerationUsageEntriesCompanion data,
+  ) {
+    return QuestionGenerationUsageEntry(
+      id: data.id.present ? data.id.value : this.id,
+      attemptCount: data.attemptCount.present
+          ? data.attemptCount.value
+          : this.attemptCount,
+      limitReachedAt: data.limitReachedAt.present
+          ? data.limitReachedAt.value
+          : this.limitReachedAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('QuestionGenerationUsageEntry(')
+          ..write('id: $id, ')
+          ..write('attemptCount: $attemptCount, ')
+          ..write('limitReachedAt: $limitReachedAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, attemptCount, limitReachedAt, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is QuestionGenerationUsageEntry &&
+          other.id == this.id &&
+          other.attemptCount == this.attemptCount &&
+          other.limitReachedAt == this.limitReachedAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class QuestionGenerationUsageEntriesCompanion
+    extends UpdateCompanion<QuestionGenerationUsageEntry> {
+  final Value<int> id;
+  final Value<int> attemptCount;
+  final Value<DateTime?> limitReachedAt;
+  final Value<DateTime> updatedAt;
+  const QuestionGenerationUsageEntriesCompanion({
+    this.id = const Value.absent(),
+    this.attemptCount = const Value.absent(),
+    this.limitReachedAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  });
+  QuestionGenerationUsageEntriesCompanion.insert({
+    this.id = const Value.absent(),
+    this.attemptCount = const Value.absent(),
+    this.limitReachedAt = const Value.absent(),
+    required DateTime updatedAt,
+  }) : updatedAt = Value(updatedAt);
+  static Insertable<QuestionGenerationUsageEntry> custom({
+    Expression<int>? id,
+    Expression<int>? attemptCount,
+    Expression<DateTime>? limitReachedAt,
+    Expression<DateTime>? updatedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (attemptCount != null) 'attempt_count': attemptCount,
+      if (limitReachedAt != null) 'limit_reached_at': limitReachedAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+    });
+  }
+
+  QuestionGenerationUsageEntriesCompanion copyWith({
+    Value<int>? id,
+    Value<int>? attemptCount,
+    Value<DateTime?>? limitReachedAt,
+    Value<DateTime>? updatedAt,
+  }) {
+    return QuestionGenerationUsageEntriesCompanion(
+      id: id ?? this.id,
+      attemptCount: attemptCount ?? this.attemptCount,
+      limitReachedAt: limitReachedAt ?? this.limitReachedAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (attemptCount.present) {
+      map['attempt_count'] = Variable<int>(attemptCount.value);
+    }
+    if (limitReachedAt.present) {
+      map['limit_reached_at'] = Variable<DateTime>(limitReachedAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('QuestionGenerationUsageEntriesCompanion(')
+          ..write('id: $id, ')
+          ..write('attemptCount: $attemptCount, ')
+          ..write('limitReachedAt: $limitReachedAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -1207,6 +1532,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $CustomDecksTable customDecks = $CustomDecksTable(this);
   late final $DeckQuestionEntriesTable deckQuestionEntries =
       $DeckQuestionEntriesTable(this);
+  late final $QuestionGenerationUsageEntriesTable
+  questionGenerationUsageEntries = $QuestionGenerationUsageEntriesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -1215,6 +1542,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     profiles,
     customDecks,
     deckQuestionEntries,
+    questionGenerationUsageEntries,
   ];
 }
 
@@ -1856,6 +2184,204 @@ typedef $$DeckQuestionEntriesTableProcessedTableManager =
       DeckQuestionEntry,
       PrefetchHooks Function()
     >;
+typedef $$QuestionGenerationUsageEntriesTableCreateCompanionBuilder =
+    QuestionGenerationUsageEntriesCompanion Function({
+      Value<int> id,
+      Value<int> attemptCount,
+      Value<DateTime?> limitReachedAt,
+      required DateTime updatedAt,
+    });
+typedef $$QuestionGenerationUsageEntriesTableUpdateCompanionBuilder =
+    QuestionGenerationUsageEntriesCompanion Function({
+      Value<int> id,
+      Value<int> attemptCount,
+      Value<DateTime?> limitReachedAt,
+      Value<DateTime> updatedAt,
+    });
+
+class $$QuestionGenerationUsageEntriesTableFilterComposer
+    extends Composer<_$AppDatabase, $QuestionGenerationUsageEntriesTable> {
+  $$QuestionGenerationUsageEntriesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get attemptCount => $composableBuilder(
+    column: $table.attemptCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get limitReachedAt => $composableBuilder(
+    column: $table.limitReachedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$QuestionGenerationUsageEntriesTableOrderingComposer
+    extends Composer<_$AppDatabase, $QuestionGenerationUsageEntriesTable> {
+  $$QuestionGenerationUsageEntriesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get attemptCount => $composableBuilder(
+    column: $table.attemptCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get limitReachedAt => $composableBuilder(
+    column: $table.limitReachedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$QuestionGenerationUsageEntriesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $QuestionGenerationUsageEntriesTable> {
+  $$QuestionGenerationUsageEntriesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get attemptCount => $composableBuilder(
+    column: $table.attemptCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get limitReachedAt => $composableBuilder(
+    column: $table.limitReachedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$QuestionGenerationUsageEntriesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $QuestionGenerationUsageEntriesTable,
+          QuestionGenerationUsageEntry,
+          $$QuestionGenerationUsageEntriesTableFilterComposer,
+          $$QuestionGenerationUsageEntriesTableOrderingComposer,
+          $$QuestionGenerationUsageEntriesTableAnnotationComposer,
+          $$QuestionGenerationUsageEntriesTableCreateCompanionBuilder,
+          $$QuestionGenerationUsageEntriesTableUpdateCompanionBuilder,
+          (
+            QuestionGenerationUsageEntry,
+            BaseReferences<
+              _$AppDatabase,
+              $QuestionGenerationUsageEntriesTable,
+              QuestionGenerationUsageEntry
+            >,
+          ),
+          QuestionGenerationUsageEntry,
+          PrefetchHooks Function()
+        > {
+  $$QuestionGenerationUsageEntriesTableTableManager(
+    _$AppDatabase db,
+    $QuestionGenerationUsageEntriesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$QuestionGenerationUsageEntriesTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$QuestionGenerationUsageEntriesTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$QuestionGenerationUsageEntriesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> attemptCount = const Value.absent(),
+                Value<DateTime?> limitReachedAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+              }) => QuestionGenerationUsageEntriesCompanion(
+                id: id,
+                attemptCount: attemptCount,
+                limitReachedAt: limitReachedAt,
+                updatedAt: updatedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> attemptCount = const Value.absent(),
+                Value<DateTime?> limitReachedAt = const Value.absent(),
+                required DateTime updatedAt,
+              }) => QuestionGenerationUsageEntriesCompanion.insert(
+                id: id,
+                attemptCount: attemptCount,
+                limitReachedAt: limitReachedAt,
+                updatedAt: updatedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$QuestionGenerationUsageEntriesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $QuestionGenerationUsageEntriesTable,
+      QuestionGenerationUsageEntry,
+      $$QuestionGenerationUsageEntriesTableFilterComposer,
+      $$QuestionGenerationUsageEntriesTableOrderingComposer,
+      $$QuestionGenerationUsageEntriesTableAnnotationComposer,
+      $$QuestionGenerationUsageEntriesTableCreateCompanionBuilder,
+      $$QuestionGenerationUsageEntriesTableUpdateCompanionBuilder,
+      (
+        QuestionGenerationUsageEntry,
+        BaseReferences<
+          _$AppDatabase,
+          $QuestionGenerationUsageEntriesTable,
+          QuestionGenerationUsageEntry
+        >,
+      ),
+      QuestionGenerationUsageEntry,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -1866,4 +2392,10 @@ class $AppDatabaseManager {
       $$CustomDecksTableTableManager(_db, _db.customDecks);
   $$DeckQuestionEntriesTableTableManager get deckQuestionEntries =>
       $$DeckQuestionEntriesTableTableManager(_db, _db.deckQuestionEntries);
+  $$QuestionGenerationUsageEntriesTableTableManager
+  get questionGenerationUsageEntries =>
+      $$QuestionGenerationUsageEntriesTableTableManager(
+        _db,
+        _db.questionGenerationUsageEntries,
+      );
 }

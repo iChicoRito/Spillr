@@ -77,7 +77,8 @@ class GameSessionState {
     if (answeredCount == 0) {
       return GameResult(
         title: 'No Spill? Kinda Sus, $displayName',
-        subtitle: 'You ended the round with zero answers. The tea remains untouched.',
+        subtitle:
+            'You ended the round with zero answers. The tea remains untouched.',
       );
     }
 

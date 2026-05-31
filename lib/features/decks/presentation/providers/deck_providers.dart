@@ -7,15 +7,38 @@ import '../../data/question_generation_service.dart';
 import '../../domain/deck_catalog.dart';
 import '../../domain/deck_question_item.dart';
 
+const _groqApiKey = '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';
+
 final deckRepositoryProvider = Provider<DeckRepository>((ref) {
   final database = ref.watch(appDatabaseProvider);
   return DeckRepository(database);
 });
 
+final questionGenerationUsageRepositoryProvider =
+    Provider<QuestionGenerationUsageStore>((ref) {
+      final database = ref.watch(appDatabaseProvider);
+      return DriftQuestionGenerationUsageRepository(database);
+    });
+
+final questionGenerationUsageProvider =
+    FutureProvider<QuestionGenerationUsageState>((ref) {
+      final repository = ref.watch(questionGenerationUsageRepositoryProvider);
+      return repository.readStatus();
+    });
+
 final questionGenerationServiceProvider = Provider<QuestionGenerationService>((
   ref,
 ) {
-  return const PrototypeQuestionGenerationService();
+  final usageStore = ref.watch(questionGenerationUsageRepositoryProvider);
+  final apiClient = GroqQuestionGenerationApiClient(apiKey: _groqApiKey);
+  final service = GroqQuestionGenerationService(
+    apiClient: apiClient,
+    usageStore: usageStore,
+    connectivityChecker: const DefaultQuestionGenerationConnectivityChecker(),
+  );
+
+  ref.onDispose(apiClient.close);
+  return service;
 });
 
 final deckFilterProvider =
@@ -269,6 +292,8 @@ class QuestionGenerationController extends AsyncNotifier<String?> {
     } catch (error, stackTrace) {
       state = AsyncError(error, stackTrace);
       Error.throwWithStackTrace(error, stackTrace);
+    } finally {
+      ref.invalidate(questionGenerationUsageProvider);
     }
   }
 }
