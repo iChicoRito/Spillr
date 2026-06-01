@@ -6,6 +6,7 @@ import 'package:hugeicons/hugeicons.dart';
 import '../../../../app/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/fallback_state_view.dart';
+import '../../../../shared/widgets/show_spillr_dialog.dart';
 import '../../../../shared/widgets/spillr_bottom_sheet_scaffold.dart';
 import '../../../../shared/widgets/spillr_confirm_dialog.dart';
 import '../../domain/deck_catalog.dart';
@@ -376,7 +377,7 @@ class _DeckRow extends ConsumerWidget {
         builder: (context) => _EditDeckSheet(item: item),
       );
     } else {
-      showDialog<void>(
+      showSpillrDialog<void>(
         context: context,
         barrierColor: AppColors.black.withValues(alpha: 0.34),
         builder: (context) => _DeleteDeckDialog(deckId: item.id),

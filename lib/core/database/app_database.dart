@@ -46,19 +46,32 @@ class QuestionGenerationUsageEntries extends Table {
   Set<Column<Object>>? get primaryKey => {id};
 }
 
+class AppAudioPreferences extends Table {
+  IntColumn get id => integer()();
+  IntColumn get nextLobbyTrackIndex =>
+      integer().withDefault(const Constant(0))();
+  IntColumn get nextGameTrackIndex =>
+      integer().withDefault(const Constant(0))();
+  DateTimeColumn get updatedAt => dateTime()();
+
+  @override
+  Set<Column<Object>>? get primaryKey => {id};
+}
+
 @DriftDatabase(
   tables: [
     Profiles,
     CustomDecks,
     DeckQuestionEntries,
     QuestionGenerationUsageEntries,
+    AppAudioPreferences,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -72,6 +85,9 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 4) {
         await migrator.createTable(questionGenerationUsageEntries);
+      }
+      if (from < 5) {
+        await migrator.createTable(appAudioPreferences);
       }
     },
   );

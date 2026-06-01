@@ -1,12 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/database/app_database.dart';
-
-final appDatabaseProvider = Provider<AppDatabase>((ref) {
-  final database = AppDatabase();
-  ref.onDispose(database.close);
-  return database;
-});
+import '../../../../core/database/app_database_provider.dart';
 
 final onboardingProfileProvider = FutureProvider<Profile?>((ref) async {
   final database = ref.watch(appDatabaseProvider);

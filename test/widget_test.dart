@@ -9,6 +9,7 @@ import 'package:hugeicons/hugeicons.dart';
 
 import 'package:spillr/app/app.dart';
 import 'package:spillr/core/database/app_database.dart';
+import 'package:spillr/core/database/app_database_provider.dart';
 import 'package:spillr/core/theme/app_colors.dart';
 import 'package:spillr/features/game/data/spillr_decks.dart';
 import 'package:spillr/features/game/domain/game_result.dart';
@@ -16,7 +17,6 @@ import 'package:spillr/features/game/domain/game_session_state.dart';
 import 'package:spillr/features/game/presentation/screens/ending_page_screen.dart';
 import 'package:spillr/features/game/presentation/screens/preparation_page_screen.dart';
 import 'package:spillr/features/game/presentation/providers/game_providers.dart';
-import 'package:spillr/features/onboarding/presentation/providers/onboarding_providers.dart';
 import 'package:spillr/shared/widgets/spillr_bottom_navigation.dart';
 
 void main() {
@@ -1243,7 +1243,10 @@ void main() {
       await tester.tap(find.text('Back'));
       await tester.pumpAndSettle();
 
-      expect(find.byKey(const ValueKey('spillr-confirm-dialog')), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('spillr-confirm-dialog')),
+        findsOneWidget,
+      );
       expect(find.text('Leaving Already?'), findsOneWidget);
       expect(
         find.text(

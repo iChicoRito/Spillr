@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/database/app_database_provider.dart';
 import '../../../game/domain/spillr_deck.dart';
-import '../../../onboarding/presentation/providers/onboarding_providers.dart';
 import '../../data/deck_repository.dart';
 import '../../data/question_generation_service.dart';
 import '../../domain/deck_catalog.dart';

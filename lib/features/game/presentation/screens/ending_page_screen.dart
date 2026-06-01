@@ -3,11 +3,13 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_confetti/flutter_confetti.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hugeicons/hugeicons.dart';
 
 import '../../../../app/router/app_router.dart';
+import '../../../../core/audio/app_audio_controller.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../domain/game_result.dart';
 import '../../domain/spillr_deck.dart';
@@ -17,17 +19,17 @@ double randomInRange(double min, double max) {
   return min + Random().nextDouble() * (max - min);
 }
 
-class EndingPageScreen extends StatefulWidget {
+class EndingPageScreen extends ConsumerStatefulWidget {
   const EndingPageScreen({required this.deck, required this.result, super.key});
 
   final SpillrDeck deck;
   final GameResult result;
 
   @override
-  State<EndingPageScreen> createState() => _EndingPageScreenState();
+  ConsumerState<EndingPageScreen> createState() => _EndingPageScreenState();
 }
 
-class _EndingPageScreenState extends State<EndingPageScreen> {
+class _EndingPageScreenState extends ConsumerState<EndingPageScreen> {
   static const int _confettiTotal = 60;
 
   final List<ConfettiController> _confettiControllers = [];
@@ -40,6 +42,7 @@ class _EndingPageScreenState extends State<EndingPageScreen> {
       if (!mounted) {
         return;
       }
+      unawaited(ref.read(appAudioControllerProvider).playEndingSfx());
       _launchConfettiSequence();
     });
   }

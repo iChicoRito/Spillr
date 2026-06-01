@@ -8,11 +8,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:spillr/app/app.dart';
 import 'package:spillr/core/database/app_database.dart';
+import 'package:spillr/core/database/app_database_provider.dart';
 import 'package:spillr/core/theme/app_colors.dart';
 import 'package:spillr/features/decks/data/question_generation_service.dart';
 import 'package:spillr/features/decks/presentation/providers/deck_providers.dart';
 import 'package:spillr/features/game/domain/spillr_deck.dart';
-import 'package:spillr/features/onboarding/presentation/providers/onboarding_providers.dart';
 
 void main() {
   late AppDatabase database;

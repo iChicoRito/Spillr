@@ -8,8 +8,10 @@ import 'package:go_router/go_router.dart';
 import 'package:hugeicons/hugeicons.dart';
 
 import '../../../../app/router/app_router.dart';
+import '../../../../core/audio/app_audio_controller.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/fallback_state_view.dart';
+import '../../../../shared/widgets/show_spillr_dialog.dart';
 import '../../../../shared/widgets/spillr_confirm_dialog.dart';
 import '../../../decks/presentation/providers/deck_providers.dart';
 import '../../../onboarding/presentation/providers/onboarding_providers.dart';
@@ -43,6 +45,7 @@ class _GamePageScreenState extends ConsumerState<GamePageScreen> {
     if (_session == null) {
       return;
     }
+    unawaited(ref.read(appAudioControllerProvider).playFlipSfx());
     _cancelFlipTimer();
     setState(() {
       _session = _session!.flip();
@@ -58,6 +61,7 @@ class _GamePageScreenState extends ConsumerState<GamePageScreen> {
     if (_session == null) {
       return;
     }
+    unawaited(ref.read(appAudioControllerProvider).playAnsweredSfx());
     _cancelFlipTimer();
     final displayName =
         ref.read(onboardingProfileProvider).value?.displayName ?? 'Spiller';
@@ -74,6 +78,7 @@ class _GamePageScreenState extends ConsumerState<GamePageScreen> {
     if (_session == null) {
       return;
     }
+    unawaited(ref.read(appAudioControllerProvider).playPassSfx());
     _cancelFlipTimer();
     final displayName =
         ref.read(onboardingProfileProvider).value?.displayName ?? 'Spiller';
@@ -108,7 +113,7 @@ class _GamePageScreenState extends ConsumerState<GamePageScreen> {
       return false;
     }
 
-    await showDialog<void>(
+    await showSpillrDialog<void>(
       context: context,
       barrierColor: AppColors.black.withValues(alpha: 0.34),
       builder: (dialogContext) {

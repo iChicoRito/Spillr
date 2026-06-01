@@ -1525,6 +1525,317 @@ class QuestionGenerationUsageEntriesCompanion
   }
 }
 
+class $AppAudioPreferencesTable extends AppAudioPreferences
+    with TableInfo<$AppAudioPreferencesTable, AppAudioPreference> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AppAudioPreferencesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _nextLobbyTrackIndexMeta =
+      const VerificationMeta('nextLobbyTrackIndex');
+  @override
+  late final GeneratedColumn<int> nextLobbyTrackIndex = GeneratedColumn<int>(
+    'next_lobby_track_index',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _nextGameTrackIndexMeta =
+      const VerificationMeta('nextGameTrackIndex');
+  @override
+  late final GeneratedColumn<int> nextGameTrackIndex = GeneratedColumn<int>(
+    'next_game_track_index',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    nextLobbyTrackIndex,
+    nextGameTrackIndex,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'app_audio_preferences';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AppAudioPreference> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('next_lobby_track_index')) {
+      context.handle(
+        _nextLobbyTrackIndexMeta,
+        nextLobbyTrackIndex.isAcceptableOrUnknown(
+          data['next_lobby_track_index']!,
+          _nextLobbyTrackIndexMeta,
+        ),
+      );
+    }
+    if (data.containsKey('next_game_track_index')) {
+      context.handle(
+        _nextGameTrackIndexMeta,
+        nextGameTrackIndex.isAcceptableOrUnknown(
+          data['next_game_track_index']!,
+          _nextGameTrackIndexMeta,
+        ),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  AppAudioPreference map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AppAudioPreference(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      nextLobbyTrackIndex: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}next_lobby_track_index'],
+      )!,
+      nextGameTrackIndex: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}next_game_track_index'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $AppAudioPreferencesTable createAlias(String alias) {
+    return $AppAudioPreferencesTable(attachedDatabase, alias);
+  }
+}
+
+class AppAudioPreference extends DataClass
+    implements Insertable<AppAudioPreference> {
+  final int id;
+  final int nextLobbyTrackIndex;
+  final int nextGameTrackIndex;
+  final DateTime updatedAt;
+  const AppAudioPreference({
+    required this.id,
+    required this.nextLobbyTrackIndex,
+    required this.nextGameTrackIndex,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['next_lobby_track_index'] = Variable<int>(nextLobbyTrackIndex);
+    map['next_game_track_index'] = Variable<int>(nextGameTrackIndex);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  AppAudioPreferencesCompanion toCompanion(bool nullToAbsent) {
+    return AppAudioPreferencesCompanion(
+      id: Value(id),
+      nextLobbyTrackIndex: Value(nextLobbyTrackIndex),
+      nextGameTrackIndex: Value(nextGameTrackIndex),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory AppAudioPreference.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AppAudioPreference(
+      id: serializer.fromJson<int>(json['id']),
+      nextLobbyTrackIndex: serializer.fromJson<int>(
+        json['nextLobbyTrackIndex'],
+      ),
+      nextGameTrackIndex: serializer.fromJson<int>(json['nextGameTrackIndex']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'nextLobbyTrackIndex': serializer.toJson<int>(nextLobbyTrackIndex),
+      'nextGameTrackIndex': serializer.toJson<int>(nextGameTrackIndex),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  AppAudioPreference copyWith({
+    int? id,
+    int? nextLobbyTrackIndex,
+    int? nextGameTrackIndex,
+    DateTime? updatedAt,
+  }) => AppAudioPreference(
+    id: id ?? this.id,
+    nextLobbyTrackIndex: nextLobbyTrackIndex ?? this.nextLobbyTrackIndex,
+    nextGameTrackIndex: nextGameTrackIndex ?? this.nextGameTrackIndex,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  AppAudioPreference copyWithCompanion(AppAudioPreferencesCompanion data) {
+    return AppAudioPreference(
+      id: data.id.present ? data.id.value : this.id,
+      nextLobbyTrackIndex: data.nextLobbyTrackIndex.present
+          ? data.nextLobbyTrackIndex.value
+          : this.nextLobbyTrackIndex,
+      nextGameTrackIndex: data.nextGameTrackIndex.present
+          ? data.nextGameTrackIndex.value
+          : this.nextGameTrackIndex,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AppAudioPreference(')
+          ..write('id: $id, ')
+          ..write('nextLobbyTrackIndex: $nextLobbyTrackIndex, ')
+          ..write('nextGameTrackIndex: $nextGameTrackIndex, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, nextLobbyTrackIndex, nextGameTrackIndex, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AppAudioPreference &&
+          other.id == this.id &&
+          other.nextLobbyTrackIndex == this.nextLobbyTrackIndex &&
+          other.nextGameTrackIndex == this.nextGameTrackIndex &&
+          other.updatedAt == this.updatedAt);
+}
+
+class AppAudioPreferencesCompanion extends UpdateCompanion<AppAudioPreference> {
+  final Value<int> id;
+  final Value<int> nextLobbyTrackIndex;
+  final Value<int> nextGameTrackIndex;
+  final Value<DateTime> updatedAt;
+  const AppAudioPreferencesCompanion({
+    this.id = const Value.absent(),
+    this.nextLobbyTrackIndex = const Value.absent(),
+    this.nextGameTrackIndex = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  });
+  AppAudioPreferencesCompanion.insert({
+    this.id = const Value.absent(),
+    this.nextLobbyTrackIndex = const Value.absent(),
+    this.nextGameTrackIndex = const Value.absent(),
+    required DateTime updatedAt,
+  }) : updatedAt = Value(updatedAt);
+  static Insertable<AppAudioPreference> custom({
+    Expression<int>? id,
+    Expression<int>? nextLobbyTrackIndex,
+    Expression<int>? nextGameTrackIndex,
+    Expression<DateTime>? updatedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (nextLobbyTrackIndex != null)
+        'next_lobby_track_index': nextLobbyTrackIndex,
+      if (nextGameTrackIndex != null)
+        'next_game_track_index': nextGameTrackIndex,
+      if (updatedAt != null) 'updated_at': updatedAt,
+    });
+  }
+
+  AppAudioPreferencesCompanion copyWith({
+    Value<int>? id,
+    Value<int>? nextLobbyTrackIndex,
+    Value<int>? nextGameTrackIndex,
+    Value<DateTime>? updatedAt,
+  }) {
+    return AppAudioPreferencesCompanion(
+      id: id ?? this.id,
+      nextLobbyTrackIndex: nextLobbyTrackIndex ?? this.nextLobbyTrackIndex,
+      nextGameTrackIndex: nextGameTrackIndex ?? this.nextGameTrackIndex,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (nextLobbyTrackIndex.present) {
+      map['next_lobby_track_index'] = Variable<int>(nextLobbyTrackIndex.value);
+    }
+    if (nextGameTrackIndex.present) {
+      map['next_game_track_index'] = Variable<int>(nextGameTrackIndex.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AppAudioPreferencesCompanion(')
+          ..write('id: $id, ')
+          ..write('nextLobbyTrackIndex: $nextLobbyTrackIndex, ')
+          ..write('nextGameTrackIndex: $nextGameTrackIndex, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -1534,6 +1845,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $DeckQuestionEntriesTable(this);
   late final $QuestionGenerationUsageEntriesTable
   questionGenerationUsageEntries = $QuestionGenerationUsageEntriesTable(this);
+  late final $AppAudioPreferencesTable appAudioPreferences =
+      $AppAudioPreferencesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -1543,6 +1856,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     customDecks,
     deckQuestionEntries,
     questionGenerationUsageEntries,
+    appAudioPreferences,
   ];
 }
 
@@ -2382,6 +2696,201 @@ typedef $$QuestionGenerationUsageEntriesTableProcessedTableManager =
       QuestionGenerationUsageEntry,
       PrefetchHooks Function()
     >;
+typedef $$AppAudioPreferencesTableCreateCompanionBuilder =
+    AppAudioPreferencesCompanion Function({
+      Value<int> id,
+      Value<int> nextLobbyTrackIndex,
+      Value<int> nextGameTrackIndex,
+      required DateTime updatedAt,
+    });
+typedef $$AppAudioPreferencesTableUpdateCompanionBuilder =
+    AppAudioPreferencesCompanion Function({
+      Value<int> id,
+      Value<int> nextLobbyTrackIndex,
+      Value<int> nextGameTrackIndex,
+      Value<DateTime> updatedAt,
+    });
+
+class $$AppAudioPreferencesTableFilterComposer
+    extends Composer<_$AppDatabase, $AppAudioPreferencesTable> {
+  $$AppAudioPreferencesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get nextLobbyTrackIndex => $composableBuilder(
+    column: $table.nextLobbyTrackIndex,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get nextGameTrackIndex => $composableBuilder(
+    column: $table.nextGameTrackIndex,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$AppAudioPreferencesTableOrderingComposer
+    extends Composer<_$AppDatabase, $AppAudioPreferencesTable> {
+  $$AppAudioPreferencesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get nextLobbyTrackIndex => $composableBuilder(
+    column: $table.nextLobbyTrackIndex,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get nextGameTrackIndex => $composableBuilder(
+    column: $table.nextGameTrackIndex,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$AppAudioPreferencesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $AppAudioPreferencesTable> {
+  $$AppAudioPreferencesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get nextLobbyTrackIndex => $composableBuilder(
+    column: $table.nextLobbyTrackIndex,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get nextGameTrackIndex => $composableBuilder(
+    column: $table.nextGameTrackIndex,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$AppAudioPreferencesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $AppAudioPreferencesTable,
+          AppAudioPreference,
+          $$AppAudioPreferencesTableFilterComposer,
+          $$AppAudioPreferencesTableOrderingComposer,
+          $$AppAudioPreferencesTableAnnotationComposer,
+          $$AppAudioPreferencesTableCreateCompanionBuilder,
+          $$AppAudioPreferencesTableUpdateCompanionBuilder,
+          (
+            AppAudioPreference,
+            BaseReferences<
+              _$AppDatabase,
+              $AppAudioPreferencesTable,
+              AppAudioPreference
+            >,
+          ),
+          AppAudioPreference,
+          PrefetchHooks Function()
+        > {
+  $$AppAudioPreferencesTableTableManager(
+    _$AppDatabase db,
+    $AppAudioPreferencesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$AppAudioPreferencesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$AppAudioPreferencesTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$AppAudioPreferencesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> nextLobbyTrackIndex = const Value.absent(),
+                Value<int> nextGameTrackIndex = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+              }) => AppAudioPreferencesCompanion(
+                id: id,
+                nextLobbyTrackIndex: nextLobbyTrackIndex,
+                nextGameTrackIndex: nextGameTrackIndex,
+                updatedAt: updatedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> nextLobbyTrackIndex = const Value.absent(),
+                Value<int> nextGameTrackIndex = const Value.absent(),
+                required DateTime updatedAt,
+              }) => AppAudioPreferencesCompanion.insert(
+                id: id,
+                nextLobbyTrackIndex: nextLobbyTrackIndex,
+                nextGameTrackIndex: nextGameTrackIndex,
+                updatedAt: updatedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$AppAudioPreferencesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $AppAudioPreferencesTable,
+      AppAudioPreference,
+      $$AppAudioPreferencesTableFilterComposer,
+      $$AppAudioPreferencesTableOrderingComposer,
+      $$AppAudioPreferencesTableAnnotationComposer,
+      $$AppAudioPreferencesTableCreateCompanionBuilder,
+      $$AppAudioPreferencesTableUpdateCompanionBuilder,
+      (
+        AppAudioPreference,
+        BaseReferences<
+          _$AppDatabase,
+          $AppAudioPreferencesTable,
+          AppAudioPreference
+        >,
+      ),
+      AppAudioPreference,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -2398,4 +2907,6 @@ class $AppDatabaseManager {
         _db,
         _db.questionGenerationUsageEntries,
       );
+  $$AppAudioPreferencesTableTableManager get appAudioPreferences =>
+      $$AppAudioPreferencesTableTableManager(_db, _db.appAudioPreferences);
 }

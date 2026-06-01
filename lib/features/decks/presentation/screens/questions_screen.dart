@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/fallback_state_view.dart';
+import '../../../../shared/widgets/show_spillr_dialog.dart';
 import '../../../../shared/widgets/spillr_bottom_sheet_scaffold.dart';
 import '../../../../shared/widgets/spillr_confirm_dialog.dart';
 import '../../../game/domain/spillr_deck.dart';
@@ -104,7 +105,7 @@ class _QuestionsContent extends ConsumerWidget {
     ];
 
     while (context.mounted) {
-      showDialog<void>(
+      showSpillrDialog<void>(
         context: context,
         barrierDismissible: false,
         barrierColor: AppColors.black.withValues(alpha: 0.42),
@@ -155,7 +156,7 @@ class _QuestionsContent extends ConsumerWidget {
       final usageState = await ref.read(questionGenerationUsageProvider.future);
       final usageMessage = _questionGenerationUsageMessage(usageState);
 
-      final action = await showDialog<_QuestionGenerationReviewAction>(
+      final action = await showSpillrDialog<_QuestionGenerationReviewAction>(
         context: context,
         barrierDismissible: false,
         barrierColor: AppColors.black.withValues(alpha: 0.42),
@@ -429,7 +430,7 @@ class _QuestionRow extends StatelessWidget {
           ),
         );
       case _QuestionMenuAction.delete:
-        showDialog<void>(
+        showSpillrDialog<void>(
           context: context,
           barrierColor: AppColors.black.withValues(alpha: 0.34),
           builder: (context) => _DeleteQuestionDialog(question: question),
@@ -841,7 +842,7 @@ Future<void> _showQuestionGenerationErrorDialog(
   BuildContext context,
   QuestionGenerationException error,
 ) {
-  return showDialog<void>(
+  return showSpillrDialog<void>(
     context: context,
     barrierDismissible: false,
     barrierColor: AppColors.black.withValues(alpha: 0.42),
