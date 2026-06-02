@@ -20,6 +20,14 @@ final gameHistoryProvider = StreamProvider<List<GameHistoryItem>>((ref) {
   return repository.watchGameHistory();
 });
 
+final notificationsEnabledProvider = StreamProvider<bool>((ref) {
+  final database = ref.watch(appDatabaseProvider);
+  return database
+      .select(database.profiles)
+      .watch()
+      .map((rows) => rows.isEmpty ? false : rows.first.notificationsEnabled);
+});
+
 final profileControllerProvider =
     AsyncNotifierProvider<ProfileController, void>(ProfileController.new);
 
@@ -49,5 +57,12 @@ class ProfileController extends AsyncNotifier<void> {
     state = await AsyncValue.guard(() async {
       await ref.read(profileRepositoryProvider).clearGameHistory();
     });
+  }
+
+  Future<void> setNotificationsEnabled({required bool enabled}) async {
+    await ref
+        .read(profileRepositoryProvider)
+        .setNotificationsEnabled(enabled: enabled);
+    ref.invalidate(onboardingProfileProvider);
   }
 }
