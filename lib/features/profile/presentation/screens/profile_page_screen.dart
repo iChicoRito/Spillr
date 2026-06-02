@@ -131,10 +131,11 @@ class _ProfilePageScreenState extends ConsumerState<ProfilePageScreen> {
                             label: 'Play History',
                             onTap: () => context.push(AppRoutes.playHistory),
                           ),
-                          const _ActionOptionRow(
-                            key: ValueKey('profile-option-decks-and-cards'),
+                          _ActionOptionRow(
+                            key: const ValueKey('profile-option-decks-and-cards'),
                             icon: Icons.dashboard_outlined,
                             label: 'Decks and Cards',
+                            onTap: () => context.push(AppRoutes.deckList),
                           ),
                         ],
                       ),
