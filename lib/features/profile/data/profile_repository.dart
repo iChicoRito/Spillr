@@ -1,4 +1,5 @@
 import '../../../core/database/app_database.dart';
+import '../../game/domain/game_outcome.dart';
 import '../domain/profile_models.dart';
 
 class ProfileRepository {
@@ -26,6 +27,34 @@ class ProfileRepository {
       deckId: deckId,
       action: action.value,
     );
+  }
+
+  Future<void> recordGameHistory({
+    required String deckId,
+    required GameOutcome outcome,
+  }) {
+    return _database.insertGameHistoryEntry(
+      deckId: deckId,
+      outcome: outcome.value,
+    );
+  }
+
+  Stream<List<GameHistoryItem>> watchGameHistory() {
+    return _database.watchGameHistory().map(
+      (rows) => rows
+          .map(
+            (row) => GameHistoryItem(
+              deckId: row.deckId,
+              outcome: GameOutcome.fromValue(row.outcome),
+              completedAt: row.completedAt,
+            ),
+          )
+          .toList(growable: false),
+    );
+  }
+
+  Future<void> clearGameHistory() {
+    return _database.clearGameHistory();
   }
 
   Future<ProfileStats> fetchProfileStats() async {

@@ -10,6 +10,7 @@ import 'package:spillr/core/audio/app_audio_controller.dart';
 import 'package:spillr/core/database/app_database.dart';
 import 'package:spillr/core/database/app_database_provider.dart';
 import 'package:spillr/features/game/data/spillr_decks.dart';
+import 'package:spillr/features/game/domain/game_outcome.dart';
 import 'package:spillr/features/game/domain/game_result.dart';
 import 'package:spillr/features/game/presentation/providers/game_providers.dart';
 import 'package:spillr/features/game/presentation/screens/ending_page_screen.dart';
@@ -264,6 +265,7 @@ void main() {
                 title: 'Certified\nDodger, Chico',
                 subtitle:
                     "You passed every question. Suspicious, but we'll allow it.",
+                outcome: GameOutcome.certifiedDodger,
               ),
             ),
           ),

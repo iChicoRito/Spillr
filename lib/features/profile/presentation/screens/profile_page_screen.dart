@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:spillr/shared/widgets/spillr_bottom_sheet_scaffold.dart';
 
+import '../../../../app/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../shared/widgets/fallback_state_view.dart';
@@ -121,13 +123,14 @@ class _ProfilePageScreenState extends ConsumerState<ProfilePageScreen> {
                       ],
                       const SizedBox(height: 42),
                       _OptionCard(
-                        children: const [
+                        children: [
                           _ActionOptionRow(
-                            key: ValueKey('profile-option-play-history'),
+                            key: const ValueKey('profile-option-play-history'),
                             icon: Icons.history,
                             label: 'Play History',
+                            onTap: () => context.push(AppRoutes.playHistory),
                           ),
-                          _ActionOptionRow(
+                          const _ActionOptionRow(
                             key: ValueKey('profile-option-decks-and-cards'),
                             icon: Icons.dashboard_outlined,
                             label: 'Decks and Cards',
@@ -355,14 +358,20 @@ class _OptionCard extends StatelessWidget {
 }
 
 class _ActionOptionRow extends StatelessWidget {
-  const _ActionOptionRow({required this.icon, required this.label, super.key});
+  const _ActionOptionRow({
+    required this.icon,
+    required this.label,
+    this.onTap,
+    super.key,
+  });
 
   final IconData icon;
   final String label;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    final row = SizedBox(
       height: 58,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 22),
@@ -390,6 +399,15 @@ class _ActionOptionRow extends StatelessWidget {
           ],
         ),
       ),
+    );
+
+    if (onTap == null) {
+      return row;
+    }
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(onTap: onTap, child: row),
     );
   }
 }

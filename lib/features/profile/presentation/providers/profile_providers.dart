@@ -15,6 +15,11 @@ final profileStatsProvider = StreamProvider<ProfileStats>((ref) {
   return repository.watchProfileStats();
 });
 
+final gameHistoryProvider = StreamProvider<List<GameHistoryItem>>((ref) {
+  final repository = ref.watch(profileRepositoryProvider);
+  return repository.watchGameHistory();
+});
+
 final profileControllerProvider =
     AsyncNotifierProvider<ProfileController, void>(ProfileController.new);
 
@@ -36,6 +41,13 @@ class ProfileController extends AsyncNotifier<void> {
         avatarColor: avatarColor,
       );
       ref.invalidate(onboardingProfileProvider);
+    });
+  }
+
+  Future<void> clearGameHistory() async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      await ref.read(profileRepositoryProvider).clearGameHistory();
     });
   }
 }

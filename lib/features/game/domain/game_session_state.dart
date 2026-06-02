@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'game_outcome.dart';
 import 'game_result.dart';
 import 'spillr_deck.dart';
 
@@ -85,6 +86,7 @@ class GameSessionState {
         title: 'No Spill? Kinda Sus, $displayName',
         subtitle:
             'You ended the round with zero answers. The tea remains untouched.',
+        outcome: GameOutcome.noSpill,
       );
     }
 
@@ -124,19 +126,22 @@ class GameSessionState {
       return GameResult(
         title: 'You Spilled\nEverything,\n$displayName',
         subtitle: 'You survived the questions. Honestly, iconic behavior.',
+        outcome: GameOutcome.spilledEverything,
       );
     }
 
     if (answered == 0 && passed == totalQuestions) {
-      return const GameResult(
-        title: 'Certified\nDodger, Chico',
+      return GameResult(
+        title: 'Certified\nDodger, $displayName',
         subtitle: "You passed every question. Suspicious, but we'll allow it.",
+        outcome: GameOutcome.certifiedDodger,
       );
     }
 
     return GameResult(
       title: 'Almost Spilled\nEverything,\n$displayName',
       subtitle: 'You finished the deck, but some tea stayed unspilled.',
+      outcome: GameOutcome.almostSpilled,
     );
   }
 }

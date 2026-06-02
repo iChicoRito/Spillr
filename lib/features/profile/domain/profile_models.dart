@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../game/domain/game_outcome.dart';
 
 enum GameplayCardAction {
   answered('answered'),
@@ -74,4 +75,16 @@ class ProfileStats {
   final int cardsPassed;
 
   int get cardsPlayed => cardsAnswered + cardsPassed;
+}
+
+class GameHistoryItem {
+  const GameHistoryItem({
+    required this.deckId,
+    required this.outcome,
+    required this.completedAt,
+  });
+
+  final String deckId;
+  final GameOutcome outcome;
+  final DateTime completedAt;
 }

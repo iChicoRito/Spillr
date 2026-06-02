@@ -143,6 +143,12 @@ class _GamePageScreenState extends ConsumerState<GamePageScreen> {
   }
 
   void _goToEnding(GameResult result) {
+    unawaited(
+      ref.read(profileRepositoryProvider).recordGameHistory(
+        deckId: _session!.deck.id,
+        outcome: result.outcome,
+      ),
+    );
     context.go(
       AppRoutes.ending,
       extra: GameEndingArguments(deck: _session!.deck, result: result),

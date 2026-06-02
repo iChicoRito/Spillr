@@ -67,6 +67,13 @@ class GameplayCardEvents extends Table {
   DateTimeColumn get occurredAt => dateTime()();
 }
 
+class GameHistoryEntries extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get deckId => text().withLength(min: 1, max: 64)();
+  TextColumn get outcome => text().withLength(min: 1, max: 32)();
+  DateTimeColumn get completedAt => dateTime()();
+}
+
 @DriftDatabase(
   tables: [
     Profiles,
@@ -75,13 +82,14 @@ class GameplayCardEvents extends Table {
     QuestionGenerationUsageEntries,
     AppAudioPreferences,
     GameplayCardEvents,
+    GameHistoryEntries,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -103,6 +111,9 @@ class AppDatabase extends _$AppDatabase {
         await migrator.addColumn(profiles, profiles.avatarAssetPath);
         await migrator.addColumn(profiles, profiles.avatarColorKey);
         await migrator.createTable(gameplayCardEvents);
+      }
+      if (from < 7) {
+        await migrator.createTable(gameHistoryEntries);
       }
     },
   );
@@ -144,6 +155,31 @@ class AppDatabase extends _$AppDatabase {
         occurredAt: DateTime.now(),
       ),
     );
+  }
+
+  Future<void> insertGameHistoryEntry({
+    required String deckId,
+    required String outcome,
+  }) {
+    return into(gameHistoryEntries).insert(
+      GameHistoryEntriesCompanion.insert(
+        deckId: deckId,
+        outcome: outcome,
+        completedAt: DateTime.now(),
+      ),
+    );
+  }
+
+  Stream<List<GameHistoryEntry>> watchGameHistory() {
+    return (select(gameHistoryEntries)..orderBy([
+          (table) => OrderingTerm.desc(table.completedAt),
+          (table) => OrderingTerm.desc(table.id),
+        ]))
+        .watch();
+  }
+
+  Future<void> clearGameHistory() {
+    return delete(gameHistoryEntries).go();
   }
 
   Stream<List<CustomDeck>> watchCustomDecks() {

@@ -2266,6 +2266,318 @@ class GameplayCardEventsCompanion extends UpdateCompanion<GameplayCardEvent> {
   }
 }
 
+class $GameHistoryEntriesTable extends GameHistoryEntries
+    with TableInfo<$GameHistoryEntriesTable, GameHistoryEntry> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $GameHistoryEntriesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _deckIdMeta = const VerificationMeta('deckId');
+  @override
+  late final GeneratedColumn<String> deckId = GeneratedColumn<String>(
+    'deck_id',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 64,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _outcomeMeta = const VerificationMeta(
+    'outcome',
+  );
+  @override
+  late final GeneratedColumn<String> outcome = GeneratedColumn<String>(
+    'outcome',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 32,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _completedAtMeta = const VerificationMeta(
+    'completedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> completedAt = GeneratedColumn<DateTime>(
+    'completed_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, deckId, outcome, completedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'game_history_entries';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<GameHistoryEntry> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('deck_id')) {
+      context.handle(
+        _deckIdMeta,
+        deckId.isAcceptableOrUnknown(data['deck_id']!, _deckIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_deckIdMeta);
+    }
+    if (data.containsKey('outcome')) {
+      context.handle(
+        _outcomeMeta,
+        outcome.isAcceptableOrUnknown(data['outcome']!, _outcomeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_outcomeMeta);
+    }
+    if (data.containsKey('completed_at')) {
+      context.handle(
+        _completedAtMeta,
+        completedAt.isAcceptableOrUnknown(
+          data['completed_at']!,
+          _completedAtMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_completedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  GameHistoryEntry map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return GameHistoryEntry(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      deckId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}deck_id'],
+      )!,
+      outcome: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}outcome'],
+      )!,
+      completedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}completed_at'],
+      )!,
+    );
+  }
+
+  @override
+  $GameHistoryEntriesTable createAlias(String alias) {
+    return $GameHistoryEntriesTable(attachedDatabase, alias);
+  }
+}
+
+class GameHistoryEntry extends DataClass
+    implements Insertable<GameHistoryEntry> {
+  final int id;
+  final String deckId;
+  final String outcome;
+  final DateTime completedAt;
+  const GameHistoryEntry({
+    required this.id,
+    required this.deckId,
+    required this.outcome,
+    required this.completedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['deck_id'] = Variable<String>(deckId);
+    map['outcome'] = Variable<String>(outcome);
+    map['completed_at'] = Variable<DateTime>(completedAt);
+    return map;
+  }
+
+  GameHistoryEntriesCompanion toCompanion(bool nullToAbsent) {
+    return GameHistoryEntriesCompanion(
+      id: Value(id),
+      deckId: Value(deckId),
+      outcome: Value(outcome),
+      completedAt: Value(completedAt),
+    );
+  }
+
+  factory GameHistoryEntry.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return GameHistoryEntry(
+      id: serializer.fromJson<int>(json['id']),
+      deckId: serializer.fromJson<String>(json['deckId']),
+      outcome: serializer.fromJson<String>(json['outcome']),
+      completedAt: serializer.fromJson<DateTime>(json['completedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'deckId': serializer.toJson<String>(deckId),
+      'outcome': serializer.toJson<String>(outcome),
+      'completedAt': serializer.toJson<DateTime>(completedAt),
+    };
+  }
+
+  GameHistoryEntry copyWith({
+    int? id,
+    String? deckId,
+    String? outcome,
+    DateTime? completedAt,
+  }) => GameHistoryEntry(
+    id: id ?? this.id,
+    deckId: deckId ?? this.deckId,
+    outcome: outcome ?? this.outcome,
+    completedAt: completedAt ?? this.completedAt,
+  );
+  GameHistoryEntry copyWithCompanion(GameHistoryEntriesCompanion data) {
+    return GameHistoryEntry(
+      id: data.id.present ? data.id.value : this.id,
+      deckId: data.deckId.present ? data.deckId.value : this.deckId,
+      outcome: data.outcome.present ? data.outcome.value : this.outcome,
+      completedAt: data.completedAt.present
+          ? data.completedAt.value
+          : this.completedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GameHistoryEntry(')
+          ..write('id: $id, ')
+          ..write('deckId: $deckId, ')
+          ..write('outcome: $outcome, ')
+          ..write('completedAt: $completedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, deckId, outcome, completedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is GameHistoryEntry &&
+          other.id == this.id &&
+          other.deckId == this.deckId &&
+          other.outcome == this.outcome &&
+          other.completedAt == this.completedAt);
+}
+
+class GameHistoryEntriesCompanion extends UpdateCompanion<GameHistoryEntry> {
+  final Value<int> id;
+  final Value<String> deckId;
+  final Value<String> outcome;
+  final Value<DateTime> completedAt;
+  const GameHistoryEntriesCompanion({
+    this.id = const Value.absent(),
+    this.deckId = const Value.absent(),
+    this.outcome = const Value.absent(),
+    this.completedAt = const Value.absent(),
+  });
+  GameHistoryEntriesCompanion.insert({
+    this.id = const Value.absent(),
+    required String deckId,
+    required String outcome,
+    required DateTime completedAt,
+  }) : deckId = Value(deckId),
+       outcome = Value(outcome),
+       completedAt = Value(completedAt);
+  static Insertable<GameHistoryEntry> custom({
+    Expression<int>? id,
+    Expression<String>? deckId,
+    Expression<String>? outcome,
+    Expression<DateTime>? completedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (deckId != null) 'deck_id': deckId,
+      if (outcome != null) 'outcome': outcome,
+      if (completedAt != null) 'completed_at': completedAt,
+    });
+  }
+
+  GameHistoryEntriesCompanion copyWith({
+    Value<int>? id,
+    Value<String>? deckId,
+    Value<String>? outcome,
+    Value<DateTime>? completedAt,
+  }) {
+    return GameHistoryEntriesCompanion(
+      id: id ?? this.id,
+      deckId: deckId ?? this.deckId,
+      outcome: outcome ?? this.outcome,
+      completedAt: completedAt ?? this.completedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (deckId.present) {
+      map['deck_id'] = Variable<String>(deckId.value);
+    }
+    if (outcome.present) {
+      map['outcome'] = Variable<String>(outcome.value);
+    }
+    if (completedAt.present) {
+      map['completed_at'] = Variable<DateTime>(completedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GameHistoryEntriesCompanion(')
+          ..write('id: $id, ')
+          ..write('deckId: $deckId, ')
+          ..write('outcome: $outcome, ')
+          ..write('completedAt: $completedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -2279,6 +2591,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $AppAudioPreferencesTable(this);
   late final $GameplayCardEventsTable gameplayCardEvents =
       $GameplayCardEventsTable(this);
+  late final $GameHistoryEntriesTable gameHistoryEntries =
+      $GameHistoryEntriesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2290,6 +2604,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     questionGenerationUsageEntries,
     appAudioPreferences,
     gameplayCardEvents,
+    gameHistoryEntries,
   ];
 }
 
@@ -3556,6 +3871,196 @@ typedef $$GameplayCardEventsTableProcessedTableManager =
       GameplayCardEvent,
       PrefetchHooks Function()
     >;
+typedef $$GameHistoryEntriesTableCreateCompanionBuilder =
+    GameHistoryEntriesCompanion Function({
+      Value<int> id,
+      required String deckId,
+      required String outcome,
+      required DateTime completedAt,
+    });
+typedef $$GameHistoryEntriesTableUpdateCompanionBuilder =
+    GameHistoryEntriesCompanion Function({
+      Value<int> id,
+      Value<String> deckId,
+      Value<String> outcome,
+      Value<DateTime> completedAt,
+    });
+
+class $$GameHistoryEntriesTableFilterComposer
+    extends Composer<_$AppDatabase, $GameHistoryEntriesTable> {
+  $$GameHistoryEntriesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get deckId => $composableBuilder(
+    column: $table.deckId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get outcome => $composableBuilder(
+    column: $table.outcome,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get completedAt => $composableBuilder(
+    column: $table.completedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$GameHistoryEntriesTableOrderingComposer
+    extends Composer<_$AppDatabase, $GameHistoryEntriesTable> {
+  $$GameHistoryEntriesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get deckId => $composableBuilder(
+    column: $table.deckId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get outcome => $composableBuilder(
+    column: $table.outcome,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get completedAt => $composableBuilder(
+    column: $table.completedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$GameHistoryEntriesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $GameHistoryEntriesTable> {
+  $$GameHistoryEntriesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get deckId =>
+      $composableBuilder(column: $table.deckId, builder: (column) => column);
+
+  GeneratedColumn<String> get outcome =>
+      $composableBuilder(column: $table.outcome, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get completedAt => $composableBuilder(
+    column: $table.completedAt,
+    builder: (column) => column,
+  );
+}
+
+class $$GameHistoryEntriesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $GameHistoryEntriesTable,
+          GameHistoryEntry,
+          $$GameHistoryEntriesTableFilterComposer,
+          $$GameHistoryEntriesTableOrderingComposer,
+          $$GameHistoryEntriesTableAnnotationComposer,
+          $$GameHistoryEntriesTableCreateCompanionBuilder,
+          $$GameHistoryEntriesTableUpdateCompanionBuilder,
+          (
+            GameHistoryEntry,
+            BaseReferences<
+              _$AppDatabase,
+              $GameHistoryEntriesTable,
+              GameHistoryEntry
+            >,
+          ),
+          GameHistoryEntry,
+          PrefetchHooks Function()
+        > {
+  $$GameHistoryEntriesTableTableManager(
+    _$AppDatabase db,
+    $GameHistoryEntriesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$GameHistoryEntriesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$GameHistoryEntriesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$GameHistoryEntriesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> deckId = const Value.absent(),
+                Value<String> outcome = const Value.absent(),
+                Value<DateTime> completedAt = const Value.absent(),
+              }) => GameHistoryEntriesCompanion(
+                id: id,
+                deckId: deckId,
+                outcome: outcome,
+                completedAt: completedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String deckId,
+                required String outcome,
+                required DateTime completedAt,
+              }) => GameHistoryEntriesCompanion.insert(
+                id: id,
+                deckId: deckId,
+                outcome: outcome,
+                completedAt: completedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$GameHistoryEntriesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $GameHistoryEntriesTable,
+      GameHistoryEntry,
+      $$GameHistoryEntriesTableFilterComposer,
+      $$GameHistoryEntriesTableOrderingComposer,
+      $$GameHistoryEntriesTableAnnotationComposer,
+      $$GameHistoryEntriesTableCreateCompanionBuilder,
+      $$GameHistoryEntriesTableUpdateCompanionBuilder,
+      (
+        GameHistoryEntry,
+        BaseReferences<
+          _$AppDatabase,
+          $GameHistoryEntriesTable,
+          GameHistoryEntry
+        >,
+      ),
+      GameHistoryEntry,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -3576,4 +4081,6 @@ class $AppDatabaseManager {
       $$AppAudioPreferencesTableTableManager(_db, _db.appAudioPreferences);
   $$GameplayCardEventsTableTableManager get gameplayCardEvents =>
       $$GameplayCardEventsTableTableManager(_db, _db.gameplayCardEvents);
+  $$GameHistoryEntriesTableTableManager get gameHistoryEntries =>
+      $$GameHistoryEntriesTableTableManager(_db, _db.gameHistoryEntries);
 }
