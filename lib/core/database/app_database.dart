@@ -54,6 +54,9 @@ class AppAudioPreferences extends Table {
       integer().withDefault(const Constant(0))();
   IntColumn get nextGameTrackIndex =>
       integer().withDefault(const Constant(0))();
+  RealColumn get masterVolume => real().withDefault(const Constant(1.0))();
+  RealColumn get bgmVolume => real().withDefault(const Constant(1.0))();
+  RealColumn get sfxVolume => real().withDefault(const Constant(1.0))();
   DateTimeColumn get updatedAt => dateTime()();
 
   @override
@@ -89,7 +92,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -114,6 +117,17 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 7) {
         await migrator.createTable(gameHistoryEntries);
+      }
+      if (from < 8) {
+        await customStatement(
+          'ALTER TABLE app_audio_preferences ADD COLUMN master_volume REAL NOT NULL DEFAULT 1.0',
+        );
+        await customStatement(
+          'ALTER TABLE app_audio_preferences ADD COLUMN bgm_volume REAL NOT NULL DEFAULT 1.0',
+        );
+        await customStatement(
+          'ALTER TABLE app_audio_preferences ADD COLUMN sfx_volume REAL NOT NULL DEFAULT 1.0',
+        );
       }
     },
   );

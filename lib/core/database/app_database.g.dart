@@ -1685,6 +1685,42 @@ class $AppAudioPreferencesTable extends AppAudioPreferences
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _masterVolumeMeta = const VerificationMeta(
+    'masterVolume',
+  );
+  @override
+  late final GeneratedColumn<double> masterVolume = GeneratedColumn<double>(
+    'master_volume',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1.0),
+  );
+  static const VerificationMeta _bgmVolumeMeta = const VerificationMeta(
+    'bgmVolume',
+  );
+  @override
+  late final GeneratedColumn<double> bgmVolume = GeneratedColumn<double>(
+    'bgm_volume',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1.0),
+  );
+  static const VerificationMeta _sfxVolumeMeta = const VerificationMeta(
+    'sfxVolume',
+  );
+  @override
+  late final GeneratedColumn<double> sfxVolume = GeneratedColumn<double>(
+    'sfx_volume',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1.0),
+  );
   static const VerificationMeta _updatedAtMeta = const VerificationMeta(
     'updatedAt',
   );
@@ -1701,6 +1737,9 @@ class $AppAudioPreferencesTable extends AppAudioPreferences
     id,
     nextLobbyTrackIndex,
     nextGameTrackIndex,
+    masterVolume,
+    bgmVolume,
+    sfxVolume,
     updatedAt,
   ];
   @override
@@ -1736,6 +1775,27 @@ class $AppAudioPreferencesTable extends AppAudioPreferences
         ),
       );
     }
+    if (data.containsKey('master_volume')) {
+      context.handle(
+        _masterVolumeMeta,
+        masterVolume.isAcceptableOrUnknown(
+          data['master_volume']!,
+          _masterVolumeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('bgm_volume')) {
+      context.handle(
+        _bgmVolumeMeta,
+        bgmVolume.isAcceptableOrUnknown(data['bgm_volume']!, _bgmVolumeMeta),
+      );
+    }
+    if (data.containsKey('sfx_volume')) {
+      context.handle(
+        _sfxVolumeMeta,
+        sfxVolume.isAcceptableOrUnknown(data['sfx_volume']!, _sfxVolumeMeta),
+      );
+    }
     if (data.containsKey('updated_at')) {
       context.handle(
         _updatedAtMeta,
@@ -1765,6 +1825,18 @@ class $AppAudioPreferencesTable extends AppAudioPreferences
         DriftSqlType.int,
         data['${effectivePrefix}next_game_track_index'],
       )!,
+      masterVolume: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}master_volume'],
+      )!,
+      bgmVolume: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}bgm_volume'],
+      )!,
+      sfxVolume: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}sfx_volume'],
+      )!,
       updatedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}updated_at'],
@@ -1783,11 +1855,17 @@ class AppAudioPreference extends DataClass
   final int id;
   final int nextLobbyTrackIndex;
   final int nextGameTrackIndex;
+  final double masterVolume;
+  final double bgmVolume;
+  final double sfxVolume;
   final DateTime updatedAt;
   const AppAudioPreference({
     required this.id,
     required this.nextLobbyTrackIndex,
     required this.nextGameTrackIndex,
+    required this.masterVolume,
+    required this.bgmVolume,
+    required this.sfxVolume,
     required this.updatedAt,
   });
   @override
@@ -1796,6 +1874,9 @@ class AppAudioPreference extends DataClass
     map['id'] = Variable<int>(id);
     map['next_lobby_track_index'] = Variable<int>(nextLobbyTrackIndex);
     map['next_game_track_index'] = Variable<int>(nextGameTrackIndex);
+    map['master_volume'] = Variable<double>(masterVolume);
+    map['bgm_volume'] = Variable<double>(bgmVolume);
+    map['sfx_volume'] = Variable<double>(sfxVolume);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
   }
@@ -1805,6 +1886,9 @@ class AppAudioPreference extends DataClass
       id: Value(id),
       nextLobbyTrackIndex: Value(nextLobbyTrackIndex),
       nextGameTrackIndex: Value(nextGameTrackIndex),
+      masterVolume: Value(masterVolume),
+      bgmVolume: Value(bgmVolume),
+      sfxVolume: Value(sfxVolume),
       updatedAt: Value(updatedAt),
     );
   }
@@ -1820,6 +1904,9 @@ class AppAudioPreference extends DataClass
         json['nextLobbyTrackIndex'],
       ),
       nextGameTrackIndex: serializer.fromJson<int>(json['nextGameTrackIndex']),
+      masterVolume: serializer.fromJson<double>(json['masterVolume']),
+      bgmVolume: serializer.fromJson<double>(json['bgmVolume']),
+      sfxVolume: serializer.fromJson<double>(json['sfxVolume']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
   }
@@ -1830,6 +1917,9 @@ class AppAudioPreference extends DataClass
       'id': serializer.toJson<int>(id),
       'nextLobbyTrackIndex': serializer.toJson<int>(nextLobbyTrackIndex),
       'nextGameTrackIndex': serializer.toJson<int>(nextGameTrackIndex),
+      'masterVolume': serializer.toJson<double>(masterVolume),
+      'bgmVolume': serializer.toJson<double>(bgmVolume),
+      'sfxVolume': serializer.toJson<double>(sfxVolume),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
   }
@@ -1838,11 +1928,17 @@ class AppAudioPreference extends DataClass
     int? id,
     int? nextLobbyTrackIndex,
     int? nextGameTrackIndex,
+    double? masterVolume,
+    double? bgmVolume,
+    double? sfxVolume,
     DateTime? updatedAt,
   }) => AppAudioPreference(
     id: id ?? this.id,
     nextLobbyTrackIndex: nextLobbyTrackIndex ?? this.nextLobbyTrackIndex,
     nextGameTrackIndex: nextGameTrackIndex ?? this.nextGameTrackIndex,
+    masterVolume: masterVolume ?? this.masterVolume,
+    bgmVolume: bgmVolume ?? this.bgmVolume,
+    sfxVolume: sfxVolume ?? this.sfxVolume,
     updatedAt: updatedAt ?? this.updatedAt,
   );
   AppAudioPreference copyWithCompanion(AppAudioPreferencesCompanion data) {
@@ -1854,6 +1950,11 @@ class AppAudioPreference extends DataClass
       nextGameTrackIndex: data.nextGameTrackIndex.present
           ? data.nextGameTrackIndex.value
           : this.nextGameTrackIndex,
+      masterVolume: data.masterVolume.present
+          ? data.masterVolume.value
+          : this.masterVolume,
+      bgmVolume: data.bgmVolume.present ? data.bgmVolume.value : this.bgmVolume,
+      sfxVolume: data.sfxVolume.present ? data.sfxVolume.value : this.sfxVolume,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
   }
@@ -1864,14 +1965,24 @@ class AppAudioPreference extends DataClass
           ..write('id: $id, ')
           ..write('nextLobbyTrackIndex: $nextLobbyTrackIndex, ')
           ..write('nextGameTrackIndex: $nextGameTrackIndex, ')
+          ..write('masterVolume: $masterVolume, ')
+          ..write('bgmVolume: $bgmVolume, ')
+          ..write('sfxVolume: $sfxVolume, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, nextLobbyTrackIndex, nextGameTrackIndex, updatedAt);
+  int get hashCode => Object.hash(
+    id,
+    nextLobbyTrackIndex,
+    nextGameTrackIndex,
+    masterVolume,
+    bgmVolume,
+    sfxVolume,
+    updatedAt,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1879,6 +1990,9 @@ class AppAudioPreference extends DataClass
           other.id == this.id &&
           other.nextLobbyTrackIndex == this.nextLobbyTrackIndex &&
           other.nextGameTrackIndex == this.nextGameTrackIndex &&
+          other.masterVolume == this.masterVolume &&
+          other.bgmVolume == this.bgmVolume &&
+          other.sfxVolume == this.sfxVolume &&
           other.updatedAt == this.updatedAt);
 }
 
@@ -1886,23 +2000,35 @@ class AppAudioPreferencesCompanion extends UpdateCompanion<AppAudioPreference> {
   final Value<int> id;
   final Value<int> nextLobbyTrackIndex;
   final Value<int> nextGameTrackIndex;
+  final Value<double> masterVolume;
+  final Value<double> bgmVolume;
+  final Value<double> sfxVolume;
   final Value<DateTime> updatedAt;
   const AppAudioPreferencesCompanion({
     this.id = const Value.absent(),
     this.nextLobbyTrackIndex = const Value.absent(),
     this.nextGameTrackIndex = const Value.absent(),
+    this.masterVolume = const Value.absent(),
+    this.bgmVolume = const Value.absent(),
+    this.sfxVolume = const Value.absent(),
     this.updatedAt = const Value.absent(),
   });
   AppAudioPreferencesCompanion.insert({
     this.id = const Value.absent(),
     this.nextLobbyTrackIndex = const Value.absent(),
     this.nextGameTrackIndex = const Value.absent(),
+    this.masterVolume = const Value.absent(),
+    this.bgmVolume = const Value.absent(),
+    this.sfxVolume = const Value.absent(),
     required DateTime updatedAt,
   }) : updatedAt = Value(updatedAt);
   static Insertable<AppAudioPreference> custom({
     Expression<int>? id,
     Expression<int>? nextLobbyTrackIndex,
     Expression<int>? nextGameTrackIndex,
+    Expression<double>? masterVolume,
+    Expression<double>? bgmVolume,
+    Expression<double>? sfxVolume,
     Expression<DateTime>? updatedAt,
   }) {
     return RawValuesInsertable({
@@ -1911,6 +2037,9 @@ class AppAudioPreferencesCompanion extends UpdateCompanion<AppAudioPreference> {
         'next_lobby_track_index': nextLobbyTrackIndex,
       if (nextGameTrackIndex != null)
         'next_game_track_index': nextGameTrackIndex,
+      if (masterVolume != null) 'master_volume': masterVolume,
+      if (bgmVolume != null) 'bgm_volume': bgmVolume,
+      if (sfxVolume != null) 'sfx_volume': sfxVolume,
       if (updatedAt != null) 'updated_at': updatedAt,
     });
   }
@@ -1919,12 +2048,18 @@ class AppAudioPreferencesCompanion extends UpdateCompanion<AppAudioPreference> {
     Value<int>? id,
     Value<int>? nextLobbyTrackIndex,
     Value<int>? nextGameTrackIndex,
+    Value<double>? masterVolume,
+    Value<double>? bgmVolume,
+    Value<double>? sfxVolume,
     Value<DateTime>? updatedAt,
   }) {
     return AppAudioPreferencesCompanion(
       id: id ?? this.id,
       nextLobbyTrackIndex: nextLobbyTrackIndex ?? this.nextLobbyTrackIndex,
       nextGameTrackIndex: nextGameTrackIndex ?? this.nextGameTrackIndex,
+      masterVolume: masterVolume ?? this.masterVolume,
+      bgmVolume: bgmVolume ?? this.bgmVolume,
+      sfxVolume: sfxVolume ?? this.sfxVolume,
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
@@ -1941,6 +2076,15 @@ class AppAudioPreferencesCompanion extends UpdateCompanion<AppAudioPreference> {
     if (nextGameTrackIndex.present) {
       map['next_game_track_index'] = Variable<int>(nextGameTrackIndex.value);
     }
+    if (masterVolume.present) {
+      map['master_volume'] = Variable<double>(masterVolume.value);
+    }
+    if (bgmVolume.present) {
+      map['bgm_volume'] = Variable<double>(bgmVolume.value);
+    }
+    if (sfxVolume.present) {
+      map['sfx_volume'] = Variable<double>(sfxVolume.value);
+    }
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
     }
@@ -1953,6 +2097,9 @@ class AppAudioPreferencesCompanion extends UpdateCompanion<AppAudioPreference> {
           ..write('id: $id, ')
           ..write('nextLobbyTrackIndex: $nextLobbyTrackIndex, ')
           ..write('nextGameTrackIndex: $nextGameTrackIndex, ')
+          ..write('masterVolume: $masterVolume, ')
+          ..write('bgmVolume: $bgmVolume, ')
+          ..write('sfxVolume: $sfxVolume, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
@@ -3491,6 +3638,9 @@ typedef $$AppAudioPreferencesTableCreateCompanionBuilder =
       Value<int> id,
       Value<int> nextLobbyTrackIndex,
       Value<int> nextGameTrackIndex,
+      Value<double> masterVolume,
+      Value<double> bgmVolume,
+      Value<double> sfxVolume,
       required DateTime updatedAt,
     });
 typedef $$AppAudioPreferencesTableUpdateCompanionBuilder =
@@ -3498,6 +3648,9 @@ typedef $$AppAudioPreferencesTableUpdateCompanionBuilder =
       Value<int> id,
       Value<int> nextLobbyTrackIndex,
       Value<int> nextGameTrackIndex,
+      Value<double> masterVolume,
+      Value<double> bgmVolume,
+      Value<double> sfxVolume,
       Value<DateTime> updatedAt,
     });
 
@@ -3522,6 +3675,21 @@ class $$AppAudioPreferencesTableFilterComposer
 
   ColumnFilters<int> get nextGameTrackIndex => $composableBuilder(
     column: $table.nextGameTrackIndex,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get masterVolume => $composableBuilder(
+    column: $table.masterVolume,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get bgmVolume => $composableBuilder(
+    column: $table.bgmVolume,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get sfxVolume => $composableBuilder(
+    column: $table.sfxVolume,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3555,6 +3723,21 @@ class $$AppAudioPreferencesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<double> get masterVolume => $composableBuilder(
+    column: $table.masterVolume,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get bgmVolume => $composableBuilder(
+    column: $table.bgmVolume,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get sfxVolume => $composableBuilder(
+    column: $table.sfxVolume,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
     column: $table.updatedAt,
     builder: (column) => ColumnOrderings(column),
@@ -3582,6 +3765,17 @@ class $$AppAudioPreferencesTableAnnotationComposer
     column: $table.nextGameTrackIndex,
     builder: (column) => column,
   );
+
+  GeneratedColumn<double> get masterVolume => $composableBuilder(
+    column: $table.masterVolume,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get bgmVolume =>
+      $composableBuilder(column: $table.bgmVolume, builder: (column) => column);
+
+  GeneratedColumn<double> get sfxVolume =>
+      $composableBuilder(column: $table.sfxVolume, builder: (column) => column);
 
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
@@ -3633,11 +3827,17 @@ class $$AppAudioPreferencesTableTableManager
                 Value<int> id = const Value.absent(),
                 Value<int> nextLobbyTrackIndex = const Value.absent(),
                 Value<int> nextGameTrackIndex = const Value.absent(),
+                Value<double> masterVolume = const Value.absent(),
+                Value<double> bgmVolume = const Value.absent(),
+                Value<double> sfxVolume = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
               }) => AppAudioPreferencesCompanion(
                 id: id,
                 nextLobbyTrackIndex: nextLobbyTrackIndex,
                 nextGameTrackIndex: nextGameTrackIndex,
+                masterVolume: masterVolume,
+                bgmVolume: bgmVolume,
+                sfxVolume: sfxVolume,
                 updatedAt: updatedAt,
               ),
           createCompanionCallback:
@@ -3645,11 +3845,17 @@ class $$AppAudioPreferencesTableTableManager
                 Value<int> id = const Value.absent(),
                 Value<int> nextLobbyTrackIndex = const Value.absent(),
                 Value<int> nextGameTrackIndex = const Value.absent(),
+                Value<double> masterVolume = const Value.absent(),
+                Value<double> bgmVolume = const Value.absent(),
+                Value<double> sfxVolume = const Value.absent(),
                 required DateTime updatedAt,
               }) => AppAudioPreferencesCompanion.insert(
                 id: id,
                 nextLobbyTrackIndex: nextLobbyTrackIndex,
                 nextGameTrackIndex: nextGameTrackIndex,
+                masterVolume: masterVolume,
+                bgmVolume: bgmVolume,
+                sfxVolume: sfxVolume,
                 updatedAt: updatedAt,
               ),
           withReferenceMapper: (p0) => p0

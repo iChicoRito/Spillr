@@ -7,10 +7,17 @@ import 'spillr_app_audio_controller.dart';
 
 final appAudioProviderOverrides = [
   appAudioControllerProvider.overrideWith((ref) {
+    final repo = ref.watch(appAudioPreferencesRepositoryProvider);
     final controller = SpillrAppAudioController(
-      trackRotator: ref.watch(appAudioPreferencesRepositoryProvider),
+      trackRotator: repo,
       audioEngine: AudioplayersAppAudioEngine(),
     );
+
+    // Apply persisted volume settings immediately after controller is created
+    repo
+        .fetchVolumeSettings()
+        .then((settings) => controller.updateVolumes(settings));
+
     ref.onDispose(() => unawaited(controller.dispose()));
     return controller;
   }),

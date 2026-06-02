@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:audioplayers/audioplayers.dart';
 
 import 'spillr_app_audio_controller.dart';
@@ -6,7 +8,7 @@ typedef AppAudioSfxPoolFactory =
     Future<AppAudioSfxPool> Function(String assetPath);
 
 abstract class AppAudioSfxPool {
-  Future<void> play();
+  Future<void> play({double volume = 1.0});
 
   Future<void> dispose();
 }
@@ -26,9 +28,12 @@ class AudioplayersAppAudioEngine implements AppAudioEngine {
       <String, Future<AppAudioSfxPool>>{};
   final AppAudioSfxPoolFactory _sfxPoolFactory;
   Future<void>? _pendingAudioContextSetup;
+  double _currentBgmVolume = 1.0;
+  Timer? _fadeTimer;
 
   @override
   Future<void> dispose() async {
+    _fadeTimer?.cancel();
     await _bgmPlayer.dispose();
     for (final pool in _sfxPools.values) {
       await pool.dispose();
@@ -45,15 +50,47 @@ class AudioplayersAppAudioEngine implements AppAudioEngine {
   }
 
   @override
-  Future<void> playSfx(String assetPath) async {
+  Future<void> playSfx(String assetPath, {double volume = 1.0}) async {
     await _ensureAudioContext();
     final pool = await _obtainSfxPool(assetPath);
-    await pool.play();
+    await pool.play(volume: volume);
   }
 
   @override
   Future<void> stopBgm() {
     return _bgmPlayer.stop();
+  }
+
+  @override
+  Future<void> setBgmVolume(double volume) async {
+    _fadeTimer?.cancel();
+    _fadeTimer = null;
+    _currentBgmVolume = volume.clamp(0.0, 1.0);
+    await _bgmPlayer.setVolume(_currentBgmVolume);
+  }
+
+  @override
+  Future<void> fadeBgmVolumeTo(double target, Duration duration) async {
+    _fadeTimer?.cancel();
+    final clampedTarget = target.clamp(0.0, 1.0);
+    final startVolume = _currentBgmVolume;
+    const steps = 20;
+    final stepDuration = Duration(
+      milliseconds: (duration.inMilliseconds / steps).round(),
+    );
+    var step = 0;
+
+    _fadeTimer = Timer.periodic(stepDuration, (timer) async {
+      step++;
+      final t = step / steps;
+      _currentBgmVolume = startVolume + (clampedTarget - startVolume) * t;
+      await _bgmPlayer.setVolume(_currentBgmVolume.clamp(0.0, 1.0));
+      if (step >= steps) {
+        timer.cancel();
+        _fadeTimer = null;
+        _currentBgmVolume = clampedTarget;
+      }
+    });
   }
 
   Future<AppAudioSfxPool> _obtainSfxPool(String assetPath) {
@@ -118,8 +155,8 @@ class _AudioplayersSfxPool implements AppAudioSfxPool {
   }
 
   @override
-  Future<void> play() async {
-    await _pool.start();
+  Future<void> play({double volume = 1.0}) async {
+    await _pool.start(volume: volume.clamp(0.0, 1.0));
   }
 }
 
@@ -137,8 +174,8 @@ final AudioContext _bgmAudioContext = AudioContext(
 
 final AudioContext _sfxAudioContext = AudioContext(
   android: _globalAudioContext.android.copy(
-    contentType: AndroidContentType.sonification,
-    usageType: AndroidUsageType.assistanceSonification,
+    contentType: AndroidContentType.music,
+    usageType: AndroidUsageType.game,
   ),
   iOS: _globalAudioContext.iOS.copy(),
 );

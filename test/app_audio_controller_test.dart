@@ -111,7 +111,7 @@ class _FakeAppAudioEngine implements AppAudioEngine {
   }
 
   @override
-  Future<void> playSfx(String assetPath) async {
+  Future<void> playSfx(String assetPath, {double volume = 1.0}) async {
     sfxEvents.add(assetPath);
   }
 
@@ -119,6 +119,12 @@ class _FakeAppAudioEngine implements AppAudioEngine {
   Future<void> stopBgm() async {
     stopCount += 1;
   }
+
+  @override
+  Future<void> setBgmVolume(double volume) async {}
+
+  @override
+  Future<void> fadeBgmVolumeTo(double target, Duration duration) async {}
 }
 
 class _FakeTrackRotator implements AppAudioTrackRotator {

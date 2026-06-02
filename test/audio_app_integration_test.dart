@@ -319,4 +319,13 @@ class _FakeAppAudioController implements AppAudioController {
   Future<void> syncRoute(String location) async {
     routeLocations.add(location);
   }
+
+  @override
+  Future<void> updateVolumes(dynamic volumes) async {}
+
+  @override
+  Future<void> pauseBgm() async {}
+
+  @override
+  Future<void> resumeBgm() async {}
 }

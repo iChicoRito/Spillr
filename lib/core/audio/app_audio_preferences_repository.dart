@@ -11,6 +11,21 @@ final appAudioPreferencesRepositoryProvider =
       return AppAudioPreferencesRepository(database);
     });
 
+class AudioVolumeSettings {
+  const AudioVolumeSettings({
+    this.masterVolume = 1.0,
+    this.bgmVolume = 1.0,
+    this.sfxVolume = 1.0,
+  });
+
+  final double masterVolume; // 0.0–1.0
+  final double bgmVolume; // 0.0–1.0
+  final double sfxVolume; // 0.0–1.0
+
+  double get effectiveBgmVolume => masterVolume * bgmVolume;
+  double get effectiveSfxVolume => masterVolume * sfxVolume;
+}
+
 class AppAudioPreferencesRepository implements AppAudioTrackRotator {
   AppAudioPreferencesRepository(this._database);
 
@@ -61,6 +76,9 @@ class AppAudioPreferencesRepository implements AppAudioTrackRotator {
       id: 1,
       nextLobbyTrackIndex: 0,
       nextGameTrackIndex: 0,
+      masterVolume: 1.0,
+      bgmVolume: 1.0,
+      sfxVolume: 1.0,
       updatedAt: now,
     );
   }
@@ -76,6 +94,29 @@ class AppAudioPreferencesRepository implements AppAudioTrackRotator {
             id: const Value(1),
             nextLobbyTrackIndex: Value(nextLobbyTrackIndex),
             nextGameTrackIndex: Value(nextGameTrackIndex),
+            updatedAt: Value(DateTime.now()),
+          ),
+        );
+  }
+
+  Future<AudioVolumeSettings> fetchVolumeSettings() async {
+    final prefs = await _readOrCreatePreferences();
+    return AudioVolumeSettings(
+      masterVolume: prefs.masterVolume,
+      bgmVolume: prefs.bgmVolume,
+      sfxVolume: prefs.sfxVolume,
+    );
+  }
+
+  Future<void> saveVolumeSettings(AudioVolumeSettings settings) {
+    return _database
+        .into(_database.appAudioPreferences)
+        .insertOnConflictUpdate(
+          AppAudioPreferencesCompanion(
+            id: const Value(1),
+            masterVolume: Value(settings.masterVolume.clamp(0.0, 1.0)),
+            bgmVolume: Value(settings.bgmVolume.clamp(0.0, 1.0)),
+            sfxVolume: Value(settings.sfxVolume.clamp(0.0, 1.0)),
             updatedAt: Value(DateTime.now()),
           ),
         );

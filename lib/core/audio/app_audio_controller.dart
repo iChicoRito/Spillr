@@ -1,5 +1,7 @@
 import 'package:riverpod/riverpod.dart';
 
+import 'app_audio_preferences_repository.dart';
+
 final appAudioControllerProvider = Provider<AppAudioController>((ref) {
   return const NoopAppAudioController();
 });
@@ -16,6 +18,12 @@ abstract class AppAudioController {
   Future<void> playPassSfx();
 
   Future<void> playEndingSfx();
+
+  Future<void> updateVolumes(AudioVolumeSettings volumes);
+
+  Future<void> pauseBgm();
+
+  Future<void> resumeBgm();
 
   Future<void> dispose();
 }
@@ -43,4 +51,13 @@ class NoopAppAudioController implements AppAudioController {
 
   @override
   Future<void> syncRoute(String location) async {}
+
+  @override
+  Future<void> updateVolumes(AudioVolumeSettings volumes) async {}
+
+  @override
+  Future<void> pauseBgm() async {}
+
+  @override
+  Future<void> resumeBgm() async {}
 }

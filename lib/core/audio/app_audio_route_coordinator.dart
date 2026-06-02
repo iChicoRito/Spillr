@@ -22,12 +22,14 @@ class AppAudioRouteCoordinator extends ConsumerStatefulWidget {
 }
 
 class _AppAudioRouteCoordinatorState
-    extends ConsumerState<AppAudioRouteCoordinator> {
+    extends ConsumerState<AppAudioRouteCoordinator>
+    with WidgetsBindingObserver {
   String? _lastLocation;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     widget.router.routeInformationProvider.addListener(_handleRouteChange);
     WidgetsBinding.instance.addPostFrameCallback((_) => _handleRouteChange());
   }
@@ -49,8 +51,20 @@ class _AppAudioRouteCoordinatorState
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     widget.router.routeInformationProvider.removeListener(_handleRouteChange);
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final controller = ref.read(appAudioControllerProvider);
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden) {
+      unawaited(controller.pauseBgm());
+    } else if (state == AppLifecycleState.resumed) {
+      unawaited(controller.resumeBgm());
+    }
   }
 
   void _handleRouteChange() {

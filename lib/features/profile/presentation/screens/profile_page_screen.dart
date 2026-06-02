@@ -12,6 +12,7 @@ import '../../../../shared/widgets/fallback_state_view.dart';
 import '../../../onboarding/presentation/providers/onboarding_providers.dart';
 import '../../domain/profile_models.dart';
 import '../providers/profile_providers.dart';
+import '../widgets/music_sounds_sheet.dart';
 
 class ProfilePageScreen extends ConsumerStatefulWidget {
   const ProfilePageScreen({super.key});
@@ -158,10 +159,13 @@ class _ProfilePageScreenState extends ConsumerState<ProfilePageScreen> {
                               setState(() => _darkModeEnabled = value);
                             },
                           ),
-                          const _ActionOptionRow(
-                            key: ValueKey('profile-option-music-and-sound'),
+                          _ActionOptionRow(
+                            key: const ValueKey(
+                              'profile-option-music-and-sound',
+                            ),
                             icon: Icons.volume_up_outlined,
                             label: 'Music & Sound',
+                            onTap: () => _openMusicSoundsSheet(context),
                           ),
                         ],
                       ),
@@ -190,6 +194,16 @@ class _ProfilePageScreenState extends ConsumerState<ProfilePageScreen> {
       backgroundColor: Colors.transparent,
       barrierColor: AppColors.black.withValues(alpha: 0.38),
       builder: (sheetContext) => _EditProfileSheet(profile: profile),
+    );
+  }
+
+  Future<void> _openMusicSoundsSheet(BuildContext context) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: AppColors.black.withValues(alpha: 0.38),
+      builder: (sheetContext) => const MusicSoundsSheet(),
     );
   }
 }
