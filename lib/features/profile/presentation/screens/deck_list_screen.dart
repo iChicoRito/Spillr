@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../../../app/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/fallback_state_view.dart';
 import '../../../../shared/widgets/show_spillr_dialog.dart';
@@ -126,40 +124,6 @@ class _DeckListHeader extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        GestureDetector(
-          key: const ValueKey('deck-list-back'),
-          behavior: HitTestBehavior.opaque,
-          onTap: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go(AppRoutes.profile);
-            }
-          },
-          child: const Padding(
-            padding: EdgeInsets.only(right: 12),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.chevron_left,
-                  color: AppColors.neutral700,
-                  size: 26,
-                ),
-                SizedBox(width: 4),
-                Text(
-                  'Back',
-                  style: TextStyle(
-                    color: AppColors.neutral700,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 14),
         Text.rich(
           TextSpan(
             children: [

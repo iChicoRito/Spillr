@@ -631,6 +631,7 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
             const SizedBox(height: 12),
             _AvatarGrid(
               selectedAvatar: _selectedAvatar,
+              selectedColor: _selectedColor,
               enabled: !profileState.isLoading,
               onSelected: (avatar) => setState(() => _selectedAvatar = avatar),
             ),
@@ -689,11 +690,14 @@ class ProfileAvatarCircle extends StatelessWidget {
                 ),
               )
             : Center(
-                child: SizedBox.square(
-                  dimension: size * 1.08,
-                  child: SvgPicture.asset(
-                    avatarAsset.assetPath,
-                    fit: BoxFit.contain,
+                child: Transform.translate(
+                  offset: Offset(0, size * 0.1),
+                  child: SizedBox.square(
+                    dimension: size * 1.08,
+                    child: SvgPicture.asset(
+                      avatarAsset.assetPath,
+                      fit: BoxFit.contain,
+                    ),
                   ),
                 ),
               ),
@@ -705,11 +709,13 @@ class ProfileAvatarCircle extends StatelessWidget {
 class _AvatarGrid extends StatelessWidget {
   const _AvatarGrid({
     required this.selectedAvatar,
+    required this.selectedColor,
     required this.enabled,
     required this.onSelected,
   });
 
   final ProfileAvatarAsset selectedAvatar;
+  final ProfileAvatarColorKey selectedColor;
   final bool enabled;
   final ValueChanged<ProfileAvatarAsset> onSelected;
 
@@ -728,6 +734,7 @@ class _AvatarGrid extends StatelessWidget {
             key: ValueKey('profile-avatar-option-${avatar.index + 1}'),
             avatar: avatar,
             selected: avatar == selectedAvatar,
+            selectedColor: selectedColor,
             enabled: enabled,
             onTap: () => onSelected(avatar),
           ),
@@ -740,6 +747,7 @@ class _AvatarTile extends StatelessWidget {
   const _AvatarTile({
     required this.avatar,
     required this.selected,
+    required this.selectedColor,
     required this.enabled,
     required this.onTap,
     super.key,
@@ -747,6 +755,7 @@ class _AvatarTile extends StatelessWidget {
 
   final ProfileAvatarAsset avatar;
   final bool selected;
+  final ProfileAvatarColorKey selectedColor;
   final bool enabled;
   final VoidCallback onTap;
 
@@ -760,10 +769,10 @@ class _AvatarTile extends StatelessWidget {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 160),
           decoration: BoxDecoration(
-            color: selected ? AppColors.amber500 : AppColors.white,
+            color: selected ? selectedColor.color : AppColors.white,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: selected ? AppColors.amber500 : AppColors.neutral200,
+              color: selected ? selectedColor.color : AppColors.neutral200,
               width: 1.2,
             ),
           ),

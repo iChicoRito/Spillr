@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:hugeicons/hugeicons.dart';
 
-import '../../../../app/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/fallback_state_view.dart';
 import '../../../../shared/widgets/show_spillr_dialog.dart';
@@ -91,52 +89,29 @@ class _PlayHistoryHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        GestureDetector(
-          key: const ValueKey('play-history-back'),
-          behavior: HitTestBehavior.opaque,
-          onTap: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go(AppRoutes.profile);
-            }
-          },
-          child: const Padding(
-            padding: EdgeInsets.only(right: 8),
-            child: Icon(
-              Icons.chevron_left,
+    return Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(
+            text: 'Your ',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              fontSize: 22,
+              height: 1.15,
+              fontWeight: FontWeight.w700,
               color: AppColors.neutral700,
-              size: 26,
             ),
           ),
-        ),
-        Text.rich(
           TextSpan(
-            children: [
-              TextSpan(
-                text: 'Your ',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontSize: 22,
-                  height: 1.15,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.neutral700,
-                ),
-              ),
-              TextSpan(
-                text: 'Play History',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontSize: 22,
-                  height: 1.15,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.teal500,
-                ),
-              ),
-            ],
+            text: 'Play History',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              fontSize: 22,
+              height: 1.15,
+              fontWeight: FontWeight.w700,
+              color: AppColors.teal500,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

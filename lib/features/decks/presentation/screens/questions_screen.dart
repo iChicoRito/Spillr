@@ -205,21 +205,6 @@ class _QuestionsContent extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          TextButton.icon(
-            key: const ValueKey('questions-back-button'),
-            onPressed: () => Navigator.of(context).maybePop(),
-            style: TextButton.styleFrom(
-              foregroundColor: AppColors.neutral700,
-              padding: EdgeInsets.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            icon: const Icon(Icons.chevron_left, size: 20),
-            label: const Text(
-              'Back',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
-            ),
-          ),
-          const SizedBox(height: 10),
           Wrap(
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
@@ -279,36 +264,33 @@ class _QuestionsContent extends ConsumerWidget {
                     ),
             ),
           ),
-          const SizedBox(height: 16),
-          Align(
-            alignment: Alignment.bottomRight,
-            child: FilledButton.icon(
-              key: const ValueKey('questions-add-button'),
-              onPressed: _canAddQuestion
-                  ? () => _openCreateQuestionFlow(context, ref)
-                  : null,
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.teal500,
-                foregroundColor: AppColors.white,
-                disabledBackgroundColor: AppColors.teal500.withValues(
-                  alpha: 0.35,
+          if (_canAddQuestion) ...[
+            const SizedBox(height: 16),
+            Align(
+              alignment: Alignment.bottomRight,
+              child: FilledButton.icon(
+                key: const ValueKey('questions-add-button'),
+                onPressed: () => _openCreateQuestionFlow(context, ref),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.teal500,
+                  foregroundColor: AppColors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 14,
+                  ),
+                  textStyle: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 18,
-                  vertical: 14,
-                ),
-                textStyle: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text('Add Question'),
               ),
-              icon: const Icon(Icons.add, size: 18),
-              label: const Text('Add Question'),
             ),
-          ),
+          ],
         ],
       ),
     );

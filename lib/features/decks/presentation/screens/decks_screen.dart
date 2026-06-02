@@ -270,7 +270,7 @@ class _DeckRow extends ConsumerWidget {
           borderRadius: BorderRadius.circular(24),
           onTap: navigateToQuestions,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
               color: AppColors.white,
               borderRadius: BorderRadius.circular(24),
@@ -279,8 +279,8 @@ class _DeckRow extends ConsumerWidget {
             child: Row(
               children: [
                 Container(
-                  width: 60,
-                  height: 60,
+                  width: 48,
+                  height: 48,
                   decoration: BoxDecoration(
                     color: item.avatarColor,
                     shape: BoxShape.circle,
@@ -289,7 +289,7 @@ class _DeckRow extends ConsumerWidget {
                     child: HugeIcon(
                       icon: item.icon,
                       color: AppColors.white,
-                      size: 24,
+                      size: 20,
                       strokeWidth: 1.8,
                     ),
                   ),
@@ -319,15 +319,52 @@ class _DeckRow extends ConsumerWidget {
                     ],
                   ),
                 ),
-                IconButton(
-                  key: ValueKey('decks-row-arrow-${item.id}'),
-                  onPressed: navigateToQuestions,
-                  icon: const Icon(
-                    Icons.chevron_right,
-                    color: AppColors.neutral400,
-                    size: 24,
+                if (!item.isBuiltIn)
+                  PopupMenuButton<_DeckAction>(
+                    key: ValueKey('decks-row-options-${item.id}'),
+                    color: AppColors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    onSelected: (action) {
+                      if (action == _DeckAction.edit) {
+                        showModalBottomSheet<void>(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          barrierColor: AppColors.black.withValues(alpha: 0.38),
+                          builder: (context) => _EditDeckSheet(item: item),
+                        );
+                      } else {
+                        showSpillrDialog<void>(
+                          context: context,
+                          barrierColor: AppColors.black.withValues(alpha: 0.34),
+                          builder: (context) => _DeleteDeckDialog(deckId: item.id),
+                        );
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      const PopupMenuItem<_DeckAction>(
+                        value: _DeckAction.edit,
+                        child: Text('Edit Deck'),
+                      ),
+                      const PopupMenuItem<_DeckAction>(
+                        value: _DeckAction.delete,
+                        child: Text(
+                          'Delete',
+                          style: TextStyle(color: AppColors.red500),
+                        ),
+                      ),
+                    ],
+                    child: const Padding(
+                      padding: EdgeInsets.all(8),
+                      child: Icon(
+                        Icons.more_vert,
+                        color: AppColors.neutral400,
+                        size: 20,
+                      ),
+                    ),
                   ),
-                ),
               ],
             ),
           ),
