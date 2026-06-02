@@ -13,6 +13,8 @@ class Profiles extends Table {
   DateTimeColumn get completedAt => dateTime()();
   TextColumn get avatarAssetPath => text().nullable()();
   TextColumn get avatarColorKey => text().nullable()();
+  BoolColumn get notificationsEnabled =>
+      boolean().withDefault(const Constant(false))();
 
   @override
   Set<Column<Object>>? get primaryKey => {id};
@@ -92,7 +94,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -129,6 +131,11 @@ class AppDatabase extends _$AppDatabase {
           'ALTER TABLE app_audio_preferences ADD COLUMN sfx_volume REAL NOT NULL DEFAULT 1.0',
         );
       }
+      if (from < 9) {
+        await customStatement(
+          'ALTER TABLE profiles ADD COLUMN notifications_enabled INTEGER NOT NULL DEFAULT 0',
+        );
+      }
     },
   );
 
@@ -155,6 +162,12 @@ class AppDatabase extends _$AppDatabase {
           avatarColorKey ?? existingProfile?.avatarColorKey,
         ),
       ),
+    );
+  }
+
+  Future<void> updateNotificationsEnabled(bool enabled) {
+    return (update(profiles)..where((t) => t.id.equals(1))).write(
+      ProfilesCompanion(notificationsEnabled: Value(enabled)),
     );
   }
 

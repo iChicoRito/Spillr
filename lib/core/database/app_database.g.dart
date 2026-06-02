@@ -65,6 +65,20 @@ class $ProfilesTable extends Profiles with TableInfo<$ProfilesTable, Profile> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _notificationsEnabledMeta =
+      const VerificationMeta('notificationsEnabled');
+  @override
+  late final GeneratedColumn<bool> notificationsEnabled = GeneratedColumn<bool>(
+    'notifications_enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("notifications_enabled" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -72,6 +86,7 @@ class $ProfilesTable extends Profiles with TableInfo<$ProfilesTable, Profile> {
     completedAt,
     avatarAssetPath,
     avatarColorKey,
+    notificationsEnabled,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -128,6 +143,15 @@ class $ProfilesTable extends Profiles with TableInfo<$ProfilesTable, Profile> {
         ),
       );
     }
+    if (data.containsKey('notifications_enabled')) {
+      context.handle(
+        _notificationsEnabledMeta,
+        notificationsEnabled.isAcceptableOrUnknown(
+          data['notifications_enabled']!,
+          _notificationsEnabledMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -157,6 +181,10 @@ class $ProfilesTable extends Profiles with TableInfo<$ProfilesTable, Profile> {
         DriftSqlType.string,
         data['${effectivePrefix}avatar_color_key'],
       ),
+      notificationsEnabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}notifications_enabled'],
+      )!,
     );
   }
 
@@ -172,12 +200,14 @@ class Profile extends DataClass implements Insertable<Profile> {
   final DateTime completedAt;
   final String? avatarAssetPath;
   final String? avatarColorKey;
+  final bool notificationsEnabled;
   const Profile({
     required this.id,
     required this.displayName,
     required this.completedAt,
     this.avatarAssetPath,
     this.avatarColorKey,
+    required this.notificationsEnabled,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -191,6 +221,7 @@ class Profile extends DataClass implements Insertable<Profile> {
     if (!nullToAbsent || avatarColorKey != null) {
       map['avatar_color_key'] = Variable<String>(avatarColorKey);
     }
+    map['notifications_enabled'] = Variable<bool>(notificationsEnabled);
     return map;
   }
 
@@ -205,6 +236,7 @@ class Profile extends DataClass implements Insertable<Profile> {
       avatarColorKey: avatarColorKey == null && nullToAbsent
           ? const Value.absent()
           : Value(avatarColorKey),
+      notificationsEnabled: Value(notificationsEnabled),
     );
   }
 
@@ -219,6 +251,9 @@ class Profile extends DataClass implements Insertable<Profile> {
       completedAt: serializer.fromJson<DateTime>(json['completedAt']),
       avatarAssetPath: serializer.fromJson<String?>(json['avatarAssetPath']),
       avatarColorKey: serializer.fromJson<String?>(json['avatarColorKey']),
+      notificationsEnabled: serializer.fromJson<bool>(
+        json['notificationsEnabled'],
+      ),
     );
   }
   @override
@@ -230,6 +265,7 @@ class Profile extends DataClass implements Insertable<Profile> {
       'completedAt': serializer.toJson<DateTime>(completedAt),
       'avatarAssetPath': serializer.toJson<String?>(avatarAssetPath),
       'avatarColorKey': serializer.toJson<String?>(avatarColorKey),
+      'notificationsEnabled': serializer.toJson<bool>(notificationsEnabled),
     };
   }
 
@@ -239,6 +275,7 @@ class Profile extends DataClass implements Insertable<Profile> {
     DateTime? completedAt,
     Value<String?> avatarAssetPath = const Value.absent(),
     Value<String?> avatarColorKey = const Value.absent(),
+    bool? notificationsEnabled,
   }) => Profile(
     id: id ?? this.id,
     displayName: displayName ?? this.displayName,
@@ -249,6 +286,7 @@ class Profile extends DataClass implements Insertable<Profile> {
     avatarColorKey: avatarColorKey.present
         ? avatarColorKey.value
         : this.avatarColorKey,
+    notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
   );
   Profile copyWithCompanion(ProfilesCompanion data) {
     return Profile(
@@ -265,6 +303,9 @@ class Profile extends DataClass implements Insertable<Profile> {
       avatarColorKey: data.avatarColorKey.present
           ? data.avatarColorKey.value
           : this.avatarColorKey,
+      notificationsEnabled: data.notificationsEnabled.present
+          ? data.notificationsEnabled.value
+          : this.notificationsEnabled,
     );
   }
 
@@ -275,7 +316,8 @@ class Profile extends DataClass implements Insertable<Profile> {
           ..write('displayName: $displayName, ')
           ..write('completedAt: $completedAt, ')
           ..write('avatarAssetPath: $avatarAssetPath, ')
-          ..write('avatarColorKey: $avatarColorKey')
+          ..write('avatarColorKey: $avatarColorKey, ')
+          ..write('notificationsEnabled: $notificationsEnabled')
           ..write(')'))
         .toString();
   }
@@ -287,6 +329,7 @@ class Profile extends DataClass implements Insertable<Profile> {
     completedAt,
     avatarAssetPath,
     avatarColorKey,
+    notificationsEnabled,
   );
   @override
   bool operator ==(Object other) =>
@@ -296,7 +339,8 @@ class Profile extends DataClass implements Insertable<Profile> {
           other.displayName == this.displayName &&
           other.completedAt == this.completedAt &&
           other.avatarAssetPath == this.avatarAssetPath &&
-          other.avatarColorKey == this.avatarColorKey);
+          other.avatarColorKey == this.avatarColorKey &&
+          other.notificationsEnabled == this.notificationsEnabled);
 }
 
 class ProfilesCompanion extends UpdateCompanion<Profile> {
@@ -305,12 +349,14 @@ class ProfilesCompanion extends UpdateCompanion<Profile> {
   final Value<DateTime> completedAt;
   final Value<String?> avatarAssetPath;
   final Value<String?> avatarColorKey;
+  final Value<bool> notificationsEnabled;
   const ProfilesCompanion({
     this.id = const Value.absent(),
     this.displayName = const Value.absent(),
     this.completedAt = const Value.absent(),
     this.avatarAssetPath = const Value.absent(),
     this.avatarColorKey = const Value.absent(),
+    this.notificationsEnabled = const Value.absent(),
   });
   ProfilesCompanion.insert({
     this.id = const Value.absent(),
@@ -318,6 +364,7 @@ class ProfilesCompanion extends UpdateCompanion<Profile> {
     required DateTime completedAt,
     this.avatarAssetPath = const Value.absent(),
     this.avatarColorKey = const Value.absent(),
+    this.notificationsEnabled = const Value.absent(),
   }) : displayName = Value(displayName),
        completedAt = Value(completedAt);
   static Insertable<Profile> custom({
@@ -326,6 +373,7 @@ class ProfilesCompanion extends UpdateCompanion<Profile> {
     Expression<DateTime>? completedAt,
     Expression<String>? avatarAssetPath,
     Expression<String>? avatarColorKey,
+    Expression<bool>? notificationsEnabled,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -333,6 +381,8 @@ class ProfilesCompanion extends UpdateCompanion<Profile> {
       if (completedAt != null) 'completed_at': completedAt,
       if (avatarAssetPath != null) 'avatar_asset_path': avatarAssetPath,
       if (avatarColorKey != null) 'avatar_color_key': avatarColorKey,
+      if (notificationsEnabled != null)
+        'notifications_enabled': notificationsEnabled,
     });
   }
 
@@ -342,6 +392,7 @@ class ProfilesCompanion extends UpdateCompanion<Profile> {
     Value<DateTime>? completedAt,
     Value<String?>? avatarAssetPath,
     Value<String?>? avatarColorKey,
+    Value<bool>? notificationsEnabled,
   }) {
     return ProfilesCompanion(
       id: id ?? this.id,
@@ -349,6 +400,7 @@ class ProfilesCompanion extends UpdateCompanion<Profile> {
       completedAt: completedAt ?? this.completedAt,
       avatarAssetPath: avatarAssetPath ?? this.avatarAssetPath,
       avatarColorKey: avatarColorKey ?? this.avatarColorKey,
+      notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
     );
   }
 
@@ -370,6 +422,9 @@ class ProfilesCompanion extends UpdateCompanion<Profile> {
     if (avatarColorKey.present) {
       map['avatar_color_key'] = Variable<String>(avatarColorKey.value);
     }
+    if (notificationsEnabled.present) {
+      map['notifications_enabled'] = Variable<bool>(notificationsEnabled.value);
+    }
     return map;
   }
 
@@ -380,7 +435,8 @@ class ProfilesCompanion extends UpdateCompanion<Profile> {
           ..write('displayName: $displayName, ')
           ..write('completedAt: $completedAt, ')
           ..write('avatarAssetPath: $avatarAssetPath, ')
-          ..write('avatarColorKey: $avatarColorKey')
+          ..write('avatarColorKey: $avatarColorKey, ')
+          ..write('notificationsEnabled: $notificationsEnabled')
           ..write(')'))
         .toString();
   }
@@ -2762,6 +2818,7 @@ typedef $$ProfilesTableCreateCompanionBuilder =
       required DateTime completedAt,
       Value<String?> avatarAssetPath,
       Value<String?> avatarColorKey,
+      Value<bool> notificationsEnabled,
     });
 typedef $$ProfilesTableUpdateCompanionBuilder =
     ProfilesCompanion Function({
@@ -2770,6 +2827,7 @@ typedef $$ProfilesTableUpdateCompanionBuilder =
       Value<DateTime> completedAt,
       Value<String?> avatarAssetPath,
       Value<String?> avatarColorKey,
+      Value<bool> notificationsEnabled,
     });
 
 class $$ProfilesTableFilterComposer
@@ -2803,6 +2861,11 @@ class $$ProfilesTableFilterComposer
 
   ColumnFilters<String> get avatarColorKey => $composableBuilder(
     column: $table.avatarColorKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get notificationsEnabled => $composableBuilder(
+    column: $table.notificationsEnabled,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -2840,6 +2903,11 @@ class $$ProfilesTableOrderingComposer
     column: $table.avatarColorKey,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get notificationsEnabled => $composableBuilder(
+    column: $table.notificationsEnabled,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ProfilesTableAnnotationComposer
@@ -2871,6 +2939,11 @@ class $$ProfilesTableAnnotationComposer
 
   GeneratedColumn<String> get avatarColorKey => $composableBuilder(
     column: $table.avatarColorKey,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get notificationsEnabled => $composableBuilder(
+    column: $table.notificationsEnabled,
     builder: (column) => column,
   );
 }
@@ -2908,12 +2981,14 @@ class $$ProfilesTableTableManager
                 Value<DateTime> completedAt = const Value.absent(),
                 Value<String?> avatarAssetPath = const Value.absent(),
                 Value<String?> avatarColorKey = const Value.absent(),
+                Value<bool> notificationsEnabled = const Value.absent(),
               }) => ProfilesCompanion(
                 id: id,
                 displayName: displayName,
                 completedAt: completedAt,
                 avatarAssetPath: avatarAssetPath,
                 avatarColorKey: avatarColorKey,
+                notificationsEnabled: notificationsEnabled,
               ),
           createCompanionCallback:
               ({
@@ -2922,12 +2997,14 @@ class $$ProfilesTableTableManager
                 required DateTime completedAt,
                 Value<String?> avatarAssetPath = const Value.absent(),
                 Value<String?> avatarColorKey = const Value.absent(),
+                Value<bool> notificationsEnabled = const Value.absent(),
               }) => ProfilesCompanion.insert(
                 id: id,
                 displayName: displayName,
                 completedAt: completedAt,
                 avatarAssetPath: avatarAssetPath,
                 avatarColorKey: avatarColorKey,
+                notificationsEnabled: notificationsEnabled,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
