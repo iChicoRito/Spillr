@@ -1,5 +1,5 @@
 import 'package:drift/native.dart';
-import 'package:drift/drift.dart' show ProfilesCompanion, Value;
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,7 +7,6 @@ import 'package:spillr/core/notifications/notification_service.dart';
 
 import 'package:spillr/core/database/app_database.dart';
 import 'package:spillr/core/database/app_database_provider.dart';
-import 'package:spillr/features/profile/data/profile_repository.dart';
 import 'package:spillr/features/profile/domain/profile_models.dart';
 import 'package:spillr/features/onboarding/presentation/providers/onboarding_providers.dart';
 import 'package:spillr/features/profile/presentation/providers/profile_providers.dart';
@@ -16,11 +15,9 @@ import 'package:spillr/shared/widgets/spillr_bottom_navigation.dart';
 
 void main() {
   late AppDatabase database;
-  late ProfileRepository repository;
 
   setUp(() {
     database = AppDatabase(NativeDatabase.memory());
-    repository = ProfileRepository(database);
   });
 
   tearDown(() async {
@@ -89,7 +86,7 @@ void main() {
     );
   }
 
-  String _statValue(WidgetTester tester, Key tileKey) {
+  String statValue(WidgetTester tester, Key tileKey) {
     final texts = tester.widgetList<Text>(
       find.descendant(of: find.byKey(tileKey), matching: find.byType(Text)),
     );
@@ -140,15 +137,15 @@ void main() {
       expect(avatar.avatarColor, ProfileAvatarColorKey.teal);
 
       expect(
-        _statValue(tester, const ValueKey('profile-stat-cards-played')),
+        statValue(tester, const ValueKey('profile-stat-cards-played')),
         '3',
       );
       expect(
-        _statValue(tester, const ValueKey('profile-stat-cards-answered')),
+        statValue(tester, const ValueKey('profile-stat-cards-answered')),
         '2',
       );
       expect(
-        _statValue(tester, const ValueKey('profile-stat-cards-passed')),
+        statValue(tester, const ValueKey('profile-stat-cards-passed')),
         '1',
       );
     },
