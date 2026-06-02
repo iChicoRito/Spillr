@@ -43,8 +43,36 @@ class $ProfilesTable extends Profiles with TableInfo<$ProfilesTable, Profile> {
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _avatarAssetPathMeta = const VerificationMeta(
+    'avatarAssetPath',
+  );
   @override
-  List<GeneratedColumn> get $columns => [id, displayName, completedAt];
+  late final GeneratedColumn<String> avatarAssetPath = GeneratedColumn<String>(
+    'avatar_asset_path',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _avatarColorKeyMeta = const VerificationMeta(
+    'avatarColorKey',
+  );
+  @override
+  late final GeneratedColumn<String> avatarColorKey = GeneratedColumn<String>(
+    'avatar_color_key',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    displayName,
+    completedAt,
+    avatarAssetPath,
+    avatarColorKey,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -82,6 +110,24 @@ class $ProfilesTable extends Profiles with TableInfo<$ProfilesTable, Profile> {
     } else if (isInserting) {
       context.missing(_completedAtMeta);
     }
+    if (data.containsKey('avatar_asset_path')) {
+      context.handle(
+        _avatarAssetPathMeta,
+        avatarAssetPath.isAcceptableOrUnknown(
+          data['avatar_asset_path']!,
+          _avatarAssetPathMeta,
+        ),
+      );
+    }
+    if (data.containsKey('avatar_color_key')) {
+      context.handle(
+        _avatarColorKeyMeta,
+        avatarColorKey.isAcceptableOrUnknown(
+          data['avatar_color_key']!,
+          _avatarColorKeyMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -103,6 +149,14 @@ class $ProfilesTable extends Profiles with TableInfo<$ProfilesTable, Profile> {
         DriftSqlType.dateTime,
         data['${effectivePrefix}completed_at'],
       )!,
+      avatarAssetPath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}avatar_asset_path'],
+      ),
+      avatarColorKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}avatar_color_key'],
+      ),
     );
   }
 
@@ -116,10 +170,14 @@ class Profile extends DataClass implements Insertable<Profile> {
   final int id;
   final String displayName;
   final DateTime completedAt;
+  final String? avatarAssetPath;
+  final String? avatarColorKey;
   const Profile({
     required this.id,
     required this.displayName,
     required this.completedAt,
+    this.avatarAssetPath,
+    this.avatarColorKey,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -127,6 +185,12 @@ class Profile extends DataClass implements Insertable<Profile> {
     map['id'] = Variable<int>(id);
     map['display_name'] = Variable<String>(displayName);
     map['completed_at'] = Variable<DateTime>(completedAt);
+    if (!nullToAbsent || avatarAssetPath != null) {
+      map['avatar_asset_path'] = Variable<String>(avatarAssetPath);
+    }
+    if (!nullToAbsent || avatarColorKey != null) {
+      map['avatar_color_key'] = Variable<String>(avatarColorKey);
+    }
     return map;
   }
 
@@ -135,6 +199,12 @@ class Profile extends DataClass implements Insertable<Profile> {
       id: Value(id),
       displayName: Value(displayName),
       completedAt: Value(completedAt),
+      avatarAssetPath: avatarAssetPath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(avatarAssetPath),
+      avatarColorKey: avatarColorKey == null && nullToAbsent
+          ? const Value.absent()
+          : Value(avatarColorKey),
     );
   }
 
@@ -147,6 +217,8 @@ class Profile extends DataClass implements Insertable<Profile> {
       id: serializer.fromJson<int>(json['id']),
       displayName: serializer.fromJson<String>(json['displayName']),
       completedAt: serializer.fromJson<DateTime>(json['completedAt']),
+      avatarAssetPath: serializer.fromJson<String?>(json['avatarAssetPath']),
+      avatarColorKey: serializer.fromJson<String?>(json['avatarColorKey']),
     );
   }
   @override
@@ -156,15 +228,28 @@ class Profile extends DataClass implements Insertable<Profile> {
       'id': serializer.toJson<int>(id),
       'displayName': serializer.toJson<String>(displayName),
       'completedAt': serializer.toJson<DateTime>(completedAt),
+      'avatarAssetPath': serializer.toJson<String?>(avatarAssetPath),
+      'avatarColorKey': serializer.toJson<String?>(avatarColorKey),
     };
   }
 
-  Profile copyWith({int? id, String? displayName, DateTime? completedAt}) =>
-      Profile(
-        id: id ?? this.id,
-        displayName: displayName ?? this.displayName,
-        completedAt: completedAt ?? this.completedAt,
-      );
+  Profile copyWith({
+    int? id,
+    String? displayName,
+    DateTime? completedAt,
+    Value<String?> avatarAssetPath = const Value.absent(),
+    Value<String?> avatarColorKey = const Value.absent(),
+  }) => Profile(
+    id: id ?? this.id,
+    displayName: displayName ?? this.displayName,
+    completedAt: completedAt ?? this.completedAt,
+    avatarAssetPath: avatarAssetPath.present
+        ? avatarAssetPath.value
+        : this.avatarAssetPath,
+    avatarColorKey: avatarColorKey.present
+        ? avatarColorKey.value
+        : this.avatarColorKey,
+  );
   Profile copyWithCompanion(ProfilesCompanion data) {
     return Profile(
       id: data.id.present ? data.id.value : this.id,
@@ -174,6 +259,12 @@ class Profile extends DataClass implements Insertable<Profile> {
       completedAt: data.completedAt.present
           ? data.completedAt.value
           : this.completedAt,
+      avatarAssetPath: data.avatarAssetPath.present
+          ? data.avatarAssetPath.value
+          : this.avatarAssetPath,
+      avatarColorKey: data.avatarColorKey.present
+          ? data.avatarColorKey.value
+          : this.avatarColorKey,
     );
   }
 
@@ -182,46 +273,66 @@ class Profile extends DataClass implements Insertable<Profile> {
     return (StringBuffer('Profile(')
           ..write('id: $id, ')
           ..write('displayName: $displayName, ')
-          ..write('completedAt: $completedAt')
+          ..write('completedAt: $completedAt, ')
+          ..write('avatarAssetPath: $avatarAssetPath, ')
+          ..write('avatarColorKey: $avatarColorKey')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, displayName, completedAt);
+  int get hashCode => Object.hash(
+    id,
+    displayName,
+    completedAt,
+    avatarAssetPath,
+    avatarColorKey,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is Profile &&
           other.id == this.id &&
           other.displayName == this.displayName &&
-          other.completedAt == this.completedAt);
+          other.completedAt == this.completedAt &&
+          other.avatarAssetPath == this.avatarAssetPath &&
+          other.avatarColorKey == this.avatarColorKey);
 }
 
 class ProfilesCompanion extends UpdateCompanion<Profile> {
   final Value<int> id;
   final Value<String> displayName;
   final Value<DateTime> completedAt;
+  final Value<String?> avatarAssetPath;
+  final Value<String?> avatarColorKey;
   const ProfilesCompanion({
     this.id = const Value.absent(),
     this.displayName = const Value.absent(),
     this.completedAt = const Value.absent(),
+    this.avatarAssetPath = const Value.absent(),
+    this.avatarColorKey = const Value.absent(),
   });
   ProfilesCompanion.insert({
     this.id = const Value.absent(),
     required String displayName,
     required DateTime completedAt,
+    this.avatarAssetPath = const Value.absent(),
+    this.avatarColorKey = const Value.absent(),
   }) : displayName = Value(displayName),
        completedAt = Value(completedAt);
   static Insertable<Profile> custom({
     Expression<int>? id,
     Expression<String>? displayName,
     Expression<DateTime>? completedAt,
+    Expression<String>? avatarAssetPath,
+    Expression<String>? avatarColorKey,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (displayName != null) 'display_name': displayName,
       if (completedAt != null) 'completed_at': completedAt,
+      if (avatarAssetPath != null) 'avatar_asset_path': avatarAssetPath,
+      if (avatarColorKey != null) 'avatar_color_key': avatarColorKey,
     });
   }
 
@@ -229,11 +340,15 @@ class ProfilesCompanion extends UpdateCompanion<Profile> {
     Value<int>? id,
     Value<String>? displayName,
     Value<DateTime>? completedAt,
+    Value<String?>? avatarAssetPath,
+    Value<String?>? avatarColorKey,
   }) {
     return ProfilesCompanion(
       id: id ?? this.id,
       displayName: displayName ?? this.displayName,
       completedAt: completedAt ?? this.completedAt,
+      avatarAssetPath: avatarAssetPath ?? this.avatarAssetPath,
+      avatarColorKey: avatarColorKey ?? this.avatarColorKey,
     );
   }
 
@@ -249,6 +364,12 @@ class ProfilesCompanion extends UpdateCompanion<Profile> {
     if (completedAt.present) {
       map['completed_at'] = Variable<DateTime>(completedAt.value);
     }
+    if (avatarAssetPath.present) {
+      map['avatar_asset_path'] = Variable<String>(avatarAssetPath.value);
+    }
+    if (avatarColorKey.present) {
+      map['avatar_color_key'] = Variable<String>(avatarColorKey.value);
+    }
     return map;
   }
 
@@ -257,7 +378,9 @@ class ProfilesCompanion extends UpdateCompanion<Profile> {
     return (StringBuffer('ProfilesCompanion(')
           ..write('id: $id, ')
           ..write('displayName: $displayName, ')
-          ..write('completedAt: $completedAt')
+          ..write('completedAt: $completedAt, ')
+          ..write('avatarAssetPath: $avatarAssetPath, ')
+          ..write('avatarColorKey: $avatarColorKey')
           ..write(')'))
         .toString();
   }
@@ -1836,6 +1959,313 @@ class AppAudioPreferencesCompanion extends UpdateCompanion<AppAudioPreference> {
   }
 }
 
+class $GameplayCardEventsTable extends GameplayCardEvents
+    with TableInfo<$GameplayCardEventsTable, GameplayCardEvent> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $GameplayCardEventsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _deckIdMeta = const VerificationMeta('deckId');
+  @override
+  late final GeneratedColumn<String> deckId = GeneratedColumn<String>(
+    'deck_id',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 64,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _actionMeta = const VerificationMeta('action');
+  @override
+  late final GeneratedColumn<String> action = GeneratedColumn<String>(
+    'action',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 24,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _occurredAtMeta = const VerificationMeta(
+    'occurredAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> occurredAt = GeneratedColumn<DateTime>(
+    'occurred_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, deckId, action, occurredAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'gameplay_card_events';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<GameplayCardEvent> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('deck_id')) {
+      context.handle(
+        _deckIdMeta,
+        deckId.isAcceptableOrUnknown(data['deck_id']!, _deckIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_deckIdMeta);
+    }
+    if (data.containsKey('action')) {
+      context.handle(
+        _actionMeta,
+        action.isAcceptableOrUnknown(data['action']!, _actionMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_actionMeta);
+    }
+    if (data.containsKey('occurred_at')) {
+      context.handle(
+        _occurredAtMeta,
+        occurredAt.isAcceptableOrUnknown(data['occurred_at']!, _occurredAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_occurredAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  GameplayCardEvent map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return GameplayCardEvent(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      deckId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}deck_id'],
+      )!,
+      action: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}action'],
+      )!,
+      occurredAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}occurred_at'],
+      )!,
+    );
+  }
+
+  @override
+  $GameplayCardEventsTable createAlias(String alias) {
+    return $GameplayCardEventsTable(attachedDatabase, alias);
+  }
+}
+
+class GameplayCardEvent extends DataClass
+    implements Insertable<GameplayCardEvent> {
+  final int id;
+  final String deckId;
+  final String action;
+  final DateTime occurredAt;
+  const GameplayCardEvent({
+    required this.id,
+    required this.deckId,
+    required this.action,
+    required this.occurredAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['deck_id'] = Variable<String>(deckId);
+    map['action'] = Variable<String>(action);
+    map['occurred_at'] = Variable<DateTime>(occurredAt);
+    return map;
+  }
+
+  GameplayCardEventsCompanion toCompanion(bool nullToAbsent) {
+    return GameplayCardEventsCompanion(
+      id: Value(id),
+      deckId: Value(deckId),
+      action: Value(action),
+      occurredAt: Value(occurredAt),
+    );
+  }
+
+  factory GameplayCardEvent.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return GameplayCardEvent(
+      id: serializer.fromJson<int>(json['id']),
+      deckId: serializer.fromJson<String>(json['deckId']),
+      action: serializer.fromJson<String>(json['action']),
+      occurredAt: serializer.fromJson<DateTime>(json['occurredAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'deckId': serializer.toJson<String>(deckId),
+      'action': serializer.toJson<String>(action),
+      'occurredAt': serializer.toJson<DateTime>(occurredAt),
+    };
+  }
+
+  GameplayCardEvent copyWith({
+    int? id,
+    String? deckId,
+    String? action,
+    DateTime? occurredAt,
+  }) => GameplayCardEvent(
+    id: id ?? this.id,
+    deckId: deckId ?? this.deckId,
+    action: action ?? this.action,
+    occurredAt: occurredAt ?? this.occurredAt,
+  );
+  GameplayCardEvent copyWithCompanion(GameplayCardEventsCompanion data) {
+    return GameplayCardEvent(
+      id: data.id.present ? data.id.value : this.id,
+      deckId: data.deckId.present ? data.deckId.value : this.deckId,
+      action: data.action.present ? data.action.value : this.action,
+      occurredAt: data.occurredAt.present
+          ? data.occurredAt.value
+          : this.occurredAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GameplayCardEvent(')
+          ..write('id: $id, ')
+          ..write('deckId: $deckId, ')
+          ..write('action: $action, ')
+          ..write('occurredAt: $occurredAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, deckId, action, occurredAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is GameplayCardEvent &&
+          other.id == this.id &&
+          other.deckId == this.deckId &&
+          other.action == this.action &&
+          other.occurredAt == this.occurredAt);
+}
+
+class GameplayCardEventsCompanion extends UpdateCompanion<GameplayCardEvent> {
+  final Value<int> id;
+  final Value<String> deckId;
+  final Value<String> action;
+  final Value<DateTime> occurredAt;
+  const GameplayCardEventsCompanion({
+    this.id = const Value.absent(),
+    this.deckId = const Value.absent(),
+    this.action = const Value.absent(),
+    this.occurredAt = const Value.absent(),
+  });
+  GameplayCardEventsCompanion.insert({
+    this.id = const Value.absent(),
+    required String deckId,
+    required String action,
+    required DateTime occurredAt,
+  }) : deckId = Value(deckId),
+       action = Value(action),
+       occurredAt = Value(occurredAt);
+  static Insertable<GameplayCardEvent> custom({
+    Expression<int>? id,
+    Expression<String>? deckId,
+    Expression<String>? action,
+    Expression<DateTime>? occurredAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (deckId != null) 'deck_id': deckId,
+      if (action != null) 'action': action,
+      if (occurredAt != null) 'occurred_at': occurredAt,
+    });
+  }
+
+  GameplayCardEventsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? deckId,
+    Value<String>? action,
+    Value<DateTime>? occurredAt,
+  }) {
+    return GameplayCardEventsCompanion(
+      id: id ?? this.id,
+      deckId: deckId ?? this.deckId,
+      action: action ?? this.action,
+      occurredAt: occurredAt ?? this.occurredAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (deckId.present) {
+      map['deck_id'] = Variable<String>(deckId.value);
+    }
+    if (action.present) {
+      map['action'] = Variable<String>(action.value);
+    }
+    if (occurredAt.present) {
+      map['occurred_at'] = Variable<DateTime>(occurredAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GameplayCardEventsCompanion(')
+          ..write('id: $id, ')
+          ..write('deckId: $deckId, ')
+          ..write('action: $action, ')
+          ..write('occurredAt: $occurredAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -1847,6 +2277,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   questionGenerationUsageEntries = $QuestionGenerationUsageEntriesTable(this);
   late final $AppAudioPreferencesTable appAudioPreferences =
       $AppAudioPreferencesTable(this);
+  late final $GameplayCardEventsTable gameplayCardEvents =
+      $GameplayCardEventsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -1857,6 +2289,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     deckQuestionEntries,
     questionGenerationUsageEntries,
     appAudioPreferences,
+    gameplayCardEvents,
   ];
 }
 
@@ -1865,12 +2298,16 @@ typedef $$ProfilesTableCreateCompanionBuilder =
       Value<int> id,
       required String displayName,
       required DateTime completedAt,
+      Value<String?> avatarAssetPath,
+      Value<String?> avatarColorKey,
     });
 typedef $$ProfilesTableUpdateCompanionBuilder =
     ProfilesCompanion Function({
       Value<int> id,
       Value<String> displayName,
       Value<DateTime> completedAt,
+      Value<String?> avatarAssetPath,
+      Value<String?> avatarColorKey,
     });
 
 class $$ProfilesTableFilterComposer
@@ -1894,6 +2331,16 @@ class $$ProfilesTableFilterComposer
 
   ColumnFilters<DateTime> get completedAt => $composableBuilder(
     column: $table.completedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get avatarAssetPath => $composableBuilder(
+    column: $table.avatarAssetPath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get avatarColorKey => $composableBuilder(
+    column: $table.avatarColorKey,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -1921,6 +2368,16 @@ class $$ProfilesTableOrderingComposer
     column: $table.completedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get avatarAssetPath => $composableBuilder(
+    column: $table.avatarAssetPath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get avatarColorKey => $composableBuilder(
+    column: $table.avatarColorKey,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ProfilesTableAnnotationComposer
@@ -1942,6 +2399,16 @@ class $$ProfilesTableAnnotationComposer
 
   GeneratedColumn<DateTime> get completedAt => $composableBuilder(
     column: $table.completedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get avatarAssetPath => $composableBuilder(
+    column: $table.avatarAssetPath,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get avatarColorKey => $composableBuilder(
+    column: $table.avatarColorKey,
     builder: (column) => column,
   );
 }
@@ -1977,20 +2444,28 @@ class $$ProfilesTableTableManager
                 Value<int> id = const Value.absent(),
                 Value<String> displayName = const Value.absent(),
                 Value<DateTime> completedAt = const Value.absent(),
+                Value<String?> avatarAssetPath = const Value.absent(),
+                Value<String?> avatarColorKey = const Value.absent(),
               }) => ProfilesCompanion(
                 id: id,
                 displayName: displayName,
                 completedAt: completedAt,
+                avatarAssetPath: avatarAssetPath,
+                avatarColorKey: avatarColorKey,
               ),
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
                 required String displayName,
                 required DateTime completedAt,
+                Value<String?> avatarAssetPath = const Value.absent(),
+                Value<String?> avatarColorKey = const Value.absent(),
               }) => ProfilesCompanion.insert(
                 id: id,
                 displayName: displayName,
                 completedAt: completedAt,
+                avatarAssetPath: avatarAssetPath,
+                avatarColorKey: avatarColorKey,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
@@ -2891,6 +3366,196 @@ typedef $$AppAudioPreferencesTableProcessedTableManager =
       AppAudioPreference,
       PrefetchHooks Function()
     >;
+typedef $$GameplayCardEventsTableCreateCompanionBuilder =
+    GameplayCardEventsCompanion Function({
+      Value<int> id,
+      required String deckId,
+      required String action,
+      required DateTime occurredAt,
+    });
+typedef $$GameplayCardEventsTableUpdateCompanionBuilder =
+    GameplayCardEventsCompanion Function({
+      Value<int> id,
+      Value<String> deckId,
+      Value<String> action,
+      Value<DateTime> occurredAt,
+    });
+
+class $$GameplayCardEventsTableFilterComposer
+    extends Composer<_$AppDatabase, $GameplayCardEventsTable> {
+  $$GameplayCardEventsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get deckId => $composableBuilder(
+    column: $table.deckId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get action => $composableBuilder(
+    column: $table.action,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get occurredAt => $composableBuilder(
+    column: $table.occurredAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$GameplayCardEventsTableOrderingComposer
+    extends Composer<_$AppDatabase, $GameplayCardEventsTable> {
+  $$GameplayCardEventsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get deckId => $composableBuilder(
+    column: $table.deckId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get action => $composableBuilder(
+    column: $table.action,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get occurredAt => $composableBuilder(
+    column: $table.occurredAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$GameplayCardEventsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $GameplayCardEventsTable> {
+  $$GameplayCardEventsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get deckId =>
+      $composableBuilder(column: $table.deckId, builder: (column) => column);
+
+  GeneratedColumn<String> get action =>
+      $composableBuilder(column: $table.action, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get occurredAt => $composableBuilder(
+    column: $table.occurredAt,
+    builder: (column) => column,
+  );
+}
+
+class $$GameplayCardEventsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $GameplayCardEventsTable,
+          GameplayCardEvent,
+          $$GameplayCardEventsTableFilterComposer,
+          $$GameplayCardEventsTableOrderingComposer,
+          $$GameplayCardEventsTableAnnotationComposer,
+          $$GameplayCardEventsTableCreateCompanionBuilder,
+          $$GameplayCardEventsTableUpdateCompanionBuilder,
+          (
+            GameplayCardEvent,
+            BaseReferences<
+              _$AppDatabase,
+              $GameplayCardEventsTable,
+              GameplayCardEvent
+            >,
+          ),
+          GameplayCardEvent,
+          PrefetchHooks Function()
+        > {
+  $$GameplayCardEventsTableTableManager(
+    _$AppDatabase db,
+    $GameplayCardEventsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$GameplayCardEventsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$GameplayCardEventsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$GameplayCardEventsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> deckId = const Value.absent(),
+                Value<String> action = const Value.absent(),
+                Value<DateTime> occurredAt = const Value.absent(),
+              }) => GameplayCardEventsCompanion(
+                id: id,
+                deckId: deckId,
+                action: action,
+                occurredAt: occurredAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String deckId,
+                required String action,
+                required DateTime occurredAt,
+              }) => GameplayCardEventsCompanion.insert(
+                id: id,
+                deckId: deckId,
+                action: action,
+                occurredAt: occurredAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$GameplayCardEventsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $GameplayCardEventsTable,
+      GameplayCardEvent,
+      $$GameplayCardEventsTableFilterComposer,
+      $$GameplayCardEventsTableOrderingComposer,
+      $$GameplayCardEventsTableAnnotationComposer,
+      $$GameplayCardEventsTableCreateCompanionBuilder,
+      $$GameplayCardEventsTableUpdateCompanionBuilder,
+      (
+        GameplayCardEvent,
+        BaseReferences<
+          _$AppDatabase,
+          $GameplayCardEventsTable,
+          GameplayCardEvent
+        >,
+      ),
+      GameplayCardEvent,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -2909,4 +3574,6 @@ class $AppDatabaseManager {
       );
   $$AppAudioPreferencesTableTableManager get appAudioPreferences =>
       $$AppAudioPreferencesTableTableManager(_db, _db.appAudioPreferences);
+  $$GameplayCardEventsTableTableManager get gameplayCardEvents =>
+      $$GameplayCardEventsTableTableManager(_db, _db.gameplayCardEvents);
 }

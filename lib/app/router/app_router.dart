@@ -9,6 +9,7 @@ import '../../features/game/presentation/screens/ending_page_screen.dart';
 import '../../features/game/presentation/screens/game_page_screen.dart';
 import '../../features/game/presentation/screens/preparation_page_screen.dart';
 import '../../features/home/presentation/screens/play_page_screen.dart';
+import '../../features/profile/presentation/screens/profile_page_screen.dart';
 import '../../features/onboarding/presentation/screens/onboarding_flow_screen.dart';
 import '../../features/startup/presentation/screens/startup_gate_screen.dart';
 
@@ -18,6 +19,7 @@ abstract final class AppRoutes {
   static const decks = '/decks';
   static const deckQuestions = '/decks/questions';
   static const home = '/home';
+  static const profile = '/profile';
   static const preparation = '/preparation';
   static const game = '/game';
   static const ending = '/ending';
@@ -62,6 +64,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                     ),
                   ),
                 ],
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.profile,
+                builder: (context, state) => const ProfilePageScreen(),
               ),
             ],
           ),

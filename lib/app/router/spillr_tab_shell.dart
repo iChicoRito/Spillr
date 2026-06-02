@@ -25,19 +25,23 @@ class SpillrTabShell extends StatelessWidget {
               selectedTab: _selectedTab,
               onDecksTap: () => _switchToBranch(1),
               onPlayTap: () => _switchToBranch(0),
+              onProfileTap: () => _switchToBranch(2),
             )
           : null,
     );
   }
 
   bool get _showsBottomNavigation {
-    return location == AppRoutes.home || location == AppRoutes.decks;
+    return location == AppRoutes.home ||
+        location == AppRoutes.decks ||
+        location == AppRoutes.profile;
   }
 
   SpillrBottomNavTab get _selectedTab {
     return switch (navigationShell.currentIndex) {
       0 => SpillrBottomNavTab.play,
       1 => SpillrBottomNavTab.decks,
+      2 => SpillrBottomNavTab.profile,
       _ => SpillrBottomNavTab.play,
     };
   }

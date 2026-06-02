@@ -13,6 +13,7 @@ import 'package:spillr/features/game/data/spillr_decks.dart';
 import 'package:spillr/features/game/domain/game_result.dart';
 import 'package:spillr/features/game/presentation/providers/game_providers.dart';
 import 'package:spillr/features/game/presentation/screens/ending_page_screen.dart';
+import 'package:spillr/features/profile/data/profile_repository.dart';
 
 void main() {
   late AppDatabase database;
@@ -95,6 +96,8 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
       await tester.tap(find.byKey(const ValueKey('questions-back-button')));
       await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('bottom-nav-profile')));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('bottom-nav-play')));
       await tester.pumpAndSettle();
       await openDeckFromPlayPage(tester, deckId: 'no-dead-air');
@@ -106,6 +109,8 @@ void main() {
         '/decks',
         '/decks/deep-spill/questions',
         '/decks',
+        '/profile',
+        '/home',
         '/home',
         '/preparation/no-dead-air',
         '/game/no-dead-air',
@@ -168,6 +173,74 @@ void main() {
     expect(audioController.flipCount, 2);
     expect(audioController.answeredCount, 1);
     expect(audioController.passCount, 1);
+
+    await disposeApp(tester);
+  });
+
+  testWidgets('records gameplay events that feed the profile stats', (
+    tester,
+  ) async {
+    await seedProfileAndOpenPlayPage(tester);
+
+    await openDeckFromPlayPage(tester, deckId: 'no-dead-air');
+    await continueFromPreparation(tester);
+
+    await flipCard(tester);
+    await tester.tap(find.byKey(const ValueKey('game-next-card-button')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 420));
+    await tester.pump(const Duration(milliseconds: 320));
+
+    await flipCard(tester);
+    await tester.tap(find.byKey(const ValueKey('game-pass-button')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 420));
+    await tester.pump(const Duration(milliseconds: 320));
+
+    final stats = await ProfileRepository(database).fetchProfileStats();
+    expect(stats.cardsAnswered, 1);
+    expect(stats.cardsPassed, 1);
+    expect(stats.cardsPlayed, 2);
+
+    await disposeApp(tester);
+  });
+
+  testWidgets('counts timeout auto-pass as a passed card', (tester) async {
+    await seedProfileAndOpenPlayPage(tester);
+
+    await openDeckFromPlayPage(tester, deckId: 'no-dead-air');
+    await continueFromPreparation(tester);
+
+    await flipCard(tester);
+    await tester.pump(const Duration(seconds: 120));
+    await tester.pump(const Duration(milliseconds: 800));
+    await tester.pumpAndSettle();
+
+    final stats = await ProfileRepository(database).fetchProfileStats();
+    expect(stats.cardsAnswered, 0);
+    expect(stats.cardsPassed, 1);
+    expect(stats.cardsPlayed, 1);
+
+    await disposeApp(tester);
+  });
+
+  testWidgets('does not add a gameplay event when a round ends early', (
+    tester,
+  ) async {
+    await seedProfileAndOpenPlayPage(tester);
+
+    await openDeckFromPlayPage(tester, deckId: 'no-dead-air');
+    await continueFromPreparation(tester);
+    await flipCard(tester);
+
+    await tester.tap(find.text('End'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 1200));
+
+    final stats = await ProfileRepository(database).fetchProfileStats();
+    expect(stats.cardsAnswered, 0);
+    expect(stats.cardsPassed, 0);
+    expect(stats.cardsPlayed, 0);
 
     await disposeApp(tester);
   });

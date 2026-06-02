@@ -15,6 +15,8 @@ import '../../../../shared/widgets/show_spillr_dialog.dart';
 import '../../../../shared/widgets/spillr_confirm_dialog.dart';
 import '../../../decks/presentation/providers/deck_providers.dart';
 import '../../../onboarding/presentation/providers/onboarding_providers.dart';
+import '../../../profile/domain/profile_models.dart';
+import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../domain/game_result.dart';
 import '../../domain/game_session_state.dart';
 import '../../domain/spillr_deck.dart';
@@ -66,11 +68,13 @@ class _GamePageScreenState extends ConsumerState<GamePageScreen> {
     final displayName =
         ref.read(onboardingProfileProvider).value?.displayName ?? 'Spiller';
     if (_session!.displayIndex == _session!.totalQuestions) {
+      _recordGameplayEvent(GameplayCardAction.answered);
       final result = _session!.answeredResult(displayName);
       _goToEnding(result);
       return;
     }
 
+    _recordGameplayEvent(GameplayCardAction.answered);
     _closeCurrentCardThenAdvance(_AdvanceAction.spill);
   }
 
@@ -83,11 +87,13 @@ class _GamePageScreenState extends ConsumerState<GamePageScreen> {
     final displayName =
         ref.read(onboardingProfileProvider).value?.displayName ?? 'Spiller';
     if (_session!.displayIndex == _session!.totalQuestions) {
+      _recordGameplayEvent(GameplayCardAction.passed);
       final result = _session!.passedResult(displayName);
       _goToEnding(result);
       return;
     }
 
+    _recordGameplayEvent(GameplayCardAction.passed);
     _closeCurrentCardThenAdvance(_AdvanceAction.pass);
   }
 
@@ -140,6 +146,19 @@ class _GamePageScreenState extends ConsumerState<GamePageScreen> {
     context.go(
       AppRoutes.ending,
       extra: GameEndingArguments(deck: _session!.deck, result: result),
+    );
+  }
+
+  void _recordGameplayEvent(GameplayCardAction action) {
+    if (_session == null) {
+      return;
+    }
+
+    unawaited(
+      ref.read(profileRepositoryProvider).recordGameplayCardEvent(
+        deckId: _session!.deck.id,
+        action: action,
+      ),
     );
   }
 

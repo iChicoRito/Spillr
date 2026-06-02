@@ -11,6 +11,8 @@ class Profiles extends Table {
   IntColumn get id => integer()();
   TextColumn get displayName => text().withLength(min: 1, max: 64)();
   DateTimeColumn get completedAt => dateTime()();
+  TextColumn get avatarAssetPath => text().nullable()();
+  TextColumn get avatarColorKey => text().nullable()();
 
   @override
   Set<Column<Object>>? get primaryKey => {id};
@@ -58,6 +60,13 @@ class AppAudioPreferences extends Table {
   Set<Column<Object>>? get primaryKey => {id};
 }
 
+class GameplayCardEvents extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get deckId => text().withLength(min: 1, max: 64)();
+  TextColumn get action => text().withLength(min: 1, max: 24)();
+  DateTimeColumn get occurredAt => dateTime()();
+}
+
 @DriftDatabase(
   tables: [
     Profiles,
@@ -65,13 +74,14 @@ class AppAudioPreferences extends Table {
     DeckQuestionEntries,
     QuestionGenerationUsageEntries,
     AppAudioPreferences,
+    GameplayCardEvents,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -89,6 +99,11 @@ class AppDatabase extends _$AppDatabase {
       if (from < 5) {
         await migrator.createTable(appAudioPreferences);
       }
+      if (from < 6) {
+        await migrator.addColumn(profiles, profiles.avatarAssetPath);
+        await migrator.addColumn(profiles, profiles.avatarColorKey);
+        await migrator.createTable(gameplayCardEvents);
+      }
     },
   );
 
@@ -96,12 +111,37 @@ class AppDatabase extends _$AppDatabase {
     return select(profiles).getSingleOrNull();
   }
 
-  Future<void> saveProfile(String displayName) {
-    return into(profiles).insertOnConflictUpdate(
+  Future<void> saveProfile(
+    String displayName, {
+    String? avatarAssetPath,
+    String? avatarColorKey,
+  }) async {
+    final existingProfile = await fetchProfile();
+
+    await into(profiles).insertOnConflictUpdate(
       ProfilesCompanion.insert(
         id: const Value(1),
         displayName: displayName,
-        completedAt: DateTime.now(),
+        completedAt: existingProfile?.completedAt ?? DateTime.now(),
+        avatarAssetPath: Value(
+          avatarAssetPath ?? existingProfile?.avatarAssetPath,
+        ),
+        avatarColorKey: Value(
+          avatarColorKey ?? existingProfile?.avatarColorKey,
+        ),
+      ),
+    );
+  }
+
+  Future<void> insertGameplayCardEvent({
+    required String deckId,
+    required String action,
+  }) {
+    return into(gameplayCardEvents).insert(
+      GameplayCardEventsCompanion.insert(
+        deckId: deckId,
+        action: action,
+        occurredAt: DateTime.now(),
       ),
     );
   }
