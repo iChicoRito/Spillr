@@ -19,6 +19,10 @@ class ProfileRepository {
     );
   }
 
+  Future<void> setNotificationsEnabled({required bool enabled}) {
+    return _database.updateNotificationsEnabled(enabled);
+  }
+
   Future<void> recordGameplayCardEvent({
     required String deckId,
     required GameplayCardAction action,
