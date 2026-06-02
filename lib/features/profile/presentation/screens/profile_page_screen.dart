@@ -6,6 +6,7 @@ import 'package:hugeicons/hugeicons.dart';
 import 'package:spillr/shared/widgets/spillr_bottom_sheet_scaffold.dart';
 
 import '../../../../app/router/app_router.dart';
+import '../../../../core/notifications/notification_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../shared/widgets/fallback_state_view.dart';
@@ -22,7 +23,6 @@ class ProfilePageScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfilePageScreenState extends ConsumerState<ProfilePageScreen> {
-  bool _notificationsEnabled = true;
   bool _darkModeEnabled = false;
 
   @override
@@ -146,10 +146,14 @@ class _ProfilePageScreenState extends ConsumerState<ProfilePageScreen> {
                             key: const ValueKey('profile-option-notifications'),
                             icon: Icons.notifications_none_outlined,
                             label: 'Notifications',
-                            value: _notificationsEnabled,
-                            onChanged: (value) {
-                              setState(() => _notificationsEnabled = value);
-                            },
+                            value: ref
+                                .watch(notificationsEnabledProvider)
+                                .maybeWhen(
+                                  data: (v) => v,
+                                  orElse: () => false,
+                                ),
+                            onChanged: (value) =>
+                                _handleNotificationToggle(context, value, profile),
                           ),
                           _ToggleOptionRow(
                             key: const ValueKey('profile-option-dark-mode'),
@@ -206,6 +210,41 @@ class _ProfilePageScreenState extends ConsumerState<ProfilePageScreen> {
       barrierColor: AppColors.black.withValues(alpha: 0.38),
       builder: (sheetContext) => const MusicSoundsSheet(),
     );
+  }
+
+  Future<void> _handleNotificationToggle(
+    BuildContext context,
+    bool value,
+    Profile? profile,
+  ) async {
+    if (value) {
+      final granted = await NotificationService.instance.requestPermission();
+      if (!granted) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Enable notifications in Settings to receive Spillr reminders.',
+            ),
+          ),
+        );
+        return;
+      }
+    }
+
+    await ref
+        .read(profileControllerProvider.notifier)
+        .setNotificationsEnabled(enabled: value);
+
+    if (!mounted) return;
+
+    if (value && profile != null) {
+      await NotificationService.instance.scheduleAll(
+        displayName: profile.displayName,
+      );
+    } else {
+      await NotificationService.instance.cancelAll();
+    }
   }
 }
 
