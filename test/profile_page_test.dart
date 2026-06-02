@@ -3,6 +3,7 @@ import 'package:drift/drift.dart' show ProfilesCompanion, Value;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:spillr/core/notifications/notification_service.dart';
 
 import 'package:spillr/core/database/app_database.dart';
 import 'package:spillr/core/database/app_database_provider.dart';
@@ -30,6 +31,7 @@ void main() {
     WidgetTester tester, {
     required Profile profile,
     required ProfileStats stats,
+    bool initialNotificationsEnabled = false,
   }) async {
     await tester.binding.setSurfaceSize(const Size(393, 852));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -42,6 +44,9 @@ void main() {
           ),
           profileStatsProvider.overrideWith(
             (ref) => Stream<ProfileStats>.value(stats),
+          ),
+          notificationsEnabledProvider.overrideWith(
+            (ref) => Stream.value(initialNotificationsEnabled),
           ),
         ],
         child: const MaterialApp(home: Scaffold(body: ProfilePageScreen())),
@@ -72,6 +77,7 @@ void main() {
     required String name,
     ProfileAvatarAsset? avatarAsset,
     ProfileAvatarColorKey? avatarColor,
+    bool notificationsEnabled = false,
   }) {
     return Profile(
       id: 1,
@@ -79,6 +85,7 @@ void main() {
       completedAt: DateTime(2026, 5, 31, 12, 0),
       avatarAssetPath: avatarAsset?.assetPath,
       avatarColorKey: avatarColor?.value,
+      notificationsEnabled: notificationsEnabled,
     );
   }
 
@@ -208,9 +215,15 @@ void main() {
     },
   );
 
-  testWidgets('toggles the notifications and dark mode switches visually', (
+  testWidgets('toggles the notifications and dark mode switches', (
     tester,
   ) async {
+    NotificationService.testMode = true;
+    addTearDown(() => NotificationService.testMode = false);
+
+    // Seed a real DB row so the UPDATE in setNotificationsEnabled has a row to update
+    await seedProfile(name: 'Chico');
+
     await pumpProfilePage(
       tester,
       profile: buildProfile(name: 'Chico'),
@@ -226,15 +239,20 @@ void main() {
       matching: find.byType(Switch),
     );
 
-    expect(tester.widget<Switch>(notificationsSwitch).value, isTrue);
+    // Default: notifications OFF (DB default false), dark mode OFF (ephemeral false)
+    expect(tester.widget<Switch>(notificationsSwitch).value, isFalse);
     expect(tester.widget<Switch>(darkModeSwitch).value, isFalse);
 
     await tester.tap(notificationsSwitch);
     await tester.tap(darkModeSwitch);
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 200));
+    await tester.pumpAndSettle();
 
-    expect(tester.widget<Switch>(notificationsSwitch).value, isFalse);
+    // Notifications: DB-backed — verify persistence rather than visual state
+    // (provider is overridden with a static stream in pumpProfilePage)
+    final savedProfile = await database.fetchProfile();
+    expect(savedProfile!.notificationsEnabled, isTrue);
+
+    // Dark mode: ephemeral — verify visual toggle
     expect(tester.widget<Switch>(darkModeSwitch).value, isTrue);
     expect(find.text('Your Profile'), findsOneWidget);
   });
