@@ -1,9 +1,7 @@
-import 'dart:io';
-
 import 'package:drift/drift.dart';
-import 'package:drift/native.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
+
+import 'app_database_connection_stub.dart'
+    if (dart.library.ui) 'app_database_connection_flutter.dart';
 
 part 'app_database.g.dart';
 
@@ -113,27 +111,49 @@ class AppDatabase extends _$AppDatabase {
         await migrator.createTable(appAudioPreferences);
       }
       if (from < 6) {
-        await migrator.addColumn(profiles, profiles.avatarAssetPath);
-        await migrator.addColumn(profiles, profiles.avatarColorKey);
+        await _addColumnIfMissing(
+          tableName: profiles.actualTableName,
+          columnName: 'avatar_asset_path',
+          alterTableSql:
+              'ALTER TABLE profiles ADD COLUMN avatar_asset_path TEXT NULL',
+        );
+        await _addColumnIfMissing(
+          tableName: profiles.actualTableName,
+          columnName: 'avatar_color_key',
+          alterTableSql:
+              'ALTER TABLE profiles ADD COLUMN avatar_color_key TEXT NULL',
+        );
         await migrator.createTable(gameplayCardEvents);
       }
       if (from < 7) {
         await migrator.createTable(gameHistoryEntries);
       }
       if (from < 8) {
-        await customStatement(
-          'ALTER TABLE app_audio_preferences ADD COLUMN master_volume REAL NOT NULL DEFAULT 1.0',
+        await _addColumnIfMissing(
+          tableName: appAudioPreferences.actualTableName,
+          columnName: 'master_volume',
+          alterTableSql:
+              'ALTER TABLE app_audio_preferences ADD COLUMN master_volume REAL NOT NULL DEFAULT 1.0',
         );
-        await customStatement(
-          'ALTER TABLE app_audio_preferences ADD COLUMN bgm_volume REAL NOT NULL DEFAULT 1.0',
+        await _addColumnIfMissing(
+          tableName: appAudioPreferences.actualTableName,
+          columnName: 'bgm_volume',
+          alterTableSql:
+              'ALTER TABLE app_audio_preferences ADD COLUMN bgm_volume REAL NOT NULL DEFAULT 1.0',
         );
-        await customStatement(
-          'ALTER TABLE app_audio_preferences ADD COLUMN sfx_volume REAL NOT NULL DEFAULT 1.0',
+        await _addColumnIfMissing(
+          tableName: appAudioPreferences.actualTableName,
+          columnName: 'sfx_volume',
+          alterTableSql:
+              'ALTER TABLE app_audio_preferences ADD COLUMN sfx_volume REAL NOT NULL DEFAULT 1.0',
         );
       }
       if (from < 9) {
-        await customStatement(
-          'ALTER TABLE profiles ADD COLUMN notifications_enabled INTEGER NOT NULL DEFAULT 0',
+        await _addColumnIfMissing(
+          tableName: profiles.actualTableName,
+          columnName: 'notifications_enabled',
+          alterTableSql:
+              'ALTER TABLE profiles ADD COLUMN notifications_enabled INTEGER NOT NULL DEFAULT 0',
         );
       }
     },
@@ -250,12 +270,20 @@ class AppDatabase extends _$AppDatabase {
   Future<void> deleteCustomDeck(int id) {
     return (delete(customDecks)..where((table) => table.id.equals(id))).go();
   }
+
+  Future<void> _addColumnIfMissing({
+    required String tableName,
+    required String columnName,
+    required String alterTableSql,
+  }) async {
+    final columns = await customSelect('PRAGMA table_info($tableName)').get();
+    final hasColumn = columns.any((row) => row.data['name'] == columnName);
+    if (!hasColumn) {
+      await customStatement(alterTableSql);
+    }
+  }
 }
 
 LazyDatabase _openConnection() {
-  return LazyDatabase(() async {
-    final directory = await getApplicationDocumentsDirectory();
-    final file = File(p.join(directory.path, 'spillr.sqlite'));
-    return NativeDatabase.createInBackground(file);
-  });
+  return LazyDatabase(openAppDatabaseConnection);
 }

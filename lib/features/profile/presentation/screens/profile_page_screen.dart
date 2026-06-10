@@ -217,33 +217,96 @@ class _ProfilePageScreenState extends ConsumerState<ProfilePageScreen> {
     bool value,
     Profile? profile,
   ) async {
-    if (value) {
-      final granted = await NotificationService.instance.requestPermission();
-      if (!granted) {
-        if (!context.mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Enable notifications in Settings to receive Spillr reminders.',
+    final notifications = ref.read(notificationServiceProvider);
+
+    try {
+      if (value) {
+        final granted = await notifications.requestPermission();
+        if (!granted) {
+          if (!context.mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Enable notifications in Settings to receive Spillr reminders.',
+              ),
             ),
-          ),
-        );
-        return;
+          );
+          return;
+        }
       }
-    }
 
-    await ref
-        .read(profileControllerProvider.notifier)
-        .setNotificationsEnabled(enabled: value);
+      await ref
+          .read(profileControllerProvider.notifier)
+          .setNotificationsEnabled(enabled: value);
 
-    if (!mounted) return;
-
-    if (value && profile != null) {
-      await NotificationService.instance.scheduleAll(
-        displayName: profile.displayName,
+      if (!context.mounted) return;
+      if (value && profile != null) {
+        await _scheduleNotificationsBestEffort(
+          context,
+          notifications,
+          profile.displayName,
+        );
+      } else if (!value) {
+        await _cancelNotificationsBestEffort(context, notifications);
+      }
+    } catch (error, stackTrace) {
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stackTrace,
+          library: 'spillr notifications',
+          context: ErrorDescription('while updating notification settings'),
+        ),
       );
-    } else {
-      await NotificationService.instance.cancelAll();
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Unable to update notifications right now.'),
+        ),
+      );
+    }
+  }
+
+  Future<void> _scheduleNotificationsBestEffort(
+    BuildContext context,
+    AppNotificationScheduler notifications,
+    String displayName,
+  ) async {
+    try {
+      await notifications.scheduleAll(displayName: displayName);
+    } catch (error, stackTrace) {
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stackTrace,
+          library: 'spillr notifications',
+          context: ErrorDescription('while scheduling reminders'),
+        ),
+      );
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Notifications are on. Reminders will retry later.'),
+        ),
+      );
+    }
+  }
+
+  Future<void> _cancelNotificationsBestEffort(
+    BuildContext context,
+    AppNotificationScheduler notifications,
+  ) async {
+    try {
+      await notifications.cancelAll();
+    } catch (error, stackTrace) {
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stackTrace,
+          library: 'spillr notifications',
+          context: ErrorDescription('while canceling reminders'),
+        ),
+      );
     }
   }
 }

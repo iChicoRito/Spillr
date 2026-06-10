@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:drift/native.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
@@ -29,6 +31,8 @@ void main() {
     required Profile profile,
     required ProfileStats stats,
     bool initialNotificationsEnabled = false,
+    AppNotificationScheduler notificationScheduler =
+        const _SuccessfulNotificationScheduler(),
   }) async {
     await tester.binding.setSurfaceSize(const Size(393, 852));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -36,6 +40,9 @@ void main() {
       ProviderScope(
         overrides: [
           appDatabaseProvider.overrideWithValue(database),
+          notificationServiceProvider.overrideWithValue(
+            notificationScheduler,
+          ),
           onboardingProfileProvider.overrideWith(
             (ref) async => profile,
           ),
@@ -215,9 +222,6 @@ void main() {
   testWidgets('toggles the notifications and dark mode switches', (
     tester,
   ) async {
-    NotificationService.testMode = true;
-    addTearDown(() => NotificationService.testMode = false);
-
     // Seed a real DB row so the UPDATE in setNotificationsEnabled has a row to update
     await seedProfile(name: 'Chico');
 
@@ -253,4 +257,81 @@ void main() {
     expect(tester.widget<Switch>(darkModeSwitch).value, isTrue);
     expect(find.text('Your Profile'), findsOneWidget);
   });
+
+  testWidgets(
+    'keeps notifications enabled when scheduling reminders fails',
+    (tester) async {
+      final reportedErrors = <FlutterErrorDetails>[];
+      final previousOnError = FlutterError.onError;
+      FlutterError.onError = reportedErrors.add;
+      addTearDown(() => FlutterError.onError = previousOnError);
+
+      await seedProfile(name: 'Chico');
+
+      await pumpProfilePage(
+        tester,
+        profile: buildProfile(name: 'Chico'),
+        stats: const ProfileStats.zero(),
+        notificationScheduler: const _FailingNotificationScheduler(),
+      );
+
+      final notificationsSwitch = find.descendant(
+        of: find.byKey(const ValueKey('profile-option-notifications')),
+        matching: find.byType(Switch),
+      );
+
+      await tester.tap(notificationsSwitch);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      final savedProfile = await database.fetchProfile();
+      expect(savedProfile!.notificationsEnabled, isTrue);
+      expect(reportedErrors, hasLength(1));
+      expect(
+        find.text('Notifications are on. Reminders will retry later.'),
+        findsOneWidget,
+      );
+      expect(find.text('Unable to update notifications right now.'), findsNothing);
+    },
+  );
+}
+
+class _SuccessfulNotificationScheduler implements AppNotificationScheduler {
+  const _SuccessfulNotificationScheduler();
+
+  @override
+  Future<void> cancelAll() async {}
+
+  @override
+  Future<bool> requestPermission() async => true;
+
+  @override
+  Future<void> scheduleAll({required String displayName, Random? random}) async {}
+
+  @override
+  Future<void> topUpIfNeeded({
+    required String displayName,
+    Random? random,
+  }) async {}
+}
+
+class _FailingNotificationScheduler implements AppNotificationScheduler {
+  const _FailingNotificationScheduler();
+
+  @override
+  Future<void> cancelAll() async {}
+
+  @override
+  Future<bool> requestPermission() async => true;
+
+  @override
+  Future<void> scheduleAll({required String displayName, Random? random}) {
+    throw StateError('schedule failed');
+  }
+
+  @override
+  Future<void> topUpIfNeeded({
+    required String displayName,
+    Random? random,
+  }) async {}
 }

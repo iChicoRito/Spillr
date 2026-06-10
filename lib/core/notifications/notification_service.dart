@@ -2,10 +2,31 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:riverpod/riverpod.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
-class NotificationService {
+final notificationServiceProvider = Provider<AppNotificationScheduler>(
+  (ref) => NotificationService.instance,
+);
+
+abstract interface class AppNotificationScheduler {
+  Future<bool> requestPermission();
+
+  Future<void> scheduleAll({
+    required String displayName,
+    Random? random,
+  });
+
+  Future<void> topUpIfNeeded({
+    required String displayName,
+    Random? random,
+  });
+
+  Future<void> cancelAll();
+}
+
+class NotificationService implements AppNotificationScheduler {
   NotificationService._();
   static final NotificationService instance = NotificationService._();
 
@@ -64,8 +85,10 @@ class NotificationService {
     _initialized = true;
   }
 
+  @override
   Future<bool> requestPermission() async {
     if (testMode) return true;
+    await initialize();
     final android = _plugin.resolvePlatformSpecificImplementation<
         AndroidFlutterLocalNotificationsPlugin>();
     if (android != null) {
@@ -84,11 +107,13 @@ class NotificationService {
     return false;
   }
 
+  @override
   Future<void> scheduleAll({
     required String displayName,
     Random? random,
   }) async {
     if (testMode) return;
+    await initialize();
     await cancelAll();
     final rng = random ?? Random();
     final times = computeScheduleTimes(
@@ -106,11 +131,13 @@ class NotificationService {
     }
   }
 
+  @override
   Future<void> topUpIfNeeded({
     required String displayName,
     Random? random,
   }) async {
     if (testMode) return;
+    await initialize();
     final pending = await _plugin.pendingNotificationRequests();
     if (pending.length >= _topUpThreshold) return;
     final needed = _targetCount - pending.length;
@@ -136,8 +163,10 @@ class NotificationService {
     }
   }
 
+  @override
   Future<void> cancelAll() async {
     if (testMode) return;
+    await initialize();
     await _plugin.cancelAll();
   }
 
